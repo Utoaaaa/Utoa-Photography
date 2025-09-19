@@ -1,0 +1,679 @@
+openapi: 3.0.3
+info:
+  title: 攝影作品展示網站 API
+  description: 支援年份、作品集與照片管理的 Next.js API Routes
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Next.js API Routes
+
+components:
+  schemas:
+    Year:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+          example: "2024"
+        order_index:
+          type: string
+          example: "2024.0"
+        status:
+          type: string
+          enum: [draft, published]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, label, order_index, status]
+
+    Collection:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        year_id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        title:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 500
+        cover_asset_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published]
+        order_index:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, year_id, slug, title, status, order_index]
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Cloudflare Images image_id"
+        alt:
+          type: string
+          minLength: 1
+          maxLength: 200
+        caption:
+          type: string
+          maxLength: 1000
+          nullable: true
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        metadata_json:
+          type: object
+          nullable: true
+      required: [id, alt, width, height]
+
+    CollectionAsset:
+      type: object
+      properties:
+        collection_id:
+          type: string
+          format: uuid
+        asset_id:
+          type: string
+        order_index:
+          type: string
+      required: [collection_id, asset_id, order_index]
+
+    DirectUploadResponse:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          format: uri
+        image_id:
+          type: string
+        form_data:
+          type: object
+          additionalProperties: true
+      required: [upload_url, image_id]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          nullable: true
+      required: [error, message]
+
+  securitySchemes:
+    CloudflareAccess:
+      type: http
+      scheme: bearer
+      description: "Cloudflare Access JWT token"
+
+paths:
+  # 年份管理 API
+  /years:
+    get:
+      summary: 獲取年份列表
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, all]
+          example: published
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: 成功獲取年份列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Year'
+
+    post:
+      summary: 創建新年份
+      security:
+        - CloudflareAccess: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                  example: "2025"
+                order_index:
+                  type: string
+                  example: "2025.0"
+                status:
+                  type: string
+                  enum: [draft, published]
+                  default: draft
+              required: [label]
+      responses:
+        '201':
+          description: 成功創建年份
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Year'
+        '400':
+          description: 請求資料無效
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /years/{year_id}:
+    get:
+      summary: 獲取特定年份資訊
+      parameters:
+        - name: year_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功獲取年份資訊
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Year'
+        '404':
+          description: 年份不存在
+
+    put:
+      summary: 更新年份資訊
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: year_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+                order_index:
+                  type: string
+                status:
+                  type: string
+                  enum: [draft, published]
+      responses:
+        '200':
+          description: 成功更新年份
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Year'
+
+    delete:
+      summary: 刪除年份
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: year_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: force
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: "是否強制刪除含有作品集的年份"
+      responses:
+        '204':
+          description: 成功刪除年份
+        '409':
+          description: 年份包含作品集，無法刪除
+
+  # 作品集管理 API
+  /years/{year_id}/collections:
+    get:
+      summary: 獲取年份下的作品集列表
+      parameters:
+        - name: year_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, all]
+          example: published
+      responses:
+        '200':
+          description: 成功獲取作品集列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collection'
+
+    post:
+      summary: 在年份下創建新作品集
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: year_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                slug:
+                  type: string
+                title:
+                  type: string
+                summary:
+                  type: string
+                cover_asset_id:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                  enum: [draft, published]
+                  default: draft
+                order_index:
+                  type: string
+              required: [slug, title]
+      responses:
+        '201':
+          description: 成功創建作品集
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+
+  /collections/{collection_id}:
+    get:
+      summary: 獲取作品集詳細資訊
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_assets
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: "是否包含作品集中的照片列表"
+      responses:
+        '200':
+          description: 成功獲取作品集資訊
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Collection'
+                  - type: object
+                    properties:
+                      assets:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/Asset'
+                            - type: object
+                              properties:
+                                order_index:
+                                  type: string
+
+    put:
+      summary: 更新作品集資訊
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                summary:
+                  type: string
+                cover_asset_id:
+                  type: string
+                  nullable: true
+                status:
+                  type: string
+                  enum: [draft, published]
+                order_index:
+                  type: string
+      responses:
+        '200':
+          description: 成功更新作品集
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+
+    delete:
+      summary: 刪除作品集
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 成功刪除作品集
+
+  # 照片與資產管理 API
+  /images/direct-upload:
+    post:
+      summary: 獲取 Cloudflare Images 直傳憑證
+      security:
+        - CloudflareAccess: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                content_type:
+                  type: string
+                  example: "image/jpeg"
+              required: [filename]
+      responses:
+        '200':
+          description: 成功獲取上傳憑證
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectUploadResponse'
+        '400':
+          description: 不支援的檔案類型
+
+  /assets:
+    post:
+      summary: 創建新資產記錄
+      security:
+        - CloudflareAccess: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: "Cloudflare Images image_id"
+                alt:
+                  type: string
+                caption:
+                  type: string
+                width:
+                  type: integer
+                height:
+                  type: integer
+                metadata_json:
+                  type: object
+              required: [id, alt, width, height]
+      responses:
+        '201':
+          description: 成功創建資產記錄
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+
+  /assets/{asset_id}:
+    put:
+      summary: 更新資產資訊
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                alt:
+                  type: string
+                caption:
+                  type: string
+                metadata_json:
+                  type: object
+      responses:
+        '200':
+          description: 成功更新資產
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+
+    delete:
+      summary: 刪除資產
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 成功刪除資產
+        '409':
+          description: 資產仍被作品集使用，無法刪除
+
+  # 作品集照片關聯管理
+  /collections/{collection_id}/assets:
+    post:
+      summary: 將照片加入作品集
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                asset_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: "要加入的照片 ID 列表"
+                insert_at:
+                  type: string
+                  description: "插入位置的 order_index"
+              required: [asset_ids]
+      responses:
+        '201':
+          description: 成功加入照片
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionAsset'
+
+    put:
+      summary: 重新排序作品集中的照片
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reorder:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      asset_id:
+                        type: string
+                      order_index:
+                        type: string
+                    required: [asset_id, order_index]
+              required: [reorder]
+      responses:
+        '200':
+          description: 成功重新排序
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionAsset'
+
+  /collections/{collection_id}/assets/{asset_id}:
+    delete:
+      summary: 從作品集移除照片
+      security:
+        - CloudflareAccess: []
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: asset_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 成功移除照片
+
+  # 快取管理 API
+  /revalidate:
+    post:
+      summary: 觸發快取重新驗證
+      security:
+        - CloudflareAccess: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: "要失效的快取標籤"
+                paths:
+                  type: array
+                  items:
+                    type: string
+                  description: "要重新驗證的路徑"
+              required: [tags]
+      responses:
+        '200':
+          description: 成功觸發重新驗證
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  revalidated:
+                    type: array
+                    items:
+                      type: string

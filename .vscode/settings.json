@@ -1,10 +1,24 @@
 {
-    "files.watcherExclude": {
-        "**/.git/objects/**": true,
-        "**/.git/subtree-cache/**": true,
-        "**/.hg/store/**": true,
-        "**/.git/**": true,
-        "**/node_modules/**": true,
-        "**/.vscode/**": true
-    }
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.hg/store/**": true,
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "eslint.config.mjs, postcss.config.mjs, jest.config.ts, jest.setup.js, .prettierrc, wrangler.toml, open-next.config.mjs, tsconfig.json, tsconfig.tsbuildinfo"
+  },
+  "files.exclude": {
+    "**/.next": true,
+    "**/.swc": true,
+    "**/.cache": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/.swc": true,
+    "**/node_modules": true,
+    "**/.cache": true
+  }
 }

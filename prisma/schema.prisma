@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Years model - Timeline containers with order_index for sorting
+model Year {
+  id          String      @id @default(uuid())
+  label       String      // e.g., "2024", "2023"
+  order_index String      // Lexicographical sorting
+  status      YearStatus  @default(draft)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+
+  // Relations
+  collections Collection[]
+
+  @@index([status, order_index])
+  @@map("years")
+}
+
+// Collections model - Photo groups within years, with slug-based URLs
+model Collection {
+  id              String            @id @default(uuid())
+  year_id         String
+  slug            String            // URL-friendly identifier
+  title           String
+  summary         String?           // Optional short description
+  cover_asset_id  String?           // Foreign key to Assets
+  template_id     String?           // Future: different layout templates
+  status          CollectionStatus  @default(draft)
+  order_index     String            // Within year ordering
+  published_at    DateTime?
+  created_at      DateTime          @default(now())
+  updated_at      DateTime          @updatedAt
+
+  // Relations
+  year             Year               @relation(fields: [year_id], references: [id], onDelete: Cascade)
+  cover_asset      Asset?             @relation("CollectionCoverAsset", fields: [cover_asset_id], references: [id])
+  collection_assets CollectionAsset[]
+
+  @@unique([year_id, slug])
+  @@index([year_id, status, order_index])
+  @@map("collections")
+}
+
+// Assets model - Cloudflare Images references with alt/caption
+model Asset {
+  id            String   @id // Cloudflare Images image_id
+  alt           String   // Required for accessibility
+  caption       String?  // Optional photo description
+  width         Int      // Original dimensions
+  height        Int
+  metadata_json String?  // EXIF, camera settings, etc. (JSON string)
+  created_at    DateTime @default(now())
+
+  // Relations
+  collection_assets   CollectionAsset[]
+  cover_collections   Collection[]       @relation("CollectionCoverAsset")
+  seo_metadata_assets SEOMetadata[]
+
+  @@map("assets")
+}
+
+// CollectionAssets model - Many-to-many with ordering for dot navigation
+model CollectionAsset {
+  collection_id String
+  asset_id      String
+  order_index   String   // Photo sequence within collection
+  created_at    DateTime @default(now())
+
+  // Relations
+  collection Collection @relation(fields: [collection_id], references: [id], onDelete: Cascade)
+  asset      Asset      @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+
+  @@id([collection_id, asset_id])
+  @@index([collection_id, order_index])
+  @@map("collection_assets")
+}
+
+// SEOMetadata model - Polymorphic design for different page types
+model SEOMetadata {
+  id            String          @id @default(uuid())
+  entity_type   SEOEntityType   // 'year' | 'collection' | 'homepage'
+  entity_id     String          // Year/Collection ID, or 'homepage'
+  title         String?         // Custom page title
+  description   String?         // Meta description
+  og_asset_id   String?         // Open Graph image
+  canonical_url String?
+  updated_at    DateTime        @updatedAt
+
+  // Relations
+  og_asset  Asset? @relation(fields: [og_asset_id], references: [id])
+
+  @@unique([entity_type, entity_id])
+  @@map("seo_metadata")
+}
+
+// Enums
+enum YearStatus {
+  draft
+  published
+}
+
+enum CollectionStatus {
+  draft
+  published
+}
+
+enum SEOEntityType {
+  year
+  collection
+  homepage
+}

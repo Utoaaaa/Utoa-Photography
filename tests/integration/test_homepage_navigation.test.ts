@@ -1,0 +1,253 @@
+/**
+ * Integration Test: Homepage year timeline navigation
+ * 
+ * Tests the complete user flow for homepage year timeline navigation.
+ * This test MUST FAIL until frontend components are implemented.
+ */
+
+import '@testing-library/jest-dom';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
+// Mock Next.js router
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  usePathname: () => '/',
+}));
+
+describe('Integration: Homepage year timeline navigation', () => {
+  const mockYearsData = [
+    {
+      id: '1',
+      label: '2024',
+      order_index: '2024.0',
+      status: 'published',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+    },
+    {
+      id: '2',
+      label: '2023',
+      order_index: '2023.0',
+      status: 'published',
+      created_at: '2023-01-01T00:00:00Z',
+      updated_at: '2023-01-01T00:00:00Z',
+    },
+    {
+      id: '3',
+      label: '2022',
+      order_index: '2022.0',
+      status: 'published',
+      created_at: '2022-01-01T00:00:00Z',
+      updated_at: '2022-01-01T00:00:00Z',
+    },
+  ];
+
+  beforeEach(() => {
+    // Mock fetch to return years data
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockYearsData),
+      })
+    ) as jest.Mock;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should render hero section with site title and geometric patterns', async () => {
+    // This will fail until we implement the homepage component
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    // Check for hero section elements
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(screen.getByText(/Utoa Photography/i)).toBeInTheDocument();
+    
+    // Check for geometric patterns (could be SVG or CSS elements)
+    const heroSection = screen.getByRole('banner');
+    expect(heroSection).toHaveClass(/hero|geometric|pattern/);
+  });
+
+  it('should display year grid in chronological order (newest first)', async () => {
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      const yearButtons = screen.getAllByRole('button');
+      expect(yearButtons).toHaveLength(3);
+    });
+
+    const yearButtons = screen.getAllByRole('button');
+    
+    // Check order: 2024, 2023, 2022
+    expect(yearButtons[0]).toHaveTextContent('2024');
+    expect(yearButtons[1]).toHaveTextContent('2023');
+    expect(yearButtons[2]).toHaveTextContent('2022');
+  });
+
+  it('should make year boxes clickable and navigable', async () => {
+    const mockPush = jest.fn();
+    jest.doMock('next/navigation', () => ({
+      useRouter: () => ({ push: mockPush }),
+      usePathname: () => '/',
+    }));
+
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('2024')).toBeInTheDocument();
+    });
+
+    const year2024Button = screen.getByText('2024');
+    fireEvent.click(year2024Button);
+
+    expect(mockPush).toHaveBeenCalledWith('/2024');
+  });
+
+  it('should support keyboard navigation for year boxes', async () => {
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      const yearButtons = screen.getAllByRole('button');
+      expect(yearButtons).toHaveLength(3);
+    });
+
+    const firstYearButton = screen.getAllByRole('button')[0];
+    
+    // Focus on first year box
+    firstYearButton.focus();
+    expect(firstYearButton).toHaveFocus();
+
+    // Tab to next year box
+    fireEvent.keyDown(firstYearButton, { key: 'Tab' });
+    const secondYearButton = screen.getAllByRole('button')[1];
+    
+    // Should be able to navigate with Tab key
+    expect(secondYearButton).toBeVisible();
+  });
+
+  it('should display year boxes in responsive grid layout', async () => {
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      const yearGrid = screen.getByRole('main');
+      expect(yearGrid).toBeInTheDocument();
+    });
+
+    const yearGrid = screen.getByRole('main');
+    
+    // Check for responsive grid classes
+    expect(yearGrid).toHaveClass(/grid|flex/);
+    expect(yearGrid).toHaveClass(/responsive|sm:|md:|lg:/);
+  });
+
+  it('should handle empty years data gracefully', async () => {
+    // Mock empty response
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([]),
+      })
+    ) as jest.Mock;
+
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      // Should show empty state message
+      expect(screen.getByText(/no years|coming soon|empty/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should handle API errors gracefully', async () => {
+    // Mock API error
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 500,
+        json: () => Promise.resolve({ error: 'Server error' }),
+      })
+    ) as jest.Mock;
+
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      // Should show error message
+      expect(screen.getByText(/error|failed|retry/i)).toBeInTheDocument();
+    });
+  });
+
+  it('should apply hover animations to year boxes', async () => {
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      const yearButton = screen.getByText('2024');
+      expect(yearButton).toBeInTheDocument();
+    });
+
+    const yearButton = screen.getByText('2024');
+    
+    // Simulate hover
+    fireEvent.mouseEnter(yearButton);
+    
+    // Check for hover state classes
+    expect(yearButton.closest('[role="button"]')).toHaveClass(/hover|transform|transition/);
+  });
+
+  it('should maintain year box aspect ratio across screen sizes', async () => {
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      const yearButtons = screen.getAllByRole('button');
+      expect(yearButtons).toHaveLength(3);
+    });
+
+    const yearButton = screen.getAllByRole('button')[0];
+    
+    // Check for aspect ratio classes or styles
+    expect(yearButton).toHaveClass(/aspect|ratio|square/);
+  });
+
+  it('should only show published years to public users', async () => {
+    const mixedStatusYears = [
+      ...mockYearsData,
+      {
+        id: '4',
+        label: '2021',
+        order_index: '2021.0',
+        status: 'draft', // This should not appear
+        created_at: '2021-01-01T00:00:00Z',
+        updated_at: '2021-01-01T00:00:00Z',
+      },
+    ];
+
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mixedStatusYears.filter(y => y.status === 'published')),
+      })
+    ) as jest.Mock;
+
+    const HomePage = await import('@/app/(site)/page').then(m => m.default);
+    render(<HomePage />);
+
+    await waitFor(() => {
+      const yearButtons = screen.getAllByRole('button');
+      expect(yearButtons).toHaveLength(3); // Only published years
+    });
+
+    // Should not see draft year
+    expect(screen.queryByText('2021')).not.toBeInTheDocument();
+  });
+});

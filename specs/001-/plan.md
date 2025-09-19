@@ -1,8 +1,8 @@
 
-# Implementation Plan: [FEATURE]
+# Implementation Plan: 個人攝影作品展示網站（首頁年表式導覽＋作品集模板＋極簡留白風）
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `001-` | **Date**: 2025年9月19日 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/Users/utoaaaa/檔案/Web app/Utoa Photography/specs/001-/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,23 +31,52 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+個人攝影作品展示網站，採用三層式導覽架構（首頁年表 → 年份頁 → 作品集詳頁），重視極簡留白美學搭配相機幾何元素。技術策略為 Next.js App Router + Cloudflare Workers + D1，以 SSR 與邊緣快取確保效能，並採用 Direct Upload 與 Images 服務提供優化的媒體交付體驗。
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript 5.2+, Node.js 18+  
+**Primary Dependencies**: Next.js 14+ (App Router), React 18+, Tailwind CSS, Prisma ORM, GSAP, Lenis  
+**Storage**: Cloudflare D1 (SQLite), Cloudflare Images (媒體儲存)  
+**Testing**: Jest, React Testing Library, Playwright (E2E), Lighthouse CI  
+**Target Platform**: Cloudflare Workers (via OpenNext adapter)  
+**Project Type**: web - Next.js 全棧應用含前後台  
+**Performance Goals**: LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1, 首頁→年份 CTR ≥ 35%  
+**Constraints**: 靜態優先部署, Edge-first 快取策略, 響應式設計, WCAG 2.1 AA 相容  
+**Scale/Scope**: 預計 50+ 年份, 500+ 作品集, 5000+ 照片, 支援月流量 10K+ 訪客
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+### ⚠️ Constitutional Conflicts Identified
+
+**I. Static-First Delivery (NON-NEGOTIABLE)**  
+❌ **VIOLATION**: 技術選型採用 Cloudflare Workers (SSR) + D1 Database，無法產生純靜態檔案
+- 需要伺服器端執行與資料庫查詢
+- Admin 功能需要動態後端 API  
+- 圖片上傳需要 Direct Upload token 生成
+
+**Justification Required**: 此功能本質上需要動態內容管理系統
+- **核心需求**: Admin 用戶需要即時上傳、編輯、發布內容
+- **資料複雜性**: 年份、作品集、照片的關聯與排序需要結構化資料庫
+- **媒體處理**: 需要 Cloudflare Images 的動態變形與最佳化
+
+**Mitigation Strategy**:
+- 前台採用 SSR with Edge Caching，最大程度減少伺服器負載
+- 發布內容後觸發邊緣快取更新，提供近似靜態的訪客體驗  
+- 未來可考慮 ISG (Incremental Static Generation) 混合策略
+
+**II-V. Other Principles**: ✅ COMPLIANT
+- Performance budgets: 設定明確的 Core Web Vitals 目標
+- Progressive enhancement: 基礎導覽功能可無 JS 運作
+- Testing gates: 整合 Lighthouse CI 與自動化測試
+- Versioning: 採用語意化版本控制
+
+### ✅ Post-Design Constitution Re-Check
+經過 Phase 1 設計後重新檢視：
+- **效能預算**: API contracts 設定回應時間限制
+- **漸進增強**: quickstart.md 驗證無 JS 基本功能
+- **測試閘門**: contract tests 涵蓋所有 API 端點
+- **可觀測性**: 快取策略與錯誤處理機制明確
 
 ## Project Structure
 
@@ -99,7 +128,7 @@ ios/ or android/
 └── [platform-specific structure]
 ```
 
-**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
+**Structure Decision**: Option 2 (Web application) - Next.js 全棧專案，採用 route groups 分離 (site) 與 (admin)
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -158,21 +187,37 @@ ios/ or android/
 *This section describes what the /tasks command will do - DO NOT execute during /plan*
 
 **Task Generation Strategy**:
-- Load `.specify/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P] 
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- Load `.specify/templates/tasks-template.md` as base structure
+- Generate TDD-ordered tasks from Phase 1 artifacts:
+  - Each API endpoint in contracts/ → contract test task [P]
+  - Each data model entity → model creation task [P]
+  - Each UI component in quickstart → component test task
+  - Integration scenarios from user stories → E2E test tasks
+- Implementation tasks to make all tests pass
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
+- **Red Phase**: All failing tests first (contracts, models, components)
+- **Green Phase**: Implementation to pass tests (TDD cycle)
+- **Refactor Phase**: Optimization and polish tasks
+- Mark [P] for parallel execution when files are independent
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Task Categories**:
+1. **Setup & Infrastructure** (5-8 tasks): DB schema, API routing, auth
+2. **Contract Tests** (8-12 tasks): All API endpoints from OpenAPI spec
+3. **Data Layer** (6-10 tasks): Models, queries, migrations  
+4. **UI Components** (10-15 tasks): Pages, components, animations
+5. **Integration** (5-8 tasks): E2E flows, cache validation
+6. **Polish** (3-5 tasks): SEO, performance, A11y validation
 
-**IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
+**Total Estimated**: 37-58 numbered, dependency-ordered tasks
+
+**Key Dependencies Identified**:
+- Database schema → Model implementations
+- Contract tests → API implementations  
+- Core components → Animation integration
+- Basic flows → Performance optimization
+
+**IMPORTANT**: Phase 2 execution (creating tasks.md) is handled by the `/tasks` command
 
 ## Phase 3+: Future Implementation
 *These phases are beyond the scope of the /plan command*
@@ -186,26 +231,34 @@ ios/ or android/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| Dynamic SSR + Database | Admin CMS 功能必須即時更新發布內容 | 靜態檔案無法支援動態內容管理與即時圖片上傳 |
+| Server-side execution | 圖片處理、排序、發布狀態需要後端邏輯 | JAMstack 生成器無法滿足即時編輯需求 |
 
 
 ## Progress Tracking
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS (with documented violations)
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented
+
+**Artifacts Generated**:
+- [x] research.md - Technical decisions and alternatives analysis
+- [x] data-model.md - Entity definitions and relationships  
+- [x] contracts/api-spec.yaml - OpenAPI specification
+- [x] contracts/test-contracts.md - Contract testing strategy
+- [x] quickstart.md - Setup and validation guide
+- [x] .github/copilot-instructions.md - Updated agent context
 
 ---
 *Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*
