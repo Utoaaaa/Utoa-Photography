@@ -3,17 +3,30 @@
 個人攝影作品展示網站。此專案用來整理與展示按年份與作品集分類的相片，提供簡易的後台管理介面上傳與管理影像，並以現代化前端與後端 API 架構提供快速、可擴充的使用體驗。
 
 ## 主要特色
-- 按年份與作品集瀏覽照片
-- 簡潔的作品集檢視與照片預覽
-- 後台管理介面（上傳、編輯、刪除作品集與影像）
-- 直接上傳影像的 API 路由
-- 測試用例涵蓋 contract 與 integration 測試
 
+# UTOA Photography
+
+## Feature Quickstart
+
+本專案包含一個「後台發布＋首頁/作品集視覺更新」功能模組。快速上手與流程請見：
+
+- `specs/002-title-publishing-why/quickstart.md`
+
+## Private Tool Separation
+
+依專案憲法的「前台純靜態、後台私有工具」原則，發布與審稿流程的程式碼放置於私有區域：
+
+- 私有工具與測試：`tools/publishing/`（CLI/Worker、契約測試設定）
+- 公開站點（Next.js App Router）：`src/app/(site)`、`src/components/ui` 等
+
+私有工具僅於開發者/CI 環境執行，不包含在公開站點的使用者下載資產內，避免洩漏密鑰與降低前端負載。
+
+## No-JS Baseline
+
+前台閱讀在停用 JavaScript 時仍可完整瀏覽：
+- 作品集視圖之點點導航退化為 `<noscript>` 連結清單（可逐張開啟）。
+- 影像以原生 `<img>` 呈現並提供替代文字（alt）。
 ## 技術棧
-- Next.js + App Router（TypeScript）
-- Prisma（資料庫模型與遷移）
-- Jest（測試）
-- 其他：PostCSS、ESLint、Prettier 等開發工具
 
 ## 專案結構（重點）
 - src/app — Next.js pages 與路由（site / admin）

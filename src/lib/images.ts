@@ -31,6 +31,23 @@ export function getImageUrl(
   return `https://imagedelivery.net/${hash}/${imageId}/${IMAGE_VARIANTS[variant]}`;
 }
 
+// Next.js <Image> custom loader for Cloudflare Images named variants
+// Maps requested width to a close variant to avoid overserving bytes.
+export function cloudflareImageLoader({
+  src,
+  width,
+}: {
+  src: string; // expects Cloudflare Image ID
+  width: number;
+  quality?: number;
+}): string {
+  let variant: ImageVariant = 'medium';
+  if (width <= 640) variant = 'small';
+  else if (width <= 1280) variant = 'medium';
+  else variant = 'large';
+  return getImageUrl(src, variant);
+}
+
 export function getResponsiveSizes(variant: ImageVariant): string {
   switch (variant) {
     case 'thumb':

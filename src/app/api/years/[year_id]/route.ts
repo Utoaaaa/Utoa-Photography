@@ -5,23 +5,26 @@ type YearStatus = 'draft' | 'published';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { year_id: string } }
+  { params }: { params: Promise<{ year_id: string }> }
 ) {
   try {
-    const { year_id } = params;
+    const { year_id } = await params;
 
-    // Validate UUID format
+    // Check if it's a year label (e.g., "2024") or UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(year_id)) {
-      return NextResponse.json(
-        { error: 'Invalid ID format', message: 'Year ID must be a valid UUID' },
-        { status: 400 }
-      );
-    }
+    const isUuid = uuidRegex.test(year_id);
 
-    const year = await prisma.year.findUnique({
-      where: { id: year_id },
-    });
+    let year;
+    if (isUuid) {
+      year = await prisma.year.findUnique({
+        where: { id: year_id },
+      });
+    } else {
+      // Find by label (e.g., "2024")
+      year = await prisma.year.findFirst({
+        where: { label: year_id },
+      });
+    }
 
     if (!year) {
       return NextResponse.json(
@@ -42,10 +45,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { year_id: string } }
+  { params }: { params: Promise<{ year_id: string }> }
 ) {
   try {
-    const { year_id } = params;
+    const { year_id } = await params;
     const body = await request.json();
 
     // Validate UUID format
@@ -108,10 +111,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { year_id: string } }
+  { params }: { params: Promise<{ year_id: string }> }
 ) {
   try {
-    const { year_id } = params;
+    const { year_id } = await params;
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 

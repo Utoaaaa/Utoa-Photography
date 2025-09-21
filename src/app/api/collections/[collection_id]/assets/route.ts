@@ -10,12 +10,13 @@ const addAssetSchema = z.object({
 // POST /api/collections/[collection_id]/assets - Add asset to collection
 export async function POST(
   request: NextRequest,
-  { params }: { params: { collection_id: string } }
+  { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
+    const { collection_id } = await params;
     // Validate collection_id UUID format
     const collectionIdSchema = z.string().uuid();
-    const validationResult = collectionIdSchema.safeParse(params.collection_id);
+    const validationResult = collectionIdSchema.safeParse(collection_id);
     
     if (!validationResult.success) {
       return NextResponse.json(
@@ -32,7 +33,7 @@ export async function POST(
 
     // Check if collection exists
     const collection = await prisma.collection.findUnique({
-      where: { id: params.collection_id },
+      where: { id: collection_id },
       include: {
         collection_assets: {
           orderBy: { order_index: 'asc' }
@@ -63,7 +64,7 @@ export async function POST(
     const existingRelation = await prisma.collectionAsset.findUnique({
       where: {
         collection_id_asset_id: {
-          collection_id: params.collection_id,
+          collection_id: collection_id,
           asset_id: validatedData.asset_id
         }
       }
@@ -99,9 +100,9 @@ export async function POST(
     // Create the collection-asset relationship
     const collectionAsset = await prisma.collectionAsset.create({
       data: {
-        collection_id: params.collection_id,
+        collection_id: collection_id,
         asset_id: validatedData.asset_id,
-        order_index: orderIndex
+        order_index: orderIndex.toString()
       },
       include: {
         asset: true,
@@ -123,12 +124,11 @@ export async function POST(
         order_index: collectionAsset.order_index,
         asset: {
           id: collectionAsset.asset.id,
-          cloudflare_id: collectionAsset.asset.cloudflare_id,
-          alt_text: collectionAsset.asset.alt_text,
+          alt: collectionAsset.asset.alt,
           caption: collectionAsset.asset.caption,
-          metadata: collectionAsset.asset.metadata,
           width: collectionAsset.asset.width,
           height: collectionAsset.asset.height,
+          metadata_json: collectionAsset.asset.metadata_json,
           created_at: collectionAsset.asset.created_at
         },
         collection: collectionAsset.collection

@@ -1,6 +1,20 @@
 import type { NextConfig } from 'next';
+import path from 'path';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: process.env.ANALYZE === 'true' });
 
-const nextConfig: NextConfig = {
+const baseConfig: NextConfig = {
+  // Re-enable ESLint and TypeScript checks during build
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+
+  // Silence lockfile root warning by explicitly setting tracing root
+  outputFileTracingRoot: path.resolve(__dirname),
+  
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -15,10 +29,8 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000, // 1 year
   },
   
-  // Bundle optimization
-  experimental: {
-    optimizePackageImports: ['gsap', 'lenis'],
-  },
+  // Bundle optimization (keep defaults; avoid import optimizations that can break dev)
+  // experimental: { optimizePackageImports: ['gsap', 'lenis'] },
   
   // Headers for performance and security
   async headers() {
@@ -61,10 +73,9 @@ const nextConfig: NextConfig = {
     ];
   },
   
-  // Webpack optimizations
-  webpack: (config, { isServer }) => {
-    // Optimize bundle splits
-    if (!isServer) {
+  // Webpack optimizations: only adjust in client production builds
+  webpack: (config, { isServer, dev }) => {
+    if (!isServer && !dev) {
       config.optimization.splitChunks = {
         chunks: 'all',
         cacheGroups: {
@@ -73,15 +84,9 @@ const nextConfig: NextConfig = {
             name: 'vendors',
             chunks: 'all',
           },
-          animations: {
-            test: /[\\/]node_modules[\\/](gsap|lenis)[\\/]/,
-            name: 'animations',
-            chunks: 'all',
-          },
         },
       };
     }
-    
     return config;
   },
   
@@ -93,4 +98,4 @@ const nextConfig: NextConfig = {
   }),
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(baseConfig);

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { getPublishedYears } from '@/lib/queries/years';
+import type { getPublishedYears } from '@/lib/queries/years';
 import { useStaggerAnimation, useHoverAnimation } from '@/lib/animations';
 
 type Year = Awaited<ReturnType<typeof getPublishedYears>>[0];

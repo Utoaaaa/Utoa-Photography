@@ -1,0 +1,117 @@
+name: Quality Gates
+
+on:
+  push:
+    branches: [ main, 'feature/*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lighthouse-ci:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build site
+        run: npm run build
+        
+      - name: Serve static site
+        run: |
+          npm install -g serve
+          serve -s out -p 3000 &
+          sleep 5
+        
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli@0.12.x
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  html-validator:
+    name: HTML Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build site
+        run: npm run build
+        
+      - name: Validate HTML
+        run: |
+          npm install -g html-validate
+          find out -name "*.html" -exec html-validate {} \;
+
+  link-checker:
+    name: Link Checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build site
+        run: npm run build
+        
+      - name: Check links
+        run: |
+          npm install -g broken-link-checker
+          serve -s out -p 3000 &
+          sleep 5
+          blc http://localhost:3000 --recursive --filter-level 3
+
+  asset-budget:
+    name: Asset Budget Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build and check bundle size
+        run: |
+          npm run build
+          npm run bundle-analyze
+          
+      - name: Check JS budget (150KB gzipped)
+        run: |
+          JS_SIZE=$(find .next/static/chunks -name "*.js" -exec gzip -c {} \; | wc -c)
+          if [ $JS_SIZE -gt 153600 ]; then
+            echo "❌ JS bundle too large: ${JS_SIZE} bytes (limit: 153600)"
+            exit 1
+          fi
+          echo "✅ JS bundle size OK: ${JS_SIZE} bytes"
+          
+      - name: Check CSS budget (50KB gzipped)
+        run: |
+          CSS_SIZE=$(find .next/static/css -name "*.css" -exec gzip -c {} \; | wc -c)
+          if [ $CSS_SIZE -gt 51200 ]; then
+            echo "❌ CSS bundle too large: ${CSS_SIZE} bytes (limit: 51200)"
+            exit 1
+          fi
+          echo "✅ CSS bundle size OK: ${CSS_SIZE} bytes"
