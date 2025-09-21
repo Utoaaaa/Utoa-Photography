@@ -1,16 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { prisma } from '@/lib/db';
 
 const revalidateSchema = z.object({
   tags: z.array(z.string()).optional(),
-  paths: z.array(z.string()).optional()
+  paths: z.array(z.string()).optional(),
+  // Precise invalidation targets (T018)
+  targets: z.object({
+    home: z.boolean().optional(),
+    year: z.string().optional(), // year_id
+    collection: z.string().optional(), // collection_id
+  }).optional()
 }).refine(
-  (data) => data.tags?.length || data.paths?.length,
+  (data) => data.tags?.length || data.paths?.length || data.targets,
   {
-    message: "Either 'tags' or 'paths' must be provided"
+    message: "Either 'tags', 'paths', or 'targets' must be provided"
   }
 );
+
+// Precise invalidation helper (T018)
+async function invalidatePreciseTargets(targets: {
+  home?: boolean;
+  year?: string;
+  collection?: string;
+}) {
+  const invalidatedPaths: string[] = [];
+  const invalidatedTags: string[] = [];
+
+  // Home page invalidation
+  if (targets.home) {
+    revalidatePath('/');
+    revalidateTag('homepage');
+    invalidatedPaths.push('/');
+    invalidatedTags.push('homepage');
+  }
+
+  // Year page invalidation
+  if (targets.year) {
+    try {
+      const year = await prisma.year.findUnique({
+        where: { id: targets.year },
+        select: { label: true }
+      });
+      
+      if (year) {
+        const yearPath = `/${year.label}`;
+        revalidatePath(yearPath);
+        revalidateTag(`years:${targets.year}`);
+        revalidateTag(`collections:year:${targets.year}`);
+        invalidatedPaths.push(yearPath);
+        invalidatedTags.push(`years:${targets.year}`, `collections:year:${targets.year}`);
+      }
+    } catch (error) {
+      console.error('Error invalidating year:', error);
+    }
+  }
+
+  // Collection page invalidation
+  if (targets.collection) {
+    try {
+      const collection = await prisma.collection.findUnique({
+        where: { id: targets.collection },
+        include: {
+          year: { select: { label: true } }
+        }
+      });
+      
+      if (collection) {
+        const collectionPath = `/${collection.year.label}/${collection.slug}`;
+        revalidatePath(collectionPath);
+        revalidateTag(`collections:${targets.collection}`);
+        revalidateTag(`assets:collection:${targets.collection}`);
+        invalidatedPaths.push(collectionPath);
+        invalidatedTags.push(`collections:${targets.collection}`, `assets:collection:${targets.collection}`);
+      }
+    } catch (error) {
+      console.error('Error invalidating collection:', error);
+    }
+  }
+
+  return { paths: invalidatedPaths, tags: invalidatedTags };
+}
 
 // POST /api/revalidate - Revalidate cache by tags or paths
 export async function POST(request: NextRequest) {
@@ -30,6 +101,7 @@ export async function POST(request: NextRequest) {
     const results = {
       revalidated_tags: [] as string[],
       revalidated_paths: [] as string[],
+      invalidated_targets: [] as string[],
       errors: [] as string[]
     };
 
@@ -59,11 +131,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Precise invalidation targets (T018)
+    if (validatedData.targets) {
+      try {
+        const invalidated = await invalidatePreciseTargets(validatedData.targets);
+        results.invalidated_targets.push(...invalidated.paths);
+        results.revalidated_tags.push(...invalidated.tags);
+      } catch (error) {
+        console.error('Error with precise invalidation:', error);
+        results.errors.push('Failed to process precise invalidation targets');
+      }
+    }
+
     const hasErrors = results.errors.length > 0;
     const status = hasErrors ? 207 : 200; // 207 Multi-Status for partial success
 
     return NextResponse.json({
-      success: !hasErrors || (results.revalidated_tags.length > 0 || results.revalidated_paths.length > 0),
+      success: !hasErrors || (results.revalidated_tags.length > 0 || results.revalidated_paths.length > 0 || results.invalidated_targets.length > 0),
       message: hasErrors 
         ? 'Partial revalidation completed with errors'
         : 'Revalidation completed successfully',
@@ -118,5 +202,14 @@ POST /api/revalidate
 {
   "tags": ["collections:year:123"],
   "paths": ["/2024"]
+}
+
+POST /api/revalidate (T018 - Precise targets)
+{
+  "targets": {
+    "home": true,
+    "year": "year-id-123",
+    "collection": "collection-id-456"
+  }
 }
 */

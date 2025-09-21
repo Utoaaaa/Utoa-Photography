@@ -20,3 +20,21 @@ name = "utoa-photography-prod"
 
 [env.staging]
 name = "utoa-photography-staging"
+
+# Private Publishing Tool Worker Configuration
+[env.publishing]
+name = "utoa-photography-publishing"
+main = "./tools/publishing/dist/index.js"
+
+[[env.publishing.d1_databases]]
+binding = "PUBLISHING_DB"
+database_name = "utoa-photography-publishing-db"
+database_id = "your_publishing_database_id"
+
+[[env.publishing.kv_namespaces]]
+binding = "PUBLISHING_CACHE"
+id = "your_publishing_cache_id"
+
+[env.publishing.vars]
+ENVIRONMENT = "production"
+LOG_LEVEL = "info"

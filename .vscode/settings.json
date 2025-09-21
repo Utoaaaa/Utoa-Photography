@@ -8,7 +8,7 @@
   },
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
-    "package.json": "eslint.config.mjs, postcss.config.mjs, jest.config.ts, jest.setup.js, .prettierrc, wrangler.toml, open-next.config.mjs, tsconfig.json, tsconfig.tsbuildinfo"
+    "package.json": "eslint.config.mjs, postcss.config.mjs, jest.config.ts, jest.setup.js, jest.setup.contract.ts, .prettierrc, wrangler.toml, open-next.config.mjs, tsconfig.json, package-lock.json, components.json, lighthouserc.json, next.config.ts, middleware.ts, tsconfig.tsbuildinfo"
   },
   "files.exclude": {
     "**/.next": true,
@@ -20,5 +20,6 @@
     "**/.swc": true,
     "**/node_modules": true,
     "**/.cache": true
-  }
+  },
+  "chat.agent.maxRequests": 50
 }

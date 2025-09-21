@@ -1,0 +1,213 @@
+openapi: 3.1.0
+info:
+  title: Utoa Publishing API (Private Tool)
+  version: 0.1.0
+  description: Private publishing tool contracts for drafting, preview, SEO/OG, publish/unpublish, and audit logging.
+servers:
+  - url: https://internal.example.com
+paths:
+  /publishing/collections:
+    get:
+      summary: List draft collections with checklist status
+      parameters:
+        - in: query
+          name: year
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [draft, published]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionSummary'
+  /publishing/collections/{id}:
+    get:
+      summary: Get collection detail for preview (slides + texts)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionDetail'
+  /publishing/collections/{id}/assets/{assetId}:
+    patch:
+      summary: Update asset text/alt/slide_index
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: assetId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAssetPayload'
+      responses:
+        '200':
+          description: Updated
+  /publishing/collections/{id}/seo:
+    put:
+      summary: Set SEO/OG for collection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeoPayload'
+      responses:
+        '200':
+          description: Saved
+  /publishing/collections/{id}/publish:
+    post:
+      summary: Publish a collection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishPayload'
+      responses:
+        '200':
+          description: Published
+  /publishing/collections/{id}/unpublish:
+    post:
+      summary: Unpublish a collection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnpublishPayload'
+      responses:
+        '200':
+          description: Unpublished
+  /publishing/collections/{id}/versions:
+    get:
+      summary: List recent versions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VersionInfo'
+components:
+  schemas:
+    CollectionSummary:
+      type: object
+      required: [id, title, year, draftCount, checklistStatus]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        year: { type: integer }
+        draftCount: { type: integer }
+        checklistStatus: { type: string, enum: [pass, pending] }
+    Slide:
+      type: object
+      required: [assetId, url, alt, slide_index]
+      properties:
+        assetId: { type: string }
+        url: { type: string }
+        alt: { type: string }
+        text: { type: string, nullable: true }
+        slide_index: { type: integer }
+    CollectionDetail:
+      type: object
+      required: [id, title, slides]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        seo:
+          type: object
+          properties:
+            title: { type: string }
+            description: { type: string }
+            ogImageAssetId: { type: string, nullable: true }
+        slides:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slide'
+    UpdateAssetPayload:
+      type: object
+      properties:
+        text: { type: string, nullable: true }
+        alt: { type: string }
+        slide_index: { type: integer }
+    SeoPayload:
+      type: object
+      required: [title, description]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        ogImageAssetId: { type: string, nullable: true }
+    PublishPayload:
+      type: object
+      required: [note]
+      properties:
+        note: { type: string }
+    UnpublishPayload:
+      type: object
+      required: [note]
+      properties:
+        note: { type: string }
+    VersionInfo:
+      type: object
+      required: [version, note, actor, created_at]
+      properties:
+        version: { type: integer }
+        note: { type: string }
+        actor: { type: string }
+        created_at: { type: string, format: date-time }

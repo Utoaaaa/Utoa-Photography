@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /out/
+/.open-next/
 
 # production
 /build
@@ -23,6 +24,13 @@
 # misc
 .DS_Store
 *.pem
+.wrangler/
+playwright-report/
+blob-report/
+.eslintcache
+.jest-cache/
+.lighthouseci/
+/**/.DS_Store
 
 # debug
 npm-debug.log*
@@ -41,3 +49,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# local databases
+/prisma/*.db
+/prisma/*.db-journal

@@ -5,10 +5,10 @@ type CollectionStatus = 'draft' | 'published';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { collection_id: string } }
+  { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
-    const { collection_id } = params;
+    const { collection_id } = await params;
     const { searchParams } = new URL(request.url);
     const include_assets = searchParams.get('include_assets') === 'true';
 
@@ -81,10 +81,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { collection_id: string } }
+  { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
-    const { collection_id } = params;
+    const { collection_id } = await params;
     const body = await request.json();
 
     // Validate UUID format
@@ -162,10 +162,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { collection_id: string } }
+  { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
-    const { collection_id } = params;
+    const { collection_id } = await params;
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

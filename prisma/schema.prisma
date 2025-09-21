@@ -31,44 +31,62 @@ model Year {
 
 // Collections model - Photo groups within years, with slug-based URLs
 model Collection {
-  id              String            @id @default(uuid())
-  year_id         String
-  slug            String            // URL-friendly identifier
-  title           String
-  summary         String?           // Optional short description
-  cover_asset_id  String?           // Foreign key to Assets
-  template_id     String?           // Future: different layout templates
-  status          CollectionStatus  @default(draft)
-  order_index     String            // Within year ordering
-  published_at    DateTime?
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
+  id               String            @id @default(uuid())
+  year_id          String
+  slug             String            // URL-friendly identifier
+  title            String
+  summary          String?           // Optional short description
+  cover_asset_id   String?           // Foreign key to Assets
+  template_id      String?           // Future: different layout templates
+  status           CollectionStatus  @default(draft)
+  order_index      String            // Within year ordering
+  
+  // Publishing fields
+  published_at     DateTime?         // When first published
+  last_published_at DateTime?        // When last published
+  version          Int               @default(1) // Version number
+  seo_title        String?           // Custom SEO title (overrides title)
+  seo_description  String?           // Meta description
+  seo_keywords     String?           // Keywords for search
+  
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
 
   // Relations
   year             Year               @relation(fields: [year_id], references: [id], onDelete: Cascade)
   cover_asset      Asset?             @relation("CollectionCoverAsset", fields: [cover_asset_id], references: [id])
   collection_assets CollectionAsset[]
+  publish_history  PublishHistory[]
 
   @@unique([year_id, slug])
   @@index([year_id, status, order_index])
+  @@index([status, published_at])
   @@map("collections")
 }
 
-// Assets model - Cloudflare Images references with alt/caption
+// Assets model - Cloudflare Images references with comprehensive text content
 model Asset {
-  id            String   @id // Cloudflare Images image_id
-  alt           String   // Required for accessibility
-  caption       String?  // Optional photo description
-  width         Int      // Original dimensions
-  height        Int
-  metadata_json String?  // EXIF, camera settings, etc. (JSON string)
-  created_at    DateTime @default(now())
+  id              String   @id // Cloudflare Images image_id
+  alt             String   // Required for accessibility (concise)
+  caption         String?  // Optional photo caption (short description)
+  description     String?  // Optional detailed description (longer narrative)
+  title           String?  // Optional photo title (displayed name)
+  photographer    String?  // Optional photographer credit
+  location        String?  // Optional photo location
+  tags            String?  // Optional comma-separated tags
+  width           Int      // Original dimensions
+  height          Int
+  metadata_json   String?  // EXIF, camera settings, etc. (JSON string)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
   // Relations
   collection_assets   CollectionAsset[]
   cover_collections   Collection[]       @relation("CollectionCoverAsset")
   seo_metadata_assets SEOMetadata[]
 
+  @@index([photographer])
+  @@index([location])
   @@map("assets")
 }
 
@@ -86,6 +104,27 @@ model CollectionAsset {
   @@id([collection_id, asset_id])
   @@index([collection_id, order_index])
   @@map("collection_assets")
+}
+
+// PublishHistory model - Track publishing changes and rollback capability
+model PublishHistory {
+  id            String               @id @default(uuid())
+  collection_id String
+  version       Int                  // Version number at time of publish
+  action        PublishHistoryAction // 'publish', 'unpublish', 'update'
+  note          String?              // Optional publish note
+  user_id       String?              // Future: track who published
+  published_at  DateTime             @default(now())
+  
+  // Snapshot of collection state at publish time
+  snapshot_data String               // JSON string of collection + assets state
+
+  // Relations
+  collection Collection @relation(fields: [collection_id], references: [id], onDelete: Cascade)
+
+  @@index([collection_id, published_at])
+  @@index([collection_id, version])
+  @@map("publish_history")
 }
 
 // SEOMetadata model - Polymorphic design for different page types
@@ -121,4 +160,10 @@ enum SEOEntityType {
   year
   collection
   homepage
+}
+
+enum PublishHistoryAction {
+  publish
+  unpublish
+  update
 }

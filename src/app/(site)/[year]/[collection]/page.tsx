@@ -9,12 +9,18 @@ interface CollectionPageProps {
     year: string;
     collection: string;
   }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function CollectionPage({ params }: CollectionPageProps) {
+export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
   const { year: yearLabel, collection: collectionSlug } = await params;
   const decodedYearLabel = decodeURIComponent(yearLabel);
   const decodedCollectionSlug = decodeURIComponent(collectionSlug);
+  
+  // T033: Enable single-screen mode for testing with ?view=fullscreen
+  const currentSearchParams = await searchParams;
+  const viewMode = currentSearchParams?.view;
+  const singleScreenMode = viewMode === 'fullscreen';
   
   // Fetch year data first
   const year = await getYearByLabel(decodedYearLabel);
@@ -31,7 +37,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   }
   
   // Get all photos from collection assets
-  const photos = collection.collection_assets.map((ca: any) => ca.asset);
+  const photos = collection.collection_assets.map((ca) => ca.asset);
   
   return (
     <div className="min-h-screen bg-white">
@@ -84,6 +90,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
           <PhotoViewer 
             photos={photos}
             collectionTitle={collection.title}
+            singleScreen={singleScreenMode}
           />
         ) : (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24" data-testid="empty-photos">
