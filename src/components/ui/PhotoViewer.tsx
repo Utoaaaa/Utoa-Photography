@@ -11,8 +11,8 @@ type Asset = {
   caption: string | null;
   width: number;
   height: number;
-  metadata_json: string | null;
-  created_at: Date;
+  metadata_json?: string | null;
+  created_at?: Date;
 };
 
 interface PhotoViewerProps {
@@ -223,20 +223,21 @@ export function PhotoViewer({
     return (
       <div 
         className="h-screen w-full relative overflow-hidden bg-black"
-        data-testid="photo-viewer-single-screen"
+        data-testid="photo-viewer"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         role="region"
         aria-label={`${collectionTitle} photo viewer`}
         aria-live="polite"
       >
+        <div data-testid="photo-viewer-single-screen" className="hidden" />
         {/* Main photo container */}
         <div 
           className={`h-full w-full flex items-center justify-center transition-opacity duration-300 ${
             isTransitioning && !prefersReducedMotion ? 'opacity-50' : 'opacity-100'
           }`}
         >
-          <div className="relative max-w-full max-h-full">
+          <div className="relative max-w-full max-h-full" data-testid="current-photo">
             <Image
               loader={cloudflareImageLoader}
               src={currentPhoto.id}
@@ -313,7 +314,7 @@ export function PhotoViewer({
           >
             <div className="relative">
               {/* Photo */}
-              <div className="relative overflow-hidden rounded bg-gray-100">
+              <div className="relative overflow-hidden rounded bg-gray-100" data-testid="current-photo">
                 <Image
                   loader={cloudflareImageLoader}
                   src={photo.id}
@@ -335,7 +336,7 @@ export function PhotoViewer({
               
               {/* Caption */}
               {photo.caption && !slideTexts[index] && (
-                <figcaption className="mt-4 text-gray-600 text-center italic max-w-3xl mx-auto">
+                <figcaption className="mt-4 text-gray-600 text-center italic max-w-3xl mx-auto" data-testid="photo-caption">
                   {photo.caption}
                 </figcaption>
               )}

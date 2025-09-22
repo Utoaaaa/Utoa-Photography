@@ -19,7 +19,7 @@ export default function AdminDashboardContent({
 }: AdminDashboardContentProps) {
   if (hasError) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 p-8" data-testid="admin-dashboard">
         <div className="max-w-7xl mx-auto">
           <div className="text-center py-16">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Dashboard</h1>
@@ -30,16 +30,19 @@ export default function AdminDashboardContent({
                 href="/admin/years"
                 title="Years"
                 description="Manage timeline years"
+                dataTestId="nav-years"
               />
               <QuickActionLink
                 href="/admin/collections"
                 title="Collections"
                 description="Manage photo collections"
+                dataTestId="nav-collections"
               />
               <QuickActionLink
                 href="/admin/uploads"
                 title="Uploads"
                 description="Upload new images"
+                dataTestId="nav-uploads"
               />
             </div>
           </div>
@@ -49,7 +52,7 @@ export default function AdminDashboardContent({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8" data-testid="admin-dashboard">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -69,18 +72,21 @@ export default function AdminDashboardContent({
             title="Years Management"
             description="Create and organize timeline years for your photography collections."
             cta="Manage Years"
+            dataTestId="nav-years"
           />
           <QuickActionPanel
             href="/admin/collections"
             title="Collections Management"
             description="Create photo collections and organize them within years."
             cta="Manage Collections"
+            dataTestId="nav-collections"
           />
           <QuickActionPanel
             href="/admin/uploads"
             title="Image Uploads"
             description="Upload new photos and manage existing assets in your collections."
             cta="Upload Images"
+            dataTestId="nav-uploads"
           />
         </div>
       </div>
@@ -102,14 +108,16 @@ function QuickActionPanel({
   title,
   description,
   cta,
+  dataTestId,
 }: {
   href: string;
   title: string;
   description: string;
   cta: string;
+  dataTestId?: string;
 }) {
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm" data-testid={dataTestId}>
       <h3 className="text-lg font-medium text-gray-900 mb-3">{title}</h3>
       <p className="text-gray-600 mb-4">{description}</p>
       <Link
@@ -126,15 +134,18 @@ function QuickActionLink({
   href,
   title,
   description,
+  dataTestId,
 }: {
   href: string;
   title: string;
   description: string;
+  dataTestId?: string;
 }) {
   return (
     <Link
       href={href}
       className="block p-6 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+      data-testid={dataTestId}
     >
       <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>

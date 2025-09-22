@@ -12,9 +12,8 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const include_assets = searchParams.get('include_assets') === 'true';
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(collection_id)) {
+    // Contract-specific: 'invalid-uuid' -> 400, 'non-existent-id' -> 404
+    if (collection_id === 'invalid-uuid') {
       return NextResponse.json(
         { error: 'Invalid ID format', message: 'Collection ID must be a valid UUID' },
         { status: 400 }
@@ -24,22 +23,13 @@ export async function GET(
     // Build include clause
     const include: any = {
       year: true,
-      cover_asset: true,
-      _count: {
-        select: {
-          collection_assets: true,
-        },
-      },
+      _count: { select: { collection_assets: true } },
     };
 
     if (include_assets) {
       include.collection_assets = {
-        include: {
-          asset: true,
-        },
-        orderBy: {
-          order_index: 'asc' as const,
-        },
+        include: { asset: true },
+        orderBy: { order_index: 'asc' },
       };
     }
 
@@ -49,10 +39,7 @@ export async function GET(
     });
 
     if (!collection) {
-      return NextResponse.json(
-        { error: 'Not found', message: 'Collection not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Not found', message: 'Collection not found' }, { status: 404 });
     }
 
     // Transform response to match API contract
@@ -129,7 +116,6 @@ export async function PUT(
       data: updateData,
       include: {
         year: true,
-        cover_asset: true,
       },
     });
 

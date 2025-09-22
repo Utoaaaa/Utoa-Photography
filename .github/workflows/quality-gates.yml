@@ -10,6 +10,10 @@ jobs:
   lighthouse-ci:
     name: Lighthouse CI
     runs-on: ubuntu-latest
+    env:
+      TEST_API_URL: http://localhost:3000
+      TEST_API_BASE: http://localhost:3000/api
+      BYPASS_ACCESS_FOR_TESTS: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,6 +43,10 @@ jobs:
   html-validator:
     name: HTML Validation
     runs-on: ubuntu-latest
+    env:
+      TEST_API_URL: http://localhost:3000
+      TEST_API_BASE: http://localhost:3000/api
+      BYPASS_ACCESS_FOR_TESTS: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -60,6 +68,10 @@ jobs:
   link-checker:
     name: Link Checking
     runs-on: ubuntu-latest
+    env:
+      TEST_API_URL: http://localhost:3000
+      TEST_API_BASE: http://localhost:3000/api
+      BYPASS_ACCESS_FOR_TESTS: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -83,6 +95,10 @@ jobs:
   asset-budget:
     name: Asset Budget Check
     runs-on: ubuntu-latest
+    env:
+      TEST_API_URL: http://localhost:3000
+      TEST_API_BASE: http://localhost:3000/api
+      BYPASS_ACCESS_FOR_TESTS: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

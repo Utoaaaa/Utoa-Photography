@@ -84,3 +84,15 @@ export async function getAllYears() {
     return [];
   }
 }
+
+// Non-cached helpers for SSR/E2E where cache can interfere
+export async function getYearByLabelDirect(label: string) {
+  try {
+    return await prisma.year.findFirst({
+      where: { label, status: 'published' },
+    });
+  } catch (error) {
+    console.error('Error (direct) fetching year by label:', error);
+    return null;
+  }
+}

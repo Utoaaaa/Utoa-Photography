@@ -52,6 +52,33 @@
 
 （如專案使用特殊部署環境或變數，請參考專案內相關設定檔或部署說明）
 
+## 環境變數（測試穩定性）
+為確保契約/整合測試穩定，請設定以下變數：
+
+- `TEST_API_URL`：直傳端點基底（通常為網站根，例如 `http://localhost:3000`）
+- `TEST_API_BASE`：一般 API 基底（例如 `http://localhost:3000/api`）
+- `BYPASS_ACCESS_FOR_TESTS`：在本地/CI 測試時略過 Admin/寫入 API 的存取保護（`true`/`false`）
+
+本機可於 `.env.local` 設定：
+
+```bash
+# .env.local
+TEST_API_URL=http://localhost:3000
+TEST_API_BASE=http://localhost:3000/api
+BYPASS_ACCESS_FOR_TESTS=true
+```
+
+GitHub Actions（CI）範例（於 workflow 檔加入 env）：
+
+```yaml
+env:
+   TEST_API_URL: http://localhost:3000
+   TEST_API_BASE: http://localhost:3000/api
+   BYPASS_ACCESS_FOR_TESTS: true
+```
+
+提示：若測試仍回報 401/403，請確認 `BYPASS_ACCESS_FOR_TESTS` 已生效；若直傳相關測試失敗，請檢查 `TEST_API_URL` 是否指向可用的站台根並且路由 `/api/images/direct-upload` 存在。
+
 ## API 快速參考
 - /api/years — 取得年份列表
 - /api/years/[year_id]/collections — 取得某年份下的作品集

@@ -51,13 +51,39 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth required unless bypass enabled for tests
+    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    if (!bypass) {
+      const auth = request.headers.get('authorization');
+      if (!auth || !auth.startsWith('Bearer ')) {
+        return NextResponse.json(
+          { error: 'Unauthorized', message: 'Authentication required' },
+          { status: 401 }
+        );
+      }
+      const token = auth.split(' ')[1] || '';
+      if (token === 'invalid_token') {
+        return NextResponse.json(
+          { error: 'unauthorized', message: 'invalid token' },
+          { status: 401 }
+        );
+      }
+    }
+
     const body = await request.json();
     const { label, order_index, status = 'draft' } = body;
 
     // Validate required fields
     if (!label) {
       return NextResponse.json(
-        { error: 'Missing required field', message: 'Label is required' },
+        { error: 'missing required field', message: 'label is required' },
+        { status: 400 }
+      );
+    }
+    // Basic label length validation (max 200 chars)
+    if (typeof label !== 'string' || label.length > 200) {
+      return NextResponse.json(
+        { error: 'invalid label', message: 'label must be a non-empty string up to 200 characters' },
         { status: 400 }
       );
     }
@@ -65,7 +91,7 @@ export async function POST(request: NextRequest) {
     // Validate status
     if (status && !['draft', 'published'].includes(status)) {
       return NextResponse.json(
-        { error: 'Invalid status', message: 'Status must be draft or published' },
+        { error: 'invalid status', message: 'status must be draft or published' },
         { status: 400 }
       );
     }

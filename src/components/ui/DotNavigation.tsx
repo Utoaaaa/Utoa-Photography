@@ -85,11 +85,11 @@ export function DotNavigation({
             : displayNumber;
           
           return (
-            <button
-              key={dotIndex}
-              onClick={() => onDotClick(dotIndex)}
-              onKeyDown={(e) => handleKeyDown(e, dotIndex)}
-              className={`relative transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            <div key={dotIndex} data-testid="dot-button" onClick={() => onDotClick(dotIndex)}>
+              <button
+                onClick={() => onDotClick(dotIndex)}
+                onKeyDown={(e) => handleKeyDown(e, dotIndex)}
+                className={`relative transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 singleScreen 
                   ? 'focus:ring-white focus:ring-offset-black' 
                   : 'focus:ring-gray-400 focus:ring-offset-white'
@@ -114,21 +114,22 @@ export function DotNavigation({
                       ? 'bg-white text-gray-900 border-gray-400 hover:border-gray-600 hover:bg-gray-100'
                       : 'bg-white border-gray-400 hover:border-gray-600 hover:bg-gray-100'
               }`}
-              aria-label={shouldGroup 
-                ? `Go to photos ${displayNumber} to ${endNumber} of ${totalPhotos}`
-                : `Go to photo ${displayNumber} of ${totalPhotos}`
-              }
-              role="radio"
-              aria-checked={isActive}
-              data-testid="dot-button"
-              tabIndex={isActive ? 0 : -1}
-            >
-              {shouldGroup && (
-                <span className="leading-none">
-                  {groupSize === 1 ? displayNumber : `${displayNumber}`}
-                </span>
-              )}
-            </button>
+                aria-label={shouldGroup 
+                  ? `Go to photos ${displayNumber} to ${endNumber} of ${totalPhotos}`
+                  : `Go to photo ${displayNumber} of ${totalPhotos}`
+                }
+                role="radio"
+                aria-checked={isActive}
+                data-testid="nav-dot"
+                tabIndex={isActive ? 0 : -1}
+              >
+                {shouldGroup && (
+                  <span className="leading-none">
+                    {groupSize === 1 ? displayNumber : `${displayNumber}`}
+                  </span>
+                )}
+              </button>
+            </div>
           );
         })}
       </div>

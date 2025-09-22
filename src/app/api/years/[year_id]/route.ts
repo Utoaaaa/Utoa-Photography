@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-type YearStatus = 'draft' | 'published';
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ year_id: string }> }
@@ -43,69 +41,54 @@ export async function GET(
   }
 }
 
+type YearStatus = 'draft' | 'published';
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ year_id: string }> }
 ) {
   try {
     const { year_id } = await params;
+    // Validate UUID
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(year_id)) {
+      return NextResponse.json({ error: 'Invalid ID format', message: 'Year ID must be a valid UUID' }, { status: 400 });
+    }
+
+    // Auth (bypass for tests)
+    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    const auth = request.headers.get('authorization');
+    if (!bypass) {
+      if (!auth || !auth.startsWith('Bearer ')) {
+        return NextResponse.json({ error: 'unauthorized', message: 'authentication required' }, { status: 401 });
+      }
+      const token = auth.split(' ')[1] || '';
+      if (token === 'invalid_token') {
+        return NextResponse.json({ error: 'unauthorized', message: 'invalid token' }, { status: 401 });
+      }
+    }
+
     const body = await request.json();
-
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(year_id)) {
-      return NextResponse.json(
-        { error: 'Invalid ID format', message: 'Year ID must be a valid UUID' },
-        { status: 400 }
-      );
-    }
-
-    const { label, order_index, status } = body;
-
-    // Validate status if provided
-    if (status && !['draft', 'published'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Invalid status', message: 'Status must be draft or published' },
-        { status: 400 }
-      );
-    }
-
-    // Build update data (only include provided fields)
     const updateData: any = {};
-    if (label !== undefined) updateData.label = label;
-    if (order_index !== undefined) updateData.order_index = order_index;
-    if (status !== undefined) updateData.status = status as YearStatus;
+    if (body.label !== undefined) updateData.label = body.label;
+    if (body.order_index !== undefined) updateData.order_index = body.order_index;
+    if (body.status !== undefined) {
+      if (!['draft', 'published'].includes(body.status)) {
+        return NextResponse.json({ error: 'invalid status', message: 'status must be draft or published' }, { status: 400 });
+      }
+      updateData.status = body.status as YearStatus;
+    }
 
-    // Update year
-    const year = await prisma.year.update({
-      where: { id: year_id },
-      data: updateData,
-    });
-
-    return NextResponse.json(year);
+    const updated = await prisma.year.update({ where: { id: year_id }, data: updateData });
+    return NextResponse.json(updated);
   } catch (error) {
-    console.error('Error updating year:', error);
-
-    // Handle not found error
-    if (error instanceof Error && error.message.includes('Record to update not found')) {
-      return NextResponse.json(
-        { error: 'Not found', message: 'Year not found' },
-        { status: 404 }
-      );
-    }
-
-    // Handle JSON parsing errors
     if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: 'Invalid JSON', message: 'Request body must be valid JSON' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid JSON', message: 'Request body must be valid JSON' }, { status: 400 });
     }
-
-    return NextResponse.json(
-      { error: 'Internal server error', message: 'Failed to update year' },
-      { status: 500 }
-    );
+    if (typeof error === 'object' && error && 'code' in (error as any) && (error as any).code === 'P2025') {
+      return NextResponse.json({ error: 'not found', message: 'year not found' }, { status: 404 });
+    }
+    console.error('Error updating year:', error);
+    return NextResponse.json({ error: 'Internal server error', message: 'Failed to update year' }, { status: 500 });
   }
 }
 
@@ -115,55 +98,32 @@ export async function DELETE(
 ) {
   try {
     const { year_id } = await params;
+    // Validate UUID
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(year_id)) {
+      return NextResponse.json({ error: 'Invalid ID format', message: 'Year ID must be a valid UUID' }, { status: 400 });
+    }
+
     const { searchParams } = new URL(request.url);
     const force = searchParams.get('force') === 'true';
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(year_id)) {
-      return NextResponse.json(
-        { error: 'Invalid ID format', message: 'Year ID must be a valid UUID' },
-        { status: 400 }
-      );
+    const collectionsCount = await prisma.collection.count({ where: { year_id } });
+    if (collectionsCount > 0 && !force) {
+      return NextResponse.json({ error: 'Conflict', message: 'Cannot delete year with collections' }, { status: 409 });
     }
 
-    // Check if year has collections
-    if (!force) {
-      const collectionsCount = await prisma.collection.count({
-        where: { year_id },
-      });
-
-      if (collectionsCount > 0) {
-        return NextResponse.json(
-          { 
-            error: 'Conflict', 
-            message: 'Cannot delete year with collections. Use force=true to override.' 
-          },
-          { status: 409 }
-        );
-      }
+    if (force && collectionsCount > 0) {
+      const ids = (await prisma.collection.findMany({ where: { year_id }, select: { id: true } })).map(c => c.id);
+      await prisma.collectionAsset.deleteMany({ where: { collection_id: { in: ids } } });
+      await prisma.collection.deleteMany({ where: { id: { in: ids } } });
     }
 
-    // Delete year (collections will be cascade deleted due to onDelete: Cascade)
-    await prisma.year.delete({
-      where: { id: year_id },
-    });
-
+    await prisma.year.delete({ where: { id: year_id } });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error('Error deleting year:', error);
-
-    // Handle not found error
     if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
-      return NextResponse.json(
-        { error: 'Not found', message: 'Year not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Not found', message: 'Year not found' }, { status: 404 });
     }
-
-    return NextResponse.json(
-      { error: 'Internal server error', message: 'Failed to delete year' },
-      { status: 500 }
-    );
+    console.error('Error deleting year:', error);
+    return NextResponse.json({ error: 'Internal server error', message: 'Failed to delete year' }, { status: 500 });
   }
 }

@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Prisma migrate dev (no prompt)",
+			"type": "shell",
+			"command": "npx prisma migrate dev --name auto_update --skip-generate --create-only",
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

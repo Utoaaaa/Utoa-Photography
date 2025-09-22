@@ -23,6 +23,18 @@ export function getCloudflareAccessHeaders(request: NextRequest): Record<string,
 
 export function extractUserFromHeaders(request: NextRequest): CloudflareAccessUser | null {
   try {
+    if (process.env.BYPASS_ACCESS_FOR_TESTS === 'true') {
+      return {
+        sub: 'test-user',
+        email: 'test@local',
+        name: 'test',
+        aud: ['admin'],
+        iss: 'bypass',
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      };
+    }
+
     const email = request.headers.get('cf-access-authenticated-user-email');
     const jwtAssertion = request.headers.get('cf-access-jwt-assertion');
 
@@ -68,7 +80,7 @@ const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(',') || [];
 export function isAuthorizedAdmin(email: string): boolean {
   if (ADMIN_EMAILS.length === 0) {
     // If no admin emails are configured, allow access for development
-    return process.env.NODE_ENV === 'development';
+    return process.env.NODE_ENV === 'development' || process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
   }
   
   return ADMIN_EMAILS.includes(email);

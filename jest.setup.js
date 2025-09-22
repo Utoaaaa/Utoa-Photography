@@ -1,6 +1,24 @@
 import '@testing-library/jest-dom';
 import 'jest-axe/extend-expect';
 
+// Polyfill TextEncoder/TextDecoder required by Next cache/streams
+if (typeof global.TextEncoder === 'undefined' || typeof global.TextDecoder === 'undefined') {
+	const { TextEncoder, TextDecoder } = require('util');
+	// eslint-disable-next-line no-global-assign
+	global.TextEncoder = TextEncoder;
+	// eslint-disable-next-line no-global-assign
+	global.TextDecoder = TextDecoder;
+}
+
+// Polyfill fetch/Request/Response/Headers for Next internals in tests
+try {
+	const undici = require('undici');
+	if (typeof globalThis.fetch === 'undefined') globalThis.fetch = undici.fetch;
+	if (typeof globalThis.Request === 'undefined') globalThis.Request = undici.Request;
+	if (typeof globalThis.Response === 'undefined') globalThis.Response = undici.Response;
+	if (typeof globalThis.Headers === 'undefined') globalThis.Headers = undici.Headers;
+} catch {}
+
 // Polyfill matchMedia used by components
 Object.defineProperty(window, 'matchMedia', {
 	writable: true,
@@ -42,6 +60,17 @@ jest.mock('next/image', () => ({
 	},
 }));
 
+// Mock next/link to a simple anchor to avoid useContext requirements
+jest.mock('next/link', () => {
+	const React = require('react');
+	const Link = React.forwardRef(({ href, children, ...rest }, ref) => {
+		const resolvedHref = typeof href === 'string' ? href : (href?.pathname || '/');
+		return React.createElement('a', { href: resolvedHref, ref, ...rest }, children);
+	});
+	Link.displayName = 'NextLinkMock';
+	return { __esModule: true, default: Link };
+});
+
 // Mock GSAP and ScrollTrigger (ESM) to avoid Jest transform issues during tests
 jest.mock('gsap', () => ({
   gsap: {
@@ -59,3 +88,15 @@ jest.mock('@/components/providers/SmoothScrollProvider', () => ({
   __esModule: true,
   SmoothScrollProvider: ({ children }) => children,
 }));
+
+// Mock animations hooks to avoid React hook execution in tests
+jest.mock('@/lib/animations', () => {
+	const React = require('react');
+	const makeRef = () => React.createRef();
+	return {
+		__esModule: true,
+		useFadeInAnimation: () => makeRef(),
+		useStaggerAnimation: () => makeRef(),
+		useHoverAnimation: () => makeRef(),
+	};
+});

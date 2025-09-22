@@ -8,7 +8,6 @@ export async function getCollectionsByYear(yearId: string) {
         status: 'published'
       },
       include: {
-        cover_asset: true,
         _count: {
           select: {
             collection_assets: true
@@ -38,7 +37,6 @@ export async function getCollectionBySlug(yearId: string, slug: string) {
       },
       include: {
         year: true,
-        cover_asset: true,
         collection_assets: {
           include: {
             asset: true
@@ -62,7 +60,6 @@ export async function getAllCollections() {
     const collections = await prisma.collection.findMany({
       include: {
         year: true,
-        cover_asset: true,
         _count: {
           select: {
             collection_assets: true
@@ -88,7 +85,6 @@ export async function getCollectionById(id: string) {
       where: { id },
       include: {
         year: true,
-        cover_asset: true,
         collection_assets: {
           include: {
             asset: true

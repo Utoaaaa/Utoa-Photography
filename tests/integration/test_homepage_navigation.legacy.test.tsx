@@ -4,7 +4,7 @@
  */
 
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -15,7 +15,15 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
-describe.skip('Integration: Homepage year timeline navigation + Brand & Patterns (legacy)', () => {
+// Mock years query to avoid hitting Prisma/unstable_cache during tests
+jest.mock('@/lib/queries/years', () => ({
+  getPublishedYears: jest.fn(async () => ([
+    { id: '1', label: '2024', order_index: '2024.0', status: 'published', created_at: '', updated_at: '' },
+    { id: '2', label: '2023', order_index: '2023.0', status: 'published', created_at: '', updated_at: '' },
+  ])),
+}));
+
+describe('Integration: Homepage year timeline navigation + Brand & Patterns (legacy)', () => {
   const mockYearsData = [
     {
       id: '1',
@@ -61,10 +69,10 @@ describe.skip('Integration: Homepage year timeline navigation + Brand & Patterns
   const HomePage = await import('../../src/app/(site)/page').then(m => m.default);
     render(await HomePage());
 
-    const header = screen.getByRole('banner');
-    expect(header).toBeInTheDocument();
-    const brandElement = screen.getByText(/utoa/i);
-    expect(brandElement).toBeInTheDocument();
+  const header = screen.getByRole('banner');
+  expect(header).toBeInTheDocument();
+  const brandElement = within(header).getByTestId('brand');
+  expect(brandElement).toBeInTheDocument();
 
     const geometricPattern = screen.getByTestId('hero-geometric');
     expect(geometricPattern).toBeInTheDocument();

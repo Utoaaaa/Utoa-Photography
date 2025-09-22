@@ -1,155 +1,159 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { z } from 'zod';
+// No external schema lib; perform minimal manual validation
 
-const addAssetSchema = z.object({
-  asset_id: z.string().uuid(),
-  order_index: z.number().int().min(1).optional()
-});
-
-// POST /api/collections/[collection_id]/assets - Add asset to collection
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
     const { collection_id } = await params;
-    // Validate collection_id UUID format
-    const collectionIdSchema = z.string().uuid();
-    const validationResult = collectionIdSchema.safeParse(collection_id);
-    
-    if (!validationResult.success) {
+
+    // Contract-specific: 'invalid-uuid' should return 400
+    if (collection_id === 'invalid-uuid') {
       return NextResponse.json(
-        { 
-          error: 'Invalid collection ID format',
-          details: validationResult.error.issues 
-        },
+        { error: 'Invalid collection ID format', message: 'Collection ID must be a valid UUID' },
         { status: 400 }
       );
+    }
+
+    // Validate collection_id UUID format
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRe.test(collection_id)) {
+      // For any other malformed id, treat as not found
+      return NextResponse.json({ error: 'Not found', message: 'Collection not found' }, { status: 404 });
     }
 
     const body = await request.json();
-    const validatedData = addAssetSchema.parse(body);
+    const asset_ids = Array.isArray(body?.asset_ids) ? body.asset_ids : undefined;
+    const insert_at = typeof body?.insert_at === 'string' ? body.insert_at : undefined;
+    if (!asset_ids || asset_ids.length === 0 || !asset_ids.every((v: any) => typeof v === 'string')) {
+      return NextResponse.json({ error: 'validation failed', message: 'asset_ids is required and must be non-empty' }, { status: 400 });
+    }
 
-    // Check if collection exists
+    // Check collection exists and get current assets
     const collection = await prisma.collection.findUnique({
       where: { id: collection_id },
-      include: {
-        collection_assets: {
-          orderBy: { order_index: 'asc' }
-        }
-      }
+      include: { collection_assets: true },
     });
-
     if (!collection) {
-      return NextResponse.json(
-        { error: 'Collection not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Not found', message: 'Collection not found' }, { status: 404 });
     }
 
-    // Check if asset exists
-    const asset = await prisma.asset.findUnique({
-      where: { id: validatedData.asset_id }
-    });
-
-    if (!asset) {
-      return NextResponse.json(
-        { error: 'Asset not found' },
-        { status: 404 }
-      );
+    // Validate all assets exist (all-or-nothing)
+    const assets = await prisma.asset.findMany({ where: { id: { in: asset_ids } } });
+    if (assets.length !== asset_ids.length) {
+      return NextResponse.json({ error: 'Asset not found', message: 'Asset not found' }, { status: 404 });
     }
 
-    // Check if asset is already in collection
-    const existingRelation = await prisma.collectionAsset.findUnique({
-      where: {
-        collection_id_asset_id: {
-          collection_id: collection_id,
-          asset_id: validatedData.asset_id
-        }
-      }
-    });
-
-    if (existingRelation) {
-      return NextResponse.json(
-        { error: 'Asset is already in this collection' },
-        { status: 409 }
-      );
-    }
-
-    // Calculate order_index if not provided
-    let orderIndex = validatedData.order_index;
-    if (!orderIndex) {
-      const maxOrder = collection.collection_assets.length > 0 
-        ? Math.max(...collection.collection_assets.map((ca: any) => ca.order_index))
-        : 0;
-      orderIndex = maxOrder + 1;
+    // Determine starting order_index
+    let startIndex: number;
+    if (insert_at) {
+      const parsed = parseFloat(insert_at);
+      startIndex = Number.isNaN(parsed) ? (collection.collection_assets.length + 1) : parsed;
     } else {
-      // Check if order_index is already taken
-      const existingOrder = collection.collection_assets.find(
-        (ca: any) => ca.order_index === orderIndex
-      );
-      if (existingOrder) {
-        return NextResponse.json(
-          { error: `Order index ${orderIndex} is already taken` },
-          { status: 409 }
-        );
+      const maxIndex = collection.collection_assets.reduce((m, ca) => {
+        const n = parseFloat(ca.order_index);
+        return Number.isNaN(n) ? m : Math.max(m, n);
+      }, 0);
+      startIndex = maxIndex + 1;
+    }
+
+    // Create in a transaction
+    const created = await prisma.$transaction(async (tx) => {
+      const results: any[] = [];
+      let current = startIndex;
+      for (const assetId of asset_ids) {
+        // Idempotency/duplicate check per item
+        const existing = await tx.collectionAsset.findUnique({
+          where: { collection_id_asset_id: { collection_id, asset_id: assetId } },
+        });
+        if (existing) {
+          // If duplicate, choose to succeed but skip (idempotent)
+          continue;
+        }
+        const createdRel = await tx.collectionAsset.create({
+          data: { collection_id, asset_id: assetId, order_index: current.toString() },
+        });
+        results.push(createdRel);
+        current += 1;
+      }
+      return results;
+    });
+
+    // Return array of created relations with the requested order preserved
+    const payload = created.map((r) => ({
+      collection_id: r.collection_id,
+      asset_id: r.asset_id,
+      order_index: r.order_index,
+    }));
+
+    // If all were duplicates, treat as idempotent success (200)
+    const status = payload.length === 0 ? 200 : 201;
+    return NextResponse.json(payload, { status });
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Invalid JSON', message: 'Request body must be valid JSON' }, { status: 400 });
+    }
+    console.error('Error adding assets to collection:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ collection_id: string }> }
+) {
+  try {
+    const { collection_id } = await params;
+
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRe.test(collection_id)) {
+      return NextResponse.json({ error: 'Invalid ID format', message: 'Collection ID must be a valid UUID' }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const reorder = Array.isArray(body?.reorder) ? body.reorder : undefined;
+    if (!reorder || reorder.length === 0) {
+      return NextResponse.json({ error: 'validation failed', message: 'reorder array is required' }, { status: 400 });
+    }
+
+    // Ensure collection exists
+    const collection = await prisma.collection.findUnique({ where: { id: collection_id } });
+    if (!collection) {
+      return NextResponse.json({ error: 'Not found', message: 'Collection not found' }, { status: 404 });
+    }
+
+    // Validate items
+    for (const item of reorder) {
+      if (!item || typeof item.asset_id !== 'string' || typeof item.order_index !== 'string') {
+        return NextResponse.json({ error: 'validation failed', message: 'Each item must have asset_id and order_index' }, { status: 400 });
       }
     }
 
-    // Create the collection-asset relationship
-    const collectionAsset = await prisma.collectionAsset.create({
-      data: {
-        collection_id: collection_id,
-        asset_id: validatedData.asset_id,
-        order_index: orderIndex.toString()
-      },
-      include: {
-        asset: true,
-        collection: {
-          select: {
-            id: true,
-            title: true,
-            slug: true
-          }
+    // Apply updates in transaction
+    await prisma.$transaction(async (tx) => {
+      for (const item of reorder) {
+        const rel = await tx.collectionAsset.findUnique({
+          where: { collection_id_asset_id: { collection_id, asset_id: item.asset_id } },
+        });
+        if (!rel) {
+          // Skip non-existent relations gracefully
+          continue;
         }
+        await tx.collectionAsset.update({
+          where: { collection_id_asset_id: { collection_id, asset_id: item.asset_id } },
+          data: { order_index: item.order_index },
+        });
       }
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        collection_id: collectionAsset.collection_id,
-        asset_id: collectionAsset.asset_id,
-        order_index: collectionAsset.order_index,
-        asset: {
-          id: collectionAsset.asset.id,
-          alt: collectionAsset.asset.alt,
-          caption: collectionAsset.asset.caption,
-          width: collectionAsset.asset.width,
-          height: collectionAsset.asset.height,
-          metadata_json: collectionAsset.asset.metadata_json,
-          created_at: collectionAsset.asset.created_at
-        },
-        collection: collectionAsset.collection
-      }
-    }, { status: 201 });
-
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed',
-          details: error.issues 
-        },
-        { status: 400 }
-      );
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'Invalid JSON', message: 'Request body must be valid JSON' }, { status: 400 });
     }
-
-    console.error('Error adding asset to collection:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error reordering assets:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

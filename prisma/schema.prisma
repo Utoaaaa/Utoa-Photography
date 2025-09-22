@@ -36,7 +36,7 @@ model Collection {
   slug             String            // URL-friendly identifier
   title            String
   summary          String?           // Optional short description
-  cover_asset_id   String?           // Foreign key to Assets
+  cover_asset_id   String?           // Optional cover asset reference (no FK)
   template_id      String?           // Future: different layout templates
   status           CollectionStatus  @default(draft)
   order_index      String            // Within year ordering
@@ -45,6 +45,7 @@ model Collection {
   published_at     DateTime?         // When first published
   last_published_at DateTime?        // When last published
   version          Int               @default(1) // Version number
+  publish_note     String?           // Optional note for this publish
   seo_title        String?           // Custom SEO title (overrides title)
   seo_description  String?           // Meta description
   seo_keywords     String?           // Keywords for search
@@ -54,7 +55,6 @@ model Collection {
 
   // Relations
   year             Year               @relation(fields: [year_id], references: [id], onDelete: Cascade)
-  cover_asset      Asset?             @relation("CollectionCoverAsset", fields: [cover_asset_id], references: [id])
   collection_assets CollectionAsset[]
   publish_history  PublishHistory[]
 
@@ -82,7 +82,6 @@ model Asset {
 
   // Relations
   collection_assets   CollectionAsset[]
-  cover_collections   Collection[]       @relation("CollectionCoverAsset")
   seo_metadata_assets SEOMetadata[]
 
   @@index([photographer])
@@ -95,6 +94,8 @@ model CollectionAsset {
   collection_id String
   asset_id      String
   order_index   String   // Photo sequence within collection
+  slide_index   Int?     // Alternative numeric ordering when preferred
+  text          String?  // Optional per-slide text/caption
   created_at    DateTime @default(now())
 
   // Relations

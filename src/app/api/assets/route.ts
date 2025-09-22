@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Validate alt text length
     if (alt.length === 0 || alt.length > 200) {
       return NextResponse.json(
-        { error: 'Invalid alt text', message: 'Alt text must be between 1 and 200 characters' },
+        { error: 'invalid alt', message: 'alt must be between 1 and 200 characters' },
         { status: 400 }
       );
     }
@@ -34,15 +34,29 @@ export async function POST(request: NextRequest) {
     // Validate caption length if provided
     if (caption && caption.length > 1000) {
       return NextResponse.json(
-        { error: 'Invalid caption', message: 'Caption must be 1000 characters or less' },
+        { error: 'invalid caption', message: 'caption must be 1000 characters or less' },
         { status: 400 }
       );
     }
 
-    // Validate dimensions
+    // Validate dimensions with reasonable bounds (used by E2E tests)
+    const minW = 200; const minH = 200; // minimum dimensions
+    const maxW = 8000; const maxH = 8000; // maximum dimensions
     if (width <= 0 || height <= 0) {
       return NextResponse.json(
-        { error: 'Invalid dimensions', message: 'Width and height must be positive numbers' },
+        { error: 'invalid dimensions', message: 'width and height must be positive numbers' },
+        { status: 400 }
+      );
+    }
+    if (width < minW || height < minH) {
+      return NextResponse.json(
+        { error: 'invalid dimensions', message: 'Image does not meet minimum dimensions' },
+        { status: 400 }
+      );
+    }
+    if (width > maxW || height > maxH) {
+      return NextResponse.json(
+        { error: 'invalid dimensions', message: 'Image exceeds maximum dimensions' },
         { status: 400 }
       );
     }
@@ -54,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     if (existingAsset) {
       return NextResponse.json(
-        { error: 'Conflict', message: 'Asset with this ID already exists' },
+        { error: 'Conflict', message: 'Asset with this ID already exists; please verify direct upload status before retrying', id: existingAsset.id },
         { status: 409 }
       );
     }
@@ -90,7 +104,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(asset, { status: 201 });
+    // Return metadata_json parsed back to object if possible
+    const response: any = { ...asset };
+    if (response.metadata_json && typeof response.metadata_json === 'string') {
+      try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
+    }
+
+    return NextResponse.json(response, { status: 201 });
   } catch (error) {
     console.error('Error creating asset:', error);
 
@@ -105,13 +125,44 @@ export async function POST(request: NextRequest) {
     // Handle unique constraint violation
     if (error instanceof Error && error.message.includes('Unique constraint')) {
       return NextResponse.json(
-        { error: 'Conflict', message: 'Asset with this ID already exists' },
+        { error: 'Conflict', message: 'Asset with this ID already exists; please verify direct upload status before retrying' },
         { status: 409 }
       );
     }
 
     return NextResponse.json(
       { error: 'Internal server error', message: 'Failed to create asset' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
+
+    const assets = await prisma.asset.findMany({
+      orderBy: { created_at: 'desc' },
+      take: Number.isNaN(limit) ? 50 : limit,
+      skip: Number.isNaN(offset) ? 0 : offset,
+    });
+
+    // Parse metadata_json to objects when possible
+    const result = assets.map((a: any) => {
+      const obj: any = { ...a };
+      if (obj.metadata_json && typeof obj.metadata_json === 'string') {
+        try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
+      }
+      return obj;
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error listing assets:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', message: 'Failed to list assets' },
       { status: 500 }
     );
   }

@@ -6,7 +6,7 @@
  */
 
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -17,7 +17,7 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
-describe.skip('Integration: Homepage year timeline navigation + Brand & Patterns', () => {
+describe('Integration: Homepage year timeline navigation + Brand & Patterns', () => {
   const mockYearsData = [
     {
       id: '1',
@@ -64,7 +64,8 @@ describe.skip('Integration: Homepage year timeline navigation + Brand & Patterns
   const HomePage = await import('../../src/app/(site)/page').then(m => m.default);
   render(await HomePage());
 
-      const brandElement = screen.getByText(/utoa/i);
+  const header = screen.getByRole('banner');
+  const brandElement = within(header).getByTestId('brand');
       expect(brandElement).toBeInTheDocument();
       
       // Check positioning classes
@@ -202,8 +203,9 @@ describe.skip('Integration: Homepage year timeline navigation + Brand & Patterns
   render(await HomePage());
 
       // Check for hero section elements
-      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-      expect(screen.getByText(/Utoa Photography/i)).toBeInTheDocument();
+  expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  const main = screen.getByRole('main');
+  expect(within(main).getByText(/Utoa Photography/i)).toBeInTheDocument();
       
       // Check for geometric patterns (could be SVG or CSS elements)
       const heroSection = screen.getByRole('banner');
@@ -229,6 +231,7 @@ describe.skip('Integration: Homepage year timeline navigation + Brand & Patterns
 
     it('should make year boxes clickable and navigable', async () => {
       const mockPush = jest.fn();
+      jest.resetModules();
       jest.doMock('next/navigation', () => ({
         useRouter: () => ({ push: mockPush }),
         usePathname: () => '/',
@@ -241,8 +244,8 @@ describe.skip('Integration: Homepage year timeline navigation + Brand & Patterns
         expect(screen.getByText('2024')).toBeInTheDocument();
       });
 
-      const year2024Button = screen.getByText('2024');
-      fireEvent.click(year2024Button);
+  const firstLink = screen.getAllByTestId('year-box')[0];
+  fireEvent.click(firstLink);
 
       expect(mockPush).toHaveBeenCalledWith('/2024');
     });

@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: Utoa Admin Minimal APIs
+  version: 0.1.0
+servers:
+  - url: /api
+paths:
+  /images/direct-upload:
+    post:
+      summary: Get direct upload URL/token for images
+      responses:
+        '200':
+          description: Direct upload details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploadURL:
+                    type: string
+                  id:
+                    type: string
+                  token:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /assets:
+    get:
+      summary: List assets with optional search
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Asset list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Asset'
+                  total:
+                    type: integer
+    post:
+      summary: Create an asset record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetInput'
+      responses:
+        '200':
+          description: Created asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+  /assets/{id}:
+    put:
+      summary: Update an asset
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetUpdate'
+      responses:
+        '200':
+          description: Updated asset
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+    delete:
+      summary: Delete an asset
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+        '409':
+          description: Conflict when asset is referenced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /collections/{id}/assets:
+    post:
+      summary: Add an asset to a collection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assetId:
+                  type: string
+                order_index:
+                  type: integer
+      responses:
+        '200':
+          description: Association created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionAsset'
+    put:
+      summary: Reorder assets in a collection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assetIds:
+                  type: array
+                  items:
+                    type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      assetId:
+                        type: string
+                      order_index:
+                        type: integer
+      responses:
+        '200':
+          description: Reordered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+  /collections/{id}/assets/{assetId}:
+    delete:
+      summary: Remove an asset from a collection
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: assetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unlinked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+    Asset:
+      type: object
+      properties:
+        id: { type: string }
+        image_id: { type: string }
+        alt: { type: string, nullable: true }
+        caption: { type: string, nullable: true }
+        width: { type: integer, nullable: true }
+        height: { type: integer, nullable: true }
+        exif_json: { type: string, nullable: true }
+    AssetInput:
+      type: object
+      required: [image_id]
+      properties:
+        image_id: { type: string }
+        alt: { type: string }
+        caption: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        exif_json: { type: string }
+    AssetUpdate:
+      type: object
+      properties:
+        alt: { type: string }
+        caption: { type: string }
+    CollectionAsset:
+      type: object
+      properties:
+        collection_id: { type: string }
+        asset_id: { type: string }
+        order_index: { type: integer }

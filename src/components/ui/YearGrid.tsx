@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { getPublishedYears } from '@/lib/queries/years';
 import { useStaggerAnimation, useHoverAnimation } from '@/lib/animations';
 
@@ -29,8 +30,9 @@ export function YearGrid({ years }: YearGridProps) {
   return (
     <div 
       ref={gridRef}
-      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 responsive"
       data-testid="years-grid"
+      role="grid"
     >
       {years.map((year) => (
         <YearBox key={year.id} year={year} />
@@ -41,12 +43,19 @@ export function YearGrid({ years }: YearGridProps) {
 
 function YearBox({ year }: { year: Year }) {
   const hoverRef = useHoverAnimation();
+  const router = useRouter();
 
   return (
     <Link
       href={`/${encodeURIComponent(year.label)}`}
-      className="group focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 rounded"
+      className="group focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 rounded aspect-square transition"
       data-testid="year-box"
+      role="button"
+      data-year-link
+      onClick={(e) => {
+        e.preventDefault();
+        router.push(`/${encodeURIComponent(year.label)}`);
+      }}
     >
       <div 
         ref={hoverRef}

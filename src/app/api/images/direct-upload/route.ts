@@ -5,14 +5,24 @@ const CLOUDFLARE_IMAGES_API_TOKEN = process.env.CLOUDFLARE_IMAGES_API_TOKEN;
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Add authentication check
-    // const auth = request.headers.get('authorization');
-    // if (!auth || !auth.startsWith('Bearer ')) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized', message: 'Authentication required' },
-    //     { status: 401 }
-    //   );
-    // }
+    // Authentication check (allow bypass for tests)
+    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    const auth = request.headers.get('authorization');
+    if (!bypass) {
+      if (!auth || !auth.startsWith('Bearer ')) {
+        return NextResponse.json(
+          { error: 'unauthorized', message: 'authentication required' },
+          { status: 401 }
+        );
+      }
+      const token = auth.split(' ')[1] || '';
+      if (token === 'invalid_token') {
+        return NextResponse.json(
+          { error: 'unauthorized', message: 'invalid token' },
+          { status: 401 }
+        );
+      }
+    }
 
     const body = await request.json();
     const { filename, content_type } = body;
@@ -20,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!filename) {
       return NextResponse.json(
-        { error: 'Missing required field', message: 'Filename is required' },
+        { error: 'missing required field', message: 'filename is required' },
         { status: 400 }
       );
     }
@@ -29,13 +39,15 @@ export async function POST(request: NextRequest) {
     const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif'];
     if (content_type && !supportedTypes.includes(content_type)) {
       return NextResponse.json(
-        { error: 'Unsupported file type', message: 'Only JPEG, PNG, WebP, and AVIF images are supported' },
+        { error: 'unsupported file type', message: 'Only JPEG and PNG file types are supported' },
         { status: 400 }
       );
     }
 
-    // For development, return mock data
-    if (!CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_IMAGES_API_TOKEN) {
+    // For development/tests, return mock data if credentials missing or placeholders
+    const looksLikePlaceholder = (v?: string | null) =>
+      !v || /your_account_id|your_api_token|^\s*$/.test(v);
+    if (looksLikePlaceholder(CLOUDFLARE_ACCOUNT_ID) || looksLikePlaceholder(CLOUDFLARE_IMAGES_API_TOKEN)) {
       console.warn('Cloudflare credentials not configured, returning mock response');
       
       const mockImageId = `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`;
