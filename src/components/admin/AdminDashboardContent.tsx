@@ -54,10 +54,11 @@ export default function AdminDashboardContent({
   return (
     <div className="min-h-screen bg-gray-50 p-8" data-testid="admin-dashboard">
       <div className="max-w-7xl mx-auto">
-        {/* Minimal session widget for tests */}
+        {/* User info from Cloudflare Access */}
         <div className="flex items-center justify-end gap-3 mb-4">
-          <div data-testid="user-info" className="text-sm text-gray-600">Signed in as test@local</div>
-          <button data-testid="logout-btn" className="text-sm text-blue-700 underline" onClick={() => { window.location.href = '/login'; }}>Logout</button>
+          <div data-testid="user-info" className="text-sm text-gray-600">
+            Cloudflare Access User
+          </div>
         </div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>

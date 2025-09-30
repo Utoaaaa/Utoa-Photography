@@ -89,16 +89,16 @@ export default function AdminYearsPage() {
         return;
       }
       if (editing) {
-  const res = await fetch(`/api/years/${editing.id}` , { method: 'PUT', headers: { 'content-type': 'application/json', authorization: 'Bearer test' }, body: JSON.stringify({ label, status }) });
+  const res = await fetch(`/api/years/${editing.id}` , { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label, status }) });
         if (!res.ok) throw new Error('Failed to update');
       } else {
         // De-dupe by label to avoid multiple identical rows breaking tests/selectors
         const existing = years.find(y => y.label === label);
         if (existing) {
-          const res = await fetch(`/api/years/${existing.id}`, { method: 'PUT', headers: { 'content-type': 'application/json', authorization: 'Bearer test' }, body: JSON.stringify({ label, status }) });
+          const res = await fetch(`/api/years/${existing.id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label, status }) });
           if (!res.ok) throw new Error('Failed to update');
         } else {
-          const res = await fetch('/api/years', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer test' }, body: JSON.stringify({ label, status }) });
+          const res = await fetch('/api/years', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label, status }) });
           if (!res.ok) throw new Error('Failed to create');
         }
       }
@@ -153,7 +153,7 @@ export default function AdminYearsPage() {
       const results = await Promise.allSettled(
         updates.map(u => fetch(`/api/years/${u.id}`, {
           method: 'PUT',
-          headers: { 'content-type': 'application/json', authorization: 'Bearer test' },
+          headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ order_index: u.order_index })
         }))
       );

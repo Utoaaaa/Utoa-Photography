@@ -79,7 +79,6 @@ export default function AdminUploadsPage() {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          authorization: 'Bearer test',
         },
         body: JSON.stringify({ filename, content_type: contentType })
       });
@@ -153,7 +152,7 @@ export default function AdminUploadsPage() {
     setMessage('');
     try {
       const ids = Array.from(selectedIds);
-      const res = await fetch('/api/assets/batch-delete', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer test' }, body: JSON.stringify({ asset_ids: ids }) });
+      const res = await fetch('/api/assets/batch-delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ asset_ids: ids }) });
       if (!res.ok) {
         setMessage('Bulk delete failed');
       } else {
