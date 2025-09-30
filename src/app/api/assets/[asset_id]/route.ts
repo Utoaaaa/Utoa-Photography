@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, logAudit } from '@/lib/db';
+import { parseRequestJsonSafe } from '@/lib/utils';
+import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 
 export async function GET(
   request: NextRequest,
@@ -35,7 +37,34 @@ export async function DELETE(
       return NextResponse.json({ error: 'Not found', message: 'Asset not found' }, { status: 404 });
     }
 
+    // Guard: prevent delete if asset is referenced by any collection
+    try {
+      const links = await prisma.collectionAsset.findMany({
+        where: { asset_id },
+        select: { collection_id: true },
+      });
+      if (Array.isArray(links) && links.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Conflict',
+            message: 'Asset is referenced by collections and cannot be deleted',
+            referenced_by: links.map((l) => l.collection_id),
+            count: links.length,
+          },
+          { status: 409 }
+        );
+      }
+    } catch (e) {
+      // Fail closed: if we cannot verify references, avoid destructive delete
+      console.error('Error checking asset references before delete:', e);
+      return NextResponse.json({ error: 'Precondition Failed', message: 'Unable to verify references' }, { status: 412 });
+    }
+
     await prisma.asset.delete({ where: { id: asset_id } });
+    try {
+      await invalidateCache([CACHE_TAGS.ASSETS, `${CACHE_TAGS.ASSETS}:${asset_id}`]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'delete', entity: `asset/${asset_id}` });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error deleting asset:', error);
@@ -48,8 +77,8 @@ export async function PUT(
   { params }: { params: Promise<{ asset_id: string }> }
 ) {
   try {
-    const { asset_id } = await params;
-    const body = await request.json();
+  const { asset_id } = await params;
+  const body = await parseRequestJsonSafe(request, {} as any);
 
     const data: any = {};
     if (body.alt !== undefined) data.alt = body.alt;
@@ -63,6 +92,10 @@ export async function PUT(
     }
 
     const updated = await prisma.asset.update({ where: { id: asset_id }, data });
+    try {
+      await invalidateCache([CACHE_TAGS.ASSETS, `${CACHE_TAGS.ASSETS}:${asset_id}`]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'edit', entity: `asset/${asset_id}`, payload: data });
 
     // Return metadata_json parsed
     const response: any = { ...updated };

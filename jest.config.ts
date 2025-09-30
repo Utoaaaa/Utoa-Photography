@@ -9,10 +9,13 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const config: Config = {
   coverageProvider: 'v8',
+  // Ensure fetch/Request polyfills are loaded before any modules under test
+  setupFiles: ['<rootDir>/jest.setup.pre-env.js'],
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^next/server$': '<rootDir>/tests/mocks/next-server.ts',
   },
   testMatch: [
     '<rootDir>/tests/**/*.test.{js,jsx,ts,tsx}',

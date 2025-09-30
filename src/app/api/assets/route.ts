@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, logAudit } from '@/lib/db';
+import { parseRequestJsonSafe } from '@/lib/utils';
+import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +14,7 @@ export async function POST(request: NextRequest) {
     //   );
     // }
 
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
     const { id, alt, caption, width, height, metadata_json } = body;
 
     // Validate required fields
@@ -110,6 +112,11 @@ export async function POST(request: NextRequest) {
       try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
     }
 
+    try {
+      await invalidateCache([CACHE_TAGS.ASSETS]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'create', entity: `asset/${asset.id}`, payload: { id: asset.id } });
+
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
     console.error('Error creating asset:', error);
@@ -147,11 +154,13 @@ export async function GET(request: NextRequest) {
       orderBy: { created_at: 'desc' },
       take: Number.isNaN(limit) ? 50 : limit,
       skip: Number.isNaN(offset) ? 0 : offset,
+      include: { _count: { select: { collection_assets: true } } },
     });
 
     // Parse metadata_json to objects when possible
     const result = assets.map((a: any) => {
-      const obj: any = { ...a };
+      const { _count, ...rest } = a;
+      const obj: any = { ...rest, used: (_count?.collection_assets ?? 0) > 0 };
       if (obj.metadata_json && typeof obj.metadata_json === 'string') {
         try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
       }

@@ -16,6 +16,9 @@ export const IMAGE_VARIANTS = {
 
 export type ImageVariant = keyof typeof IMAGE_VARIANTS;
 
+const FALLBACK_PLACEHOLDER = '/placeholder.svg';
+let warnedNoHash = false;
+
 export function getImageUrl(
   imageId: string, 
   variant: ImageVariant = 'medium',
@@ -24,8 +27,12 @@ export function getImageUrl(
   const hash = accountHash || process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
   
   if (!hash) {
-    console.warn('Cloudflare account hash not configured');
-    return '/placeholder.jpg';
+    // Warn only on the server in development and only once
+    if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production' && !warnedNoHash) {
+      console.warn('Cloudflare account hash not configured; using placeholder image.');
+      warnedNoHash = true;
+    }
+    return FALLBACK_PLACEHOLDER;
   }
   
   return `https://imagedelivery.net/${hash}/${imageId}/${IMAGE_VARIANTS[variant]}`;
@@ -146,6 +153,8 @@ export function getOptimalImageSize(
 // Performance utilities
 export function prefetchImage(imageId: string, variant: ImageVariant = 'medium'): void {
   if (typeof window !== 'undefined') {
+    const hash = process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
+    if (!hash) return; // avoid preloading in dev/tests when not configured
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
@@ -155,5 +164,11 @@ export function prefetchImage(imageId: string, variant: ImageVariant = 'medium')
 }
 
 export function preloadCriticalImages(imageIds: string[], variant: ImageVariant = 'medium'): void {
+  const hash = process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
+  if (!hash) return; // skip when Cloudflare Images not configured
   imageIds.slice(0, 3).forEach(id => prefetchImage(id, variant));
+}
+
+export function isCloudflareConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH);
 }

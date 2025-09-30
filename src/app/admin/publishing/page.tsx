@@ -39,6 +39,35 @@ export default function PublishingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Safe JSON parsing to avoid flakiness when server briefly returns HTML/empty
+  async function safeJson<T = any>(res: Response, fallback: T): Promise<T> {
+    try {
+      const ct = res.headers.get('content-type') || '';
+      if (!res.ok || !ct.includes('application/json')) return fallback;
+      const text = await res.text();
+      if (!text) return fallback;
+      return JSON.parse(text) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  // Minimal retry to smooth over transient dev/E2E races
+  async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retries = 2, backoffMs = 200): Promise<Response> {
+    let lastErr: unknown = null;
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const res = await fetch(input, init);
+        if (res.ok) return res;
+        lastErr = new Error(`HTTP ${res.status}`);
+      } catch (e) {
+        lastErr = e;
+      }
+      if (i < retries) await new Promise(r => setTimeout(r, backoffMs * (i + 1)));
+    }
+    throw lastErr instanceof Error ? lastErr : new Error('Fetch failed');
+  }
+
   // Load collections with filters
   const loadCollections = useCallback(async () => {
     try {
@@ -52,19 +81,14 @@ export default function PublishingPage() {
       params.append('limit', '50');
       params.append('offset', '0');
       
-      const response = await fetch(`/api/publishing/collections?${params}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to load collections');
+      const response = await fetchWithRetry(`/api/publishing/collections?${params}`, { cache: 'no-store' });
+
+      const result = await safeJson<{ success: boolean; data: CollectionSummary[]; error?: string }>(response, { success: false, data: [] });
+      if (!response.ok || !result.success) {
+        throw new Error(result?.error || 'Failed to load collections');
       }
       
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to load collections');
-      }
-      
-      let filteredCollections = result.data;
+      let filteredCollections = result.data || [];
       
       // Client-side filtering for checklist status
       if (filters.checklistStatus) {
@@ -73,7 +97,7 @@ export default function PublishingPage() {
         );
       }
       
-      setCollections(filteredCollections);
+  setCollections(filteredCollections);
       
       // Auto-select first collection if none selected
       if (!selectedCollection && filteredCollections.length > 0) {

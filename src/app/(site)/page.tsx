@@ -1,13 +1,18 @@
 import { YearGrid } from '@/components/ui/YearGrid';
-import { AnimatedSection } from '@/components/ui/AnimatedSection';
+import { getPublishedYears } from '@/lib/queries/years';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Homepage() {
   let years: any[] = [];
   let hasError = false;
+  const getApiBaseUrl = () => {
+    const vercel = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
+    const site = process.env.NEXT_PUBLIC_SITE_URL || vercel || 'http://localhost:3000';
+    return site.replace(/\/$/, '');
+  };
   try {
-    const res = await fetch('/api/years?status=published', { cache: 'no-store' });
+  const res = await fetch(`${getApiBaseUrl()}/api/years?status=published&order=asc`, { cache: 'no-store' });
     if (res.ok) {
       years = await res.json();
     } else {
@@ -18,15 +23,13 @@ export default async function Homepage() {
     hasError = true;
     years = [];
   }
-  if (years.length === 0) {
+  // Only fallback when primary fetch failed
+  if (hasError && years.length === 0) {
     try {
-      const mod: any = await import('@/lib/queries/years');
-      if (mod && typeof mod.getPublishedYears === 'function') {
-        const fallbackYears = await mod.getPublishedYears();
-        if (Array.isArray(fallbackYears) && fallbackYears.length > 0) {
-          years = fallbackYears as any[];
-          hasError = false;
-        }
+      const fallbackYears = await getPublishedYears();
+      if (Array.isArray(fallbackYears) && fallbackYears.length > 0) {
+        years = fallbackYears as any[];
+        // keep hasError to indicate API issue while showing data from fallback
       }
     } catch {
       // ignore; keep empty state
@@ -45,12 +48,12 @@ export default async function Homepage() {
         </span>
       </header>
 
-      <main role="main" className="flex flex-col md:flex-col">
+    <main role="main" className="flex flex-col md:flex-col">
   {/* Hidden h1 for a11y and tests */}
   <h1 className="sr-only">Home</h1>
 
         {/* Hero Section with right-side geometric pattern (T026) */}
-        <AnimatedSection>
+        <div>
           <section className="relative flex items-center justify-center min-h-[60vh] overflow-hidden">
             {/* Right-side geometric pattern - Hidden on mobile (T026) */}
             <div
@@ -98,10 +101,10 @@ export default async function Homepage() {
               </p>
             </div>
           </section>
-        </AnimatedSection>
+        </div>
 
         {/* Years Timeline */}
-        <AnimatedSection delay={0.3}>
+        <div>
           <section className="px-8 py-16 max-w-7xl mx-auto">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-light tracking-wide text-gray-900 mb-4">
@@ -117,7 +120,7 @@ export default async function Homepage() {
             
             <YearGrid years={years} />
           </section>
-        </AnimatedSection>
+        </div>
       </main>
       </div>
   );

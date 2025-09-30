@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
+import { revalidatePathsWithRetry, revalidateTagsWithRetry } from '@/lib/cache';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
+import { parseRequestJsonSafe } from '@/lib/utils';
 
 const revalidateSchema = z.object({
   tags: z.array(z.string()).optional(),
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
     const validatedData = revalidateSchema.parse(body);
 
     const results = {
@@ -107,27 +109,21 @@ export async function POST(request: NextRequest) {
 
     // Revalidate by tags
     if (validatedData.tags) {
-      for (const tag of validatedData.tags) {
-        try {
-          revalidateTag(tag);
-          results.revalidated_tags.push(tag);
-        } catch (error) {
-          console.error(`Error revalidating tag ${tag}:`, error);
-          results.errors.push(`Failed to revalidate tag: ${tag}`);
-        }
+      const { success, failed } = await revalidateTagsWithRetry(validatedData.tags, { who: 'system', auditOnFailure: true });
+      results.revalidated_tags.push(...success);
+      for (const f of failed) {
+        console.error(`Error revalidating tag ${f.value}:`, f.error);
+        results.errors.push(`Failed to revalidate tag: ${f.value}`);
       }
     }
 
     // Revalidate by paths
     if (validatedData.paths) {
-      for (const path of validatedData.paths) {
-        try {
-          revalidatePath(path);
-          results.revalidated_paths.push(path);
-        } catch (error) {
-          console.error(`Error revalidating path ${path}:`, error);
-          results.errors.push(`Failed to revalidate path: ${path}`);
-        }
+      const { success, failed } = await revalidatePathsWithRetry(validatedData.paths, { who: 'system', auditOnFailure: true });
+      results.revalidated_paths.push(...success);
+      for (const f of failed) {
+        console.error(`Error revalidating path ${f.value}:`, f.error);
+        results.errors.push(`Failed to revalidate path: ${f.value}`);
       }
     }
 

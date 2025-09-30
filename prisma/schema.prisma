@@ -146,6 +146,23 @@ model SEOMetadata {
   @@map("seo_metadata")
 }
 
+// AuditLog model - Comprehensive audit trail for all write operations (FR-009)
+model AuditLog {
+  id           String   @id @default(uuid())
+  actor        String   // Who performed the action (user_id or 'system')
+  actor_type   String   @default("user") // 'user' | 'system' | 'api'
+  entity_type  String   // 'year' | 'collection' | 'asset' | etc.
+  entity_id    String   // ID of affected entity
+  action       String   // 'create' | 'edit' | 'delete' | 'publish' | etc.
+  timestamp    DateTime @default(now())
+  meta         String?  // JSON string of action metadata (changes, context)
+  
+  @@index([entity_type, entity_id])
+  @@index([timestamp])
+  @@index([actor])
+  @@map("audit_logs")
+}
+
 // Enums
 enum YearStatus {
   draft

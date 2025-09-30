@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
 import { validateData, ValidationRules } from '@/lib/validation';
 import { z } from 'zod';
+import { parseRequestJsonSafe } from '@/lib/utils';
 
 // Request body schema for asset updates
 const updateAssetSchema = z.object({
@@ -25,7 +26,7 @@ export async function PATCH(
     ]);
 
     // Parse request body
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
     const validatedData = updateAssetSchema.parse(body);
 
     // Check if collection exists and asset is part of it

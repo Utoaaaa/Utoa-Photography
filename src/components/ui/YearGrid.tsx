@@ -1,24 +1,18 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { getPublishedYears } from '@/lib/queries/years';
-import { useStaggerAnimation, useHoverAnimation } from '@/lib/animations';
 
-type Year = Awaited<ReturnType<typeof getPublishedYears>>[0];
+interface Year {
+  id: string;
+  label: string;
+}
 
 interface YearGridProps {
   years: Year[];
 }
 
 export function YearGrid({ years }: YearGridProps) {
-  const gridRef = useStaggerAnimation({
-    stagger: 0.1,
-    delay: 0.2,
-    duration: 0.8,
-    y: 30
-  });
-
+  const router = useRouter();
   if (years.length === 0) {
     return (
       <div className="text-center py-16" data-testid="empty-years">
@@ -29,36 +23,32 @@ export function YearGrid({ years }: YearGridProps) {
 
   return (
     <div 
-      ref={gridRef}
       className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 responsive"
       data-testid="years-grid"
       role="grid"
     >
       {years.map((year) => (
-        <YearBox key={year.id} year={year} />
+        <YearBox key={year.id} year={year} onNavigate={(href) => router.push(href)} />
       ))}
     </div>
   );
 }
 
-function YearBox({ year }: { year: Year }) {
-  const hoverRef = useHoverAnimation();
-  const router = useRouter();
-
+function YearBox({ year, onNavigate }: { year: Year; onNavigate: (href: string) => void }) {
   return (
-    <Link
+    <a
       href={`/${encodeURIComponent(year.label)}`}
       className="group focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 rounded aspect-square transition"
-      data-testid="year-box"
       role="button"
+      data-testid="year-box"
       data-year-link
       onClick={(e) => {
         e.preventDefault();
-        router.push(`/${encodeURIComponent(year.label)}`);
+        const href = `/${encodeURIComponent(year.label)}`;
+        onNavigate(href);
       }}
     >
       <div 
-        ref={hoverRef}
         className="relative aspect-square bg-white border border-gray-200 hover:border-gray-400 transition-all duration-300 group-hover:shadow-lg rounded flex items-center justify-center overflow-hidden"
       >
         {/* Background geometric pattern */}
@@ -94,6 +84,6 @@ function YearBox({ year }: { year: Year }) {
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-gray-50 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
       </div>
-    </Link>
+    </a>
   );
 }

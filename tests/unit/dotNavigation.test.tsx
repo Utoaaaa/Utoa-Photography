@@ -13,7 +13,7 @@ describe('DotNavigation', () => {
       />
     );
 
-    const dots = screen.getAllByTestId('dot-button');
+    const dots = screen.getAllByTestId('nav-dot');
     expect(dots.length).toBe(5);
     expect(screen.getByText('1 / 5')).toBeInTheDocument();
   });
@@ -28,7 +28,7 @@ describe('DotNavigation', () => {
       />
     );
 
-  const dots = screen.getAllByTestId('dot-button');
+  const dots = screen.getAllByTestId('nav-dot');
   // Grouped view should render multiple groups but not exceed maxVisibleDots
   expect(dots.length).toBeGreaterThanOrEqual(10);
   expect(dots.length).toBeLessThanOrEqual(40);
@@ -45,7 +45,7 @@ describe('DotNavigation', () => {
       />
     );
 
-    const dots = screen.getAllByTestId('dot-button');
+    const dots = screen.getAllByTestId('nav-dot');
     fireEvent.click(dots[3]);
     expect(onDotClick).toHaveBeenCalledWith(3);
   });

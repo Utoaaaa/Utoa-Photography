@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Image placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b0b0c"/>
+      <stop offset="100%" stop-color="#1a1a1c"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff10"/>
+      <stop offset="50%" stop-color="#ffffff20"/>
+      <stop offset="100%" stop-color="#ffffff10"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#g)"/>
+  <g opacity="0.15">
+    <circle cx="300" cy="200" r="180" fill="#888"/>
+    <rect x="520" y="180" width="420" height="280" rx="12" fill="#777"/>
+  </g>
+  <g opacity="0.6">
+    <rect x="48" y="48" width="1104" height="704" rx="16" stroke="url(#shine)" stroke-width="2"/>
+  </g>
+  <g fill="#c9c9c9" opacity="0.9" transform="translate(0,12)">
+    <path d="M600 320c-57.99 0-105 47.01-105 105s47.01 105 105 105 105-47.01 105-105-47.01-105-105-105zm0 30c41.42 0 75 33.58 75 75s-33.58 75-75 75-75-33.58-75-75 33.58-75 75-75z"/>
+    <path d="M370 270h460c27.614 0 50 22.386 50 50v260c0 27.614-22.386 50-50 50H370c-27.614 0-50-22.386-50-50V320c0-27.614 22.386-50 50-50zm0 30c-11.046 0-20 8.954-20 20v260c0 11.046 8.954 20 20 20h460c11.046 0 20-8.954 20-20V320c0-11.046-8.954-20-20-20H370z"/>
+  </g>
+  <g fill="#9e9ea2" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="28" text-anchor="middle">
+    <text x="600" y="720">No image available</text>
+  </g>
+</svg>

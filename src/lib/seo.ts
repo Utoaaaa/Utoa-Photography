@@ -29,12 +29,14 @@ export function generateSEOMetadata(data: SEOData): Metadata {
       url: data.url ? `${baseUrl}${data.url}` : baseUrl,
       siteName: 'UTOA Photography',
       type: data.type || 'website',
-      images: data.images?.map(img => ({
-        url: img.url,
-        width: img.width,
-        height: img.height,
-        alt: img.alt,
-      })) || [],
+      images: Array.isArray((data as any).images)
+        ? (data as any).images.map((img: any) => ({
+            url: img.url,
+            width: img.width,
+            height: img.height,
+            alt: img.alt,
+          }))
+        : [],
       ...(data.publishedTime && { publishedTime: data.publishedTime }),
       ...(data.modifiedTime && { modifiedTime: data.modifiedTime }),
     },
@@ -45,7 +47,9 @@ export function generateSEOMetadata(data: SEOData): Metadata {
       title: data.title,
       description: data.description,
       creator: '@utoa_photo',
-      images: data.images?.[0]?.url || '',
+      images: Array.isArray((data as any).images) && (data as any).images.length > 0
+        ? ((data as any).images[0] && (data as any).images[0].url) || ''
+        : '',
     },
     
     // Additional meta tags

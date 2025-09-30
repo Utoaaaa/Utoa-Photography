@@ -73,11 +73,11 @@ export function CollectionsList({
   };
 
   const getChecklistStatus = (collection: Collection) => {
-    const hasTitle = collection.title?.trim();
-    const hasDescription = collection.description?.trim();
-    const hasSeoTitle = collection.seoTitle?.trim();
-    const hasSeoDescription = collection.seoDescription?.trim();
-    const hasAssets = (collection.assets?.length ?? 0) > 0;
+  const hasTitle = typeof collection.title === 'string' && collection.title.trim().length > 0;
+  const hasDescription = typeof collection.description === 'string' && collection.description.trim().length > 0;
+  const hasSeoTitle = typeof collection.seoTitle === 'string' && collection.seoTitle.trim().length > 0;
+  const hasSeoDescription = typeof collection.seoDescription === 'string' && collection.seoDescription.trim().length > 0;
+  const hasAssets = Array.isArray(collection.assets) && collection.assets.length > 0;
     
     const checks = [hasTitle, hasDescription, hasSeoTitle, hasSeoDescription, hasAssets];
     const passedChecks = checks.filter(Boolean).length;

@@ -78,10 +78,13 @@ export async function GET(request: NextRequest) {
     const summaries = collections.map(collection => {
       // Calculate checklist status
       const collectionData = collection as any;
-      const hasTitle = !!collection.title?.trim();
-      const hasSeoTitle = !!collectionData.seo_title?.trim();
-      const hasSeoDescription = !!collectionData.seo_description?.trim();
-      const allAssetsHaveAlt = collection.collection_assets.every(ca => !!ca.asset.alt?.trim());
+      const hasTitle = typeof collection.title === 'string' && collection.title.trim().length > 0;
+      const hasSeoTitle = typeof collectionData.seo_title === 'string' && collectionData.seo_title.trim().length > 0;
+      const hasSeoDescription = typeof collectionData.seo_description === 'string' && collectionData.seo_description.trim().length > 0;
+      const allAssetsHaveAlt = collection.collection_assets.every(ca => {
+        const alt = ca.asset && typeof ca.asset.alt === 'string' ? ca.asset.alt : '';
+        return alt.trim().length > 0;
+      });
       
       const checklistStatus = hasTitle && hasSeoTitle && hasSeoDescription && allAssetsHaveAlt 
         ? 'pass' 

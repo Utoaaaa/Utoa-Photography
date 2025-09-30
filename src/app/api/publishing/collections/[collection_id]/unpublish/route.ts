@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma, logAudit } from '@/lib/db';
 import { revalidateTag } from 'next/cache';
+import { parseRequestJsonSafe } from '@/lib/utils';
 
 const paramsSchema = z.object({
   collection_id: z.string().uuid('Invalid collection ID format')
@@ -33,8 +34,8 @@ export async function POST(
 ) {
   try {
     // Validate parameters - await params in Next.js 15
-    const { collection_id } = paramsSchema.parse(await params);
-    const body = await request.json();
+  const { collection_id } = paramsSchema.parse(await params);
+  const body = await parseRequestJsonSafe(request, {} as any);
     const { note } = unpublishSchema.parse(body);
 
     // Get collection

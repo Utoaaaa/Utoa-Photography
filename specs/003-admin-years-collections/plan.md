@@ -43,6 +43,18 @@
 **Constraints**: 靜態優先（前台無需伺服端運行）、可及性與資產預算；Admin 與寫入 API 經 Access 保護；客戶端不暴露機密  
 **Scale/Scope**: 個人網站管理，資料量中小型，並以穩定 CI 驗證為目標
 
+## Terminology & Test IDs
+- Terminology
+   - Asset: 後端資料實體與一般媒體的統稱（資料表 assets）；包含上傳後的原始檔與其中繼資料。
+   - Image: 前台或後台呈現時的視覺實體（Asset 的一種使用情境）；文案偏前台敘述使用 Image。
+   - Uploads: Admin 中「上傳與管理資產」的流程頁（工作流程名稱），不做資料模型命名。
+   - Collections/Years：沿用既有命名；排序使用 order_index（字串，字典序），前端以鍵盤與按鈕上下移動。
+- data-testid 規範
+   - 命名模式：`{domain}-{action}-{target}(-suffix?)`，kebab-case，2–5 段。
+   - 避免過度通用詞（button/input/item/link/...）。
+   - 兼容保留：`brand`, `breadcrumb` 作為單字 allowlist（既有測試沿用）。
+   - 檢查工具：`tools/check-testids.js`；指令：`npm run lint:testids` / `npm run ci:testids`。
+
 ## Constitution Check
 根據 `.specify/memory/constitution.md`：
 - I. Static-First Delivery（非談判）：前台公開頁面維持可純靜態輸出與 CDN 佈署；本次新增之 Admin 與寫入 API 屬「非核心（private/admin）」能力，僅於 Workers 執行，不影響前台靜態原則。
@@ -50,6 +62,7 @@
 - III. Progressive Enhancement & No-JS Baseline：前台核心內容與導覽在無 JS 仍可用；Admin 介面以增強為主但須提供可及性替代（排序可上下移動）。
 - IV. Testing & CI Gates：保留 HTML 驗證、Lighthouse、連結檢查與資產預算；本輪著重讓現有測試綠燈。
 - V. Versioning, URLs, Observability：不破壞現有公開 URL；寫入操作記錄於稽核；快取失效具可觀測性。
+ - VI. Browser/SSR Safety & Optional Chaining Ban：現有 ESLint `no-restricted-syntax` 與 grep 規則已阻擋 optional call/method；本功能新增程式碼需遵循無 top-level side effects（動態載入第三方、RSC 邊界隔離）。
 
 結論：存在「私有動態能力」對 Static-First 的例外，但僅限 Admin/API 域，且不影響公開站點的靜態輸出。記載於 Complexity Tracking 以示化解方案與邊界；狀態：可接受並通過初始檢查（附帶說明）。
 
@@ -118,7 +131,7 @@ specs/003-admin-years-collections/
 - [x] Complexity deviations documented
 
 ---
-*Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*
+*Based on Constitution v1.1.0 - See `.specify/memory/constitution.md`*
 
 
 # Implementation Plan: [FEATURE]
@@ -330,4 +343,4 @@ ios/ or android/
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*
+*Based on Constitution v1.1.0 - See `.specify/memory/constitution.md`*

@@ -75,7 +75,9 @@ export function requireAuth(request: NextRequest): CloudflareAccessUser {
 }
 
 // Admin email whitelist for additional security
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(',') || [];
+const ADMIN_EMAILS = typeof process !== 'undefined' && process.env && typeof process.env.ADMIN_EMAILS === 'string'
+  ? (process.env.ADMIN_EMAILS as string).split(',')
+  : [];
 
 export function isAuthorizedAdmin(email: string): boolean {
   if (ADMIN_EMAILS.length === 0) {

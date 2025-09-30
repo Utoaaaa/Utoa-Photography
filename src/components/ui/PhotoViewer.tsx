@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import Head from 'next/head';
 import Image from 'next/image';
-import { cloudflareImageLoader, getImageUrl, prefetchImage } from '@/lib/images';
+import { cloudflareImageLoader, getImageUrl, prefetchImage, isCloudflareConfigured } from '@/lib/images';
 import { DotNavigation } from './DotNavigation';
 
 type Asset = {
@@ -220,6 +221,9 @@ export function PhotoViewer({
   
   // T027: Single-screen viewer render
   if (singleScreen) {
+    const cfConfigured = isCloudflareConfigured();
+    const imgSrc = cfConfigured ? currentPhoto.id : '/placeholder.svg';
+
     return (
       <div 
         className="h-screen w-full relative overflow-hidden bg-black"
@@ -230,6 +234,18 @@ export function PhotoViewer({
         aria-label={`${collectionTitle} photo viewer`}
         aria-live="polite"
       >
+        {/* Preload adjacent images for smoother navigation */}
+        <Head>
+          {preloadImages.slice(0, 3).map((p) => (
+            <link
+              // Use preload only when Cloudflare is configured
+              key={p.id}
+              rel="preload"
+              as="image"
+              href={cfConfigured ? getImageUrl(p.id, 'large') : undefined}
+            />
+          ))}
+        </Head>
         <div data-testid="photo-viewer-single-screen" className="hidden" />
         {/* Main photo container */}
         <div 
@@ -237,17 +253,31 @@ export function PhotoViewer({
             isTransitioning && !prefersReducedMotion ? 'opacity-50' : 'opacity-100'
           }`}
         >
-          <div className="relative max-w-full max-h-full" data-testid="current-photo">
-            <Image
-              loader={cloudflareImageLoader}
-              src={currentPhoto.id}
-              alt={currentPhoto.alt}
-              width={currentPhoto.width}
-              height={currentPhoto.height}
-              className="max-w-full max-h-screen object-contain"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
-              priority={activePhotoIndex === 0}
-            />
+          <div className="relative max-w-full max-h-full" data-testid="current-photo" id={`photo-${activePhotoIndex + 1}`}>
+            {cfConfigured ? (
+              <Image
+                loader={cloudflareImageLoader}
+                src={currentPhoto.id}
+                alt={currentPhoto.alt}
+                width={currentPhoto.width}
+                height={currentPhoto.height}
+                className="max-w-full max-h-screen object-contain"
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
+                priority={activePhotoIndex === 0}
+                fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
+              />
+            ) : (
+              <img
+                src={imgSrc}
+                alt={currentPhoto.alt || 'placeholder image'}
+                width={currentPhoto.width}
+                height={currentPhoto.height}
+                className="max-w-full max-h-screen object-contain"
+                loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchPriority={activePhotoIndex === 0 ? 'high' as const : 'low' as const}
+              />
+            )}
           </div>
         </div>
 
@@ -314,17 +344,31 @@ export function PhotoViewer({
           >
             <div className="relative">
               {/* Photo */}
-              <div className="relative overflow-hidden rounded bg-gray-100" data-testid="current-photo">
-                <Image
-                  loader={cloudflareImageLoader}
-                  src={photo.id}
-                  alt={photo.alt}
-                  width={photo.width}
-                  height={photo.height}
-                  className="w-full h-auto object-contain"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 85vw, 1200px"
-                  priority={index === 0}
-                />
+              <div className="relative overflow-hidden rounded bg-gray-100" data-testid="current-photo" id={`photo-${index + 1}`}>
+                {isCloudflareConfigured() ? (
+                  <Image
+                    loader={cloudflareImageLoader}
+                    src={photo.id}
+                    alt={photo.alt}
+                    width={photo.width}
+                    height={photo.height}
+                    className="w-full h-auto object-contain"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 85vw, 1200px"
+                    priority={index === 0}
+                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                  />
+                ) : (
+                  <img
+                    src={'/placeholder.svg'}
+                    alt={photo.alt || 'placeholder image'}
+                    width={photo.width}
+                    height={photo.height}
+                    className="w-full h-auto object-contain"
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    fetchPriority={index === 0 ? 'high' : 'low'}
+                  />
+                )}
               </div>
               
               {/* Text content */}

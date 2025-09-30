@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, logAudit } from '@/lib/db';
+import { parseRequestJsonSafe } from '@/lib/utils';
+import { getYears } from '@/lib/queries/years';
+import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 type YearStatus = 'draft' | 'published';
 
@@ -25,19 +31,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build where clause
-    const where: any = {};
-    if (status && status !== 'all') {
-      where.status = status as YearStatus;
-    }
+    const years = await getYears({ status: (status as any) ?? 'all', order: order as 'asc' | 'desc' });
 
-    // Query years
-    const years = await prisma.year.findMany({
-      where,
-      orderBy: {
-        order_index: order as 'asc' | 'desc',
-      },
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[GET /api/years]', { status: status ?? 'all', order, count: Array.isArray(years) ? years.length : 0, labels: (years as any[])?.slice(0, 5)?.map((y: any) => y.label) });
+    }
 
     return NextResponse.json(years);
   } catch (error) {
@@ -53,6 +51,9 @@ export async function POST(request: NextRequest) {
   try {
     // Auth required unless bypass enabled for tests
     const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[POST /api/years] bypass:', bypass, 'env:', { NODE_ENV: process.env.NODE_ENV });
+    }
     if (!bypass) {
       const auth = request.headers.get('authorization');
       if (!auth || !auth.startsWith('Bearer ')) {
@@ -70,7 +71,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[POST /api/years] body:', body);
+    }
     const { label, order_index, status = 'draft' } = body;
 
     // Validate required fields
@@ -107,7 +111,10 @@ export async function POST(request: NextRequest) {
         status: status as YearStatus,
       },
     });
-
+    try {
+      await invalidateCache([CACHE_TAGS.YEARS]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'create', entity: `year/${year.id}`, payload: { label: year.label } });
     return NextResponse.json(year, { status: 201 });
   } catch (error) {
     console.error('Error creating year:', error);

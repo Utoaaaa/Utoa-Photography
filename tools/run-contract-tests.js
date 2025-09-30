@@ -9,8 +9,10 @@ async function waitForServer(url, timeoutMs = 20000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const res = await fetch(`${url}/api/years`, { method: 'GET' });
-      if (res.ok || res.status === 200) return true;
+      // Prefer a public route for readiness to avoid auth (401) false negatives.
+      const res = await fetch(`${url}/`, { method: 'GET' });
+      // Any HTTP response means the server is up (200/3xx/4xx/5xx all acceptable for readiness)
+      if (res && typeof res.status === 'number') return true;
     } catch (_) {}
     await new Promise((r) => setTimeout(r, 500));
   }
@@ -84,6 +86,7 @@ function runJest(files, extraEnv = {}) {
   // Phase 2: bypass enabled for suites that create data without auth
   const phase2 = [
     'tests/contract/test_years_get.test.ts',
+    'tests/contract/test_years_delete.ts',
     'tests/contract/test_assets_post.ts',
     'tests/contract/test_collections_post.ts',
     'tests/contract/test_collection_assets.ts',

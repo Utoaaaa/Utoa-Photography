@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, logAudit } from '@/lib/db';
+import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
+
+export const dynamic = 'force-dynamic';
 
 type CollectionStatus = 'draft' | 'published' | 'all';
-
-function isUUID(v: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
-}
 
 export async function GET(
   request: NextRequest,
@@ -13,6 +12,9 @@ export async function GET(
 ) {
   try {
     const { year_id } = await params;
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[GET /years/:id/collections] year_id:', year_id, 'url:', request.url);
+    }
     const { searchParams } = new URL(request.url);
     const status = (searchParams.get('status') || 'all') as CollectionStatus;
 
@@ -25,7 +27,7 @@ export async function GET(
       return NextResponse.json({ error: 'Not found', message: 'Year not found' }, { status: 404 });
     }
 
-    const where: any = { year_id };
+  const where: { year_id: string; status?: 'draft' | 'published' } = { year_id };
     if (status !== 'all') where.status = status;
 
     const collections = await prisma.collection.findMany({
@@ -33,7 +35,7 @@ export async function GET(
       orderBy: { order_index: 'asc' },
     });
 
-    return NextResponse.json(collections);
+  return NextResponse.json(collections);
   } catch (error) {
     console.error('Error listing collections by year:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -46,11 +48,20 @@ export async function POST(
 ) {
   try {
     const { year_id } = await params;
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[POST /years/:id/collections] year_id:', year_id);
+    }
 
     // Auth (bypass for tests)
     // No auth required for contract tests
-
-    const body = await request.json();
+    // Safe parse JSON to avoid throwing SyntaxError on empty body
+    let body: any = {};
+    try {
+      const txt = await request.text();
+      body = txt ? JSON.parse(txt) : {};
+    } catch {
+      body = {};
+    }
     const { slug, title, summary, status = 'draft', order_index, cover_asset_id } = body;
 
     if (!slug) {
@@ -80,11 +91,20 @@ export async function POST(
     if (status === 'published') data.published_at = new Date();
 
     const created = await prisma.collection.create({ data });
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[POST /years/:id/collections] created collection:', created?.id, created?.slug);
+    }
+    try {
+      await invalidateCache([
+        CACHE_TAGS.COLLECTIONS,
+        CACHE_TAGS.yearCollections(year_id),
+        CACHE_TAGS.year(year_id),
+      ]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'create', entity: `collection/${created.id}`, payload: { slug: created.slug, year_id } });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-    }
+    // Do not leak low-level JSON parse errors; respond gracefully
     if (error instanceof Error && error.message.includes('Unique constraint')) {
       return NextResponse.json({ error: 'conflict', message: 'duplicate slug for this year' }, { status: 409 });
     }

@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, logAudit } from '@/lib/db';
+import { parseRequestJsonSafe } from '@/lib/utils';
+import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 
 type CollectionStatus = 'draft' | 'published';
+
+export const dynamic = 'force-dynamic';
+
+function isUUID(v: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
 
 export async function GET(
   request: NextRequest,
@@ -11,6 +19,9 @@ export async function GET(
     const { collection_id } = await params;
     const { searchParams } = new URL(request.url);
     const include_assets = searchParams.get('include_assets') === 'true';
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[GET /api/collections/:id] param:', collection_id, 'include_assets:', include_assets);
+    }
 
     // Contract-specific: 'invalid-uuid' -> 400, 'non-existent-id' -> 404
     if (collection_id === 'invalid-uuid') {
@@ -21,7 +32,11 @@ export async function GET(
     }
 
     // Build include clause
-    const include: any = {
+    const include: {
+      year: true;
+      _count: { select: { collection_assets: true } };
+      collection_assets?: { include: { asset: true }; orderBy: { order_index: 'asc' } };
+    } = {
       year: true,
       _count: { select: { collection_assets: true } },
     };
@@ -33,27 +48,34 @@ export async function GET(
       };
     }
 
-    const collection = await prisma.collection.findUnique({
-      where: { id: collection_id },
-      include,
-    });
+  let collection: unknown = null;
+    if (isUUID(collection_id)) {
+      collection = await prisma.collection.findUnique({ where: { id: collection_id }, include });
+    } else {
+      // Fallback: allow looking up by slug if a UUID wasn't provided
+      collection = await prisma.collection.findFirst({ where: { slug: collection_id }, include, orderBy: { created_at: 'desc' } });
+    }
 
     if (!collection) {
       return NextResponse.json({ error: 'Not found', message: 'Collection not found' }, { status: 404 });
     }
 
     // Transform response to match API contract
-    let response: any = collection;
+  let response: unknown = collection;
 
-    if (include_assets && collection.collection_assets) {
+  if (include_assets && (collection as any)?.collection_assets) {
       response = {
         ...collection,
-        assets: collection.collection_assets.map((ca: any) => ({
+        assets: (collection as any).collection_assets.map((ca: any) => ({
           ...ca.asset,
           order_index: ca.order_index,
         })),
       };
-      delete response.collection_assets;
+      delete (response as any).collection_assets;
+      if (process.env.NODE_ENV !== 'production') {
+        const respAny = response as any;
+        console.log('[GET /collections/:id?include_assets=true] assets:', respAny.assets?.length ?? 0);
+      }
     }
 
     return NextResponse.json(response);
@@ -72,7 +94,7 @@ export async function PUT(
 ) {
   try {
     const { collection_id } = await params;
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -118,6 +140,15 @@ export async function PUT(
         year: true,
       },
     });
+
+    try {
+      await invalidateCache([
+        CACHE_TAGS.COLLECTIONS,
+        CACHE_TAGS.collection(collection_id),
+        CACHE_TAGS.yearCollections(collection.year_id),
+      ]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'edit', entity: `collection/${collection_id}`, payload: updateData });
 
     return NextResponse.json(collection);
   } catch (error) {
@@ -166,6 +197,14 @@ export async function DELETE(
     await prisma.collection.delete({
       where: { id: collection_id },
     });
+
+    try {
+      await invalidateCache([
+        CACHE_TAGS.COLLECTIONS,
+        CACHE_TAGS.collection(collection_id),
+      ]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'delete', entity: `collection/${collection_id}` });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

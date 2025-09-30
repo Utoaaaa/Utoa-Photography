@@ -7,6 +7,24 @@
 			"command": "npx prisma migrate dev --name auto_update --skip-generate --create-only",
 			"isBackground": false,
 			"group": "build"
+		},
+		{
+			"label": "Run unit and integration tests",
+			"type": "shell",
+			"command": "npm run test:unit && npm run test:integration",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run unit tests a11y",
+			"type": "shell",
+			"command": "npm run test:unit",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
 		}
 	]
 }

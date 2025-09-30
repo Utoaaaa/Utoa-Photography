@@ -36,7 +36,7 @@ describe('PhotoViewer', () => {
     );
 
     expect(screen.getByTestId('photo-viewer-single-screen')).toBeInTheDocument();
-    const dots = screen.getAllByTestId('dot-button');
+    const dots = screen.getAllByTestId('nav-dot');
     fireEvent.click(dots[2]);
     // Use the aria-live status to assert the active index
     expect(

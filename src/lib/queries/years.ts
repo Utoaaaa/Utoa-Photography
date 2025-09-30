@@ -1,8 +1,12 @@
 import { prisma } from '@/lib/db';
-import { unstable_cache } from 'next/cache';
-import { CACHE_TAGS } from '@/lib/cache';
 
-export const getPublishedYears = unstable_cache(
+// Simple wrapper that returns the original function without importing next/cache.
+// In production Next runtime, we can later enhance to use unstable_cache via a separate adapter.
+function passthrough<TArgs extends unknown[], TReturn>(fn: (...args: TArgs) => Promise<TReturn> | TReturn) {
+  return (async (...args: TArgs) => await fn(...args));
+}
+
+export const getPublishedYears = passthrough(
   async () => {
     try {
       const years = await prisma.year.findMany({
@@ -10,7 +14,7 @@ export const getPublishedYears = unstable_cache(
           status: 'published'
         },
         orderBy: {
-          order_index: 'desc'
+          order_index: 'asc'
         }
       });
       
@@ -20,14 +24,21 @@ export const getPublishedYears = unstable_cache(
       return [];
     }
   },
-  ['published-years'],
-  {
-    tags: [CACHE_TAGS.YEARS],
-    revalidate: 3600, // 1 hour
-  }
 );
 
-export const getYearById = unstable_cache(
+export async function getYears(params: { status?: 'draft' | 'published' | 'all'; order?: 'asc' | 'desc' } = {}) {
+  const { status, order = 'desc' } = params;
+  const where: { status?: 'draft' | 'published' } = {};
+  if (status && status !== 'all') where.status = status;
+  try {
+    return await prisma.year.findMany({ where, orderBy: { order_index: order } });
+  } catch (error) {
+    console.error('Error fetching years:', error);
+    return [] as const;
+  }
+}
+
+export const getYearById = passthrough(
   async (id: string) => {
     try {
       const year = await prisma.year.findUnique({
@@ -40,14 +51,9 @@ export const getYearById = unstable_cache(
       return null;
     }
   },
-  ['year-by-id'],
-  {
-    tags: [CACHE_TAGS.YEARS],
-    revalidate: 3600,
-  }
 );
 
-export const getYearByLabel = unstable_cache(
+export const getYearByLabel = passthrough(
   async (label: string) => {
     try {
       const year = await prisma.year.findFirst({
@@ -63,18 +69,13 @@ export const getYearByLabel = unstable_cache(
       return null;
     }
   },
-  ['year-by-label'],
-  {
-    tags: [CACHE_TAGS.YEARS],
-    revalidate: 3600,
-  }
 );
 
 export async function getAllYears() {
   try {
     const years = await prisma.year.findMany({
       orderBy: {
-        order_index: 'desc'
+        order_index: 'asc'
       }
     });
     
@@ -94,5 +95,18 @@ export async function getYearByLabelDirect(label: string) {
   } catch (error) {
     console.error('Error (direct) fetching year by label:', error);
     return null;
+  }
+}
+
+// Non-cached: fetch published years directly (SSR-safe, no unstable_cache)
+export async function getPublishedYearsDirect() {
+  try {
+    return await prisma.year.findMany({
+      where: { status: 'published' },
+      orderBy: { order_index: 'asc' },
+    });
+  } catch (error) {
+    console.error('Error (direct) fetching published years:', error);
+    return [] as const;
   }
 }

@@ -112,7 +112,7 @@ export default function ClientCollectionViewer({ yearLabel, collectionSlug }: Pr
   })();
 
   return (
-    <div data-testid="photo-viewer">
+  <div data-testid="photo-viewer-container">
       <header className="border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6">

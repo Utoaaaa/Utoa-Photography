@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
 import { validateData, ValidationRules } from '@/lib/validation';
 import { z } from 'zod';
+import { parseRequestJsonSafe } from '@/lib/utils';
 
 // SEO update schema
 const seoSchema = z.object({
@@ -134,7 +135,7 @@ export async function PUT(
     ]);
 
     // Parse request body
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
     const validatedData = seoSchema.parse(body);
 
     // Check if collection exists

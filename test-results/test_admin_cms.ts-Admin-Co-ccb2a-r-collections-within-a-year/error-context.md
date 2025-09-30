@@ -1,0 +1,109 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - heading "Collections" [level=1] [ref=e4]
+    - status [ref=e5]
+    - generic [ref=e6]:
+      - generic [ref=e7]: Filter by year
+      - combobox "Filter by year" [ref=e8]:
+        - option "Test Year 2024" [selected]
+        - option "2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+        - option "Test Year 2024"
+      - button "Create Collection" [ref=e9]
+    - list [ref=e10]:
+      - listitem [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - text: First Collection
+            - generic [ref=e14]: (published)
+          - generic "reorder controls" [ref=e15]:
+            - button "↑" [disabled] [ref=e16]
+            - button "↓" [active] [ref=e17]
+        - generic [ref=e18]:
+          - button "Edit" [ref=e19]
+          - link "Manage Photos" [ref=e20] [cursor=pointer]:
+            - /url: /admin/collections/b8b3806b-9536-4448-8209-be26135fa8ab
+          - button "Delete" [ref=e21]
+      - listitem [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - text: Updated Admin Collection
+            - generic [ref=e25]: (published)
+          - generic "reorder controls" [ref=e26]:
+            - button "↑" [ref=e27]
+            - button "↓" [ref=e28]
+        - generic [ref=e29]:
+          - button "Edit" [ref=e30]
+          - link "Manage Photos" [ref=e31] [cursor=pointer]:
+            - /url: /admin/collections/8e69bac2-417b-4e75-ac9a-60a914badd7b
+          - button "Delete" [ref=e32]
+      - listitem [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - text: Second Collection
+            - generic [ref=e36]: (published)
+          - generic "reorder controls" [ref=e37]:
+            - button "↑" [ref=e38]
+            - button "↓" [ref=e39]
+        - generic [ref=e40]:
+          - button "Edit" [ref=e41]
+          - link "Manage Photos" [ref=e42] [cursor=pointer]:
+            - /url: /admin/collections/10ab8c4a-9186-4475-9762-126124e71710
+          - button "Delete" [ref=e43]
+      - listitem [ref=e44]:
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - text: Third Collection
+            - generic [ref=e47]: (draft)
+          - generic "reorder controls" [ref=e48]:
+            - button "↑" [ref=e49]
+            - button "↓" [disabled] [ref=e50]
+        - generic [ref=e51]:
+          - button "Edit" [ref=e52]
+          - link "Manage Photos" [ref=e53] [cursor=pointer]:
+            - /url: /admin/collections/f8521de7-09fb-4099-9cdd-ed069b75154c
+          - button "Delete" [ref=e54]
+  - button "Open Next.js Dev Tools" [ref=e60] [cursor=pointer]:
+    - img [ref=e61] [cursor=pointer]
+  - alert [ref=e64]
+```

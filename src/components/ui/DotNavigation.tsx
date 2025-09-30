@@ -85,7 +85,7 @@ export function DotNavigation({
             : displayNumber;
           
           return (
-            <div key={dotIndex} data-testid="dot-button" onClick={() => onDotClick(dotIndex)}>
+            <div key={dotIndex}>
               <button
                 onClick={() => onDotClick(dotIndex)}
                 onKeyDown={(e) => handleKeyDown(e, dotIndex)}
@@ -133,6 +133,18 @@ export function DotNavigation({
           );
         })}
       </div>
+      <noscript>
+        <div className={`mt-4 text-xs ${singleScreen ? 'text-white' : 'text-gray-600'}`}>
+          快速導覽：
+          <ul>
+            {visibleDots.map((dotIndex) => (
+              <li key={`ns-${dotIndex}`}>
+                <a href={`#photo-${dotIndex + 1}`}>{dotIndex + 1}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </noscript>
       
       {/* Progress indicator with enhanced ARIA support */}
       <div 

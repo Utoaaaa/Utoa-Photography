@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseRequestJsonSafe } from '@/lib/utils';
 
 const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const CLOUDFLARE_IMAGES_API_TOKEN = process.env.CLOUDFLARE_IMAGES_API_TOKEN;
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
     const { filename, content_type } = body;
 
     // Validate required fields

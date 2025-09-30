@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getCollectionsByYear } from '@/lib/queries/collections';
-import { useStaggerAnimation } from '@/lib/animations';
 
 type Collection = Awaited<ReturnType<typeof getCollectionsByYear>>[0];
 
@@ -13,20 +12,12 @@ interface CollectionListProps {
 }
 
 export function CollectionList({ collections, yearLabel }: CollectionListProps) {
-  const gridRef = useStaggerAnimation({
-    stagger: 0.15,
-    delay: 0.3,
-    duration: 0.8,
-    y: 40
-  });
-
   if (collections.length === 0) {
     return null;
   }
 
   return (
     <div 
-      ref={gridRef}
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" 
       data-testid="collections-grid"
     >
@@ -40,10 +31,10 @@ export function CollectionList({ collections, yearLabel }: CollectionListProps) 
           <article className="bg-white border border-gray-200 hover:border-gray-400 transition-all duration-300 group-hover:shadow-lg rounded overflow-hidden">
             {/* Cover image */}
             <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-              {collection.cover_asset ? (
+              {collection.cover_asset_id ? (
                 <Image
-                  src={`https://imagedelivery.net/${process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH}/${collection.cover_asset.id}/cover`}
-                  alt={collection.cover_asset.alt}
+                  src={`https://imagedelivery.net/${process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH}/${collection.cover_asset_id}/cover`}
+                  alt={collection.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"

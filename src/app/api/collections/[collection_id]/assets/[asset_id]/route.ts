@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, logAudit } from '@/lib/db';
+import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
+
+export const dynamic = 'force-dynamic';
 
 export async function DELETE(
   request: NextRequest,
@@ -41,7 +44,13 @@ export async function DELETE(
     await prisma.collectionAsset.delete({
       where: { collection_id_asset_id: { collection_id, asset_id } },
     });
-
+    try {
+      await invalidateCache([
+        CACHE_TAGS.collectionAssets(collection_id),
+        CACHE_TAGS.collection(collection_id),
+      ]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'unlink', entity: `collection/${collection_id}`, payload: { asset_id } });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error unlinking asset from collection:', error);

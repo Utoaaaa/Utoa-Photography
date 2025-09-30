@@ -115,22 +115,22 @@ export function CollectionPreview({
     return [
       { 
         label: '作品集標題', 
-        passed: !!collection.title?.trim(),
+        passed: typeof collection.title === 'string' && collection.title.trim().length > 0,
         value: collection.title 
       },
       { 
         label: '作品集描述', 
-        passed: !!collection.description?.trim(),
+        passed: typeof collection.description === 'string' && collection.description.trim().length > 0,
         value: collection.description 
       },
       { 
         label: 'SEO 標題', 
-        passed: !!collection.seoTitle?.trim(),
+        passed: typeof collection.seoTitle === 'string' && collection.seoTitle.trim().length > 0,
         value: collection.seoTitle 
       },
       { 
         label: 'SEO 描述', 
-        passed: !!collection.seoDescription?.trim(),
+        passed: typeof collection.seoDescription === 'string' && collection.seoDescription.trim().length > 0,
         value: collection.seoDescription 
       },
       { 

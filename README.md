@@ -11,6 +11,7 @@
 本專案包含一個「後台發布＋首頁/作品集視覺更新」功能模組。快速上手與流程請見：
 
 - `specs/002-title-publishing-why/quickstart.md`
+- `specs/003-admin-years-collections/quickstart.md`
 
 ## Private Tool Separation
 

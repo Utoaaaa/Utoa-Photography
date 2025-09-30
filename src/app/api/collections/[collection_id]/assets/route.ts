@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, logAudit } from '@/lib/db';
+import { parseRequestJsonSafe } from '@/lib/utils';
+import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 // No external schema lib; perform minimal manual validation
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: NextRequest,
@@ -24,7 +28,10 @@ export async function POST(
       return NextResponse.json({ error: 'Not found', message: 'Collection not found' }, { status: 404 });
     }
 
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[POST /collections/:id/assets] incoming body:', body);
+    }
     const asset_ids = Array.isArray(body?.asset_ids) ? body.asset_ids : undefined;
     const insert_at = typeof body?.insert_at === 'string' ? body.insert_at : undefined;
     if (!asset_ids || asset_ids.length === 0 || !asset_ids.every((v: any) => typeof v === 'string')) {
@@ -90,6 +97,16 @@ export async function POST(
 
     // If all were duplicates, treat as idempotent success (200)
     const status = payload.length === 0 ? 200 : 201;
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[POST /collections/:id/assets] created count:', payload.length, 'status:', status, 'ids:', asset_ids);
+    }
+    try {
+      await invalidateCache([
+        CACHE_TAGS.collectionAssets(collection_id),
+        CACHE_TAGS.collection(collection_id),
+      ]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'link', entity: `collection/${collection_id}`, payload: { asset_ids } });
     return NextResponse.json(payload, { status });
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -112,7 +129,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid ID format', message: 'Collection ID must be a valid UUID' }, { status: 400 });
     }
 
-    const body = await request.json();
+  const body = await parseRequestJsonSafe(request, {} as any);
     const reorder = Array.isArray(body?.reorder) ? body.reorder : undefined;
     if (!reorder || reorder.length === 0) {
       return NextResponse.json({ error: 'validation failed', message: 'reorder array is required' }, { status: 400 });
@@ -147,7 +164,16 @@ export async function PUT(
         });
       }
     });
-
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[PUT /collections/:id/assets] reorder size:', reorder.length);
+    }
+    try {
+      await invalidateCache([
+        CACHE_TAGS.collectionAssets(collection_id),
+        CACHE_TAGS.collection(collection_id),
+      ]);
+    } catch {}
+    await logAudit({ who: 'system', action: 'sort', entity: `collection/${collection_id}`, payload: { reorder } });
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     if (error instanceof SyntaxError) {

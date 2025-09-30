@@ -29,7 +29,9 @@ describe('DELETE /api/years/{id} Contract Tests', () => {
   });
 
   test('DELETE /api/years/{id} - should return 404 for non-existent year', async () => {
-    const response = await fetch(`${API_BASE}/years/non-existent-id`, {
+    // Use a valid UUID format that is extremely unlikely to exist
+    const nonExistentId = '00000000-0000-0000-0000-000000000000';
+    const response = await fetch(`${API_BASE}/years/${nonExistentId}`, {
       method: 'DELETE'
     });
 

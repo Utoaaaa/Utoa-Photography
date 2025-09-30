@@ -1,25 +1,27 @@
 <!--
 Sync Impact Report
-- Version change: N/A → 1.0.0
+- Version change: 1.0.0 → 1.1.0
 - Modified principles:
-	• I. Static-First Delivery (NON-NEGOTIABLE)
-	• II. Accessibility & Performance Budgets
-	• III. Progressive Enhancement & No-JS Baseline
-	• IV. Testing & CI Gates
-	• V. Versioning, URLs, and Observability
-- Added sections:
-	• Technical & Security Constraints
-	• Development Workflow & Quality Gates
+	• II. Accessibility & Performance Budgets (clarified budgets wording)
+	• IV. Testing & CI Gates (added mechanized guards reference)
+- Added sections/principles:
+	• VI. Browser/SSR Safety & Optional Chaining Ban (new core principle)
+	• Technical & Security Constraints: zero top-level side effects, dynamic 3P loading
 - Removed sections: None
 - Templates requiring updates:
-	• .specify/templates/plan-template.md → ✅ aligned (Constitution Check gates map to budgets/static-only rule)
-	• .specify/templates/spec-template.md → ✅ aligned (testable requirements focus)
-	• .specify/templates/tasks-template.md → ✅ aligned (TDD and categories unchanged)
+	• .specify/templates/plan-template.md → ✅ aligned (Constitution Check pulls new gates)
+	• .specify/templates/spec-template.md → ✅ aligned (no change required)
+	• .specify/templates/tasks-template.md → ✅ aligned (no change required)
 	• .specify/templates/agent-file-template.md → ✅ aligned (no agent-specific conflicts)
-	• README.md → ⚠ pending (add quickstart + principles summary)
+	• README.md → ⚠ pending (summarize coding standards + CI commands)
+- Repo sync actions in this change:
+	• eslint.config.mjs → ✅ add no-restricted-syntax to forbid optional call
+	• package.json → ✅ add CI grep checks and quick scan script
+	• src/lib/utils.ts → ✅ add isBrowser(), shouldReduceMotion()
+	• src/lib/gsap-loader.ts → ✅ add dynamic loader with single registration
 - Follow-up TODOs:
 	• TODO(RATIFICATION_DATE): Provide original adoption date
-	• ⚠ Create CI configs later: Lighthouse CI, HTML validation, link checker
+	• Consider adding a pre-push hook to run CI grep locally
 -->
 
 # Utoa Photography Constitution
@@ -63,6 +65,7 @@ Every pull request MUST pass automated quality gates before merge.
 - Lighthouse CI MUST enforce the budgets and thresholds defined above.
 - Image and asset lints MUST fail the build if budgets are exceeded (by type).
 - Preview deploys per PR MUST be produced for reviewer validation.
+- Mechanized guards MUST enforce coding standards (see Development Workflow).
 
 ### V. Versioning, URLs, and Observability
 Changes MUST be tracked and rollbacks MUST be straightforward.
@@ -72,6 +75,29 @@ Changes MUST be tracked and rollbacks MUST be straightforward.
 	usable 404 page.
 - Releases MUST be tagged (`vX.Y.Z`) and linked to the deploy. Build logs and
 	artifacts SHOULD be retained for auditability.
+
+### VI. Browser/SSR Safety & Optional Chaining Ban
+Runtime safety across RSC/SSR and browsers is NON-NEGOTIABLE.
+- Optional calls are FORBIDDEN: `fn?.()`, `obj?.method(...)`. Use explicit guards:
+	- `if (typeof fn === 'function') fn(a, b)`
+	- `const m = obj && (obj as any).method; if (typeof m === 'function') m.call(obj, a)`
+- Cleanup MUST also guard: `if (ctx && typeof ctx.revert === 'function') ctx.revert()`
+	and `if (typeof cleanup === 'function') cleanup()`.
+- Zero top-level side effects: do NOT touch `window`/`document`/`matchMedia`/
+	`ResizeObserver` at module scope; no third-party init or event binding at
+	module scope.
+- Browser-only logic MUST run inside `useEffect` or after dynamic load.
+- Provide guards:
+	- `const isBrowser = () => typeof window !== 'undefined'`
+	- `function shouldReduceMotion() { if (!isBrowser()) return false; const mm = window.matchMedia; if (typeof mm !== 'function') return false; const q = mm('(prefers-reduced-motion: reduce)'); return !!(q && q.matches === true); }`
+- Third-party modules MUST be dynamically loaded with loose resolution and
+	register once (e.g., GSAP `registerPlugin` only once) using runtime
+	capability checks.
+- Do NOT destructure DOM methods then call; e.g., use `window.matchMedia(...)`
+	only after checking `typeof window.matchMedia === 'function'`.
+- RSC/SSR boundaries: Client components place effects only in `useEffect`.
+	Server components MUST NOT import files with top-level side effects (e.g.,
+	animation loaders or direct browser API access).
 
 ## Technical & Security Constraints
 
@@ -89,13 +115,23 @@ Changes MUST be tracked and rollbacks MUST be straightforward.
 	third-party services; API keys MUST NOT be embedded as secrets.
 - Assets: Images MUST be optimized, responsive, and sized for targets; fonts
 	SHOULD use modern formats with `font-display: swap`.
+- Third-party dynamic loading: perform imports inside guarded functions; ensure
+	single-registration patterns and runtime capability checks.
 
 ## Development Workflow & Quality Gates
 
 - Branching & review: Feature branches with at least one reviewer approval.
 - Pre-commit: Formatting and linting configured per repository (HTML/CSS/JS).
+- Lint guards: ESLint must forbid optional calls via `no-restricted-syntax`:
+	- `CallExpression[optional=true]` → error "禁用可選呼叫 ?.()（會被轉成 .call()）"
+	- `OptionalCallExpression` → error "禁用可選呼叫 ?.()"
 - CI steps (required): build → HTML validation → link check → Lighthouse CI →
-	asset budget checks → preview deploy. Any failure blocks merge.
+	asset budget checks → preview deploy → optional-call grep checks. Any failure
+	blocks merge.
+- CI grep checks (blocking):
+	- `git grep -nE "\?\.\(" -- src && echo "Found optional call, fail" && exit 1`
+	- `git grep -nE "\?\.[a-zA-Z_$][\w$]*\s*\(" -- src && echo "Found optional method call, fail" && exit 1`
+- Startup quick scan (diagnostic): `rg -n "\.call\(" .next/static/chunks/app --no-ignore`.
 - Release: Tag `vX.Y.Z`, update changelog summary, store Lighthouse results and
 	deploy URL. Ensure rollback to last successful release is one click/command.
 
@@ -107,54 +143,4 @@ stability and redirects), proposed version bump, and any migration steps.
 Compliance MUST be verified in PR reviews, and violations MUST include a
 documented justification and follow-up plan.
 
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE) | **Last Amended**: 2025-09-19
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
-
-## Core Principles
-
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
-
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
-
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
-
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
-
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
-
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
-
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
-
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
-
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.1.0 | **Ratified**: TODO(RATIFICATION_DATE) | **Last Amended**: 2025-09-24

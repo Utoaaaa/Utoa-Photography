@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import ClientProviders from './ClientProviders';
 
 export const metadata: Metadata = {
   title: 'UTOA Photography',
@@ -11,5 +10,5 @@ export default function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <ClientProviders>{children}</ClientProviders>;
+  return children;
 }

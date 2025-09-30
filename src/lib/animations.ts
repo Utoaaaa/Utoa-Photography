@@ -1,25 +1,20 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Register GSAP plugins
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+// Completely disable animations to avoid any GSAP-related runtime errors
+// This is a temporary solution to ensure the page loads properly
 
 export function useGSAPAnimation() {
   const elementRef = useRef<HTMLDivElement>(null);
   
   return {
     elementRef,
-    gsap,
-    ScrollTrigger,
+    isReady: false,
   };
 }
 
-export function useFadeInAnimation(options?: {
+export function useFadeInAnimation(_options?: {
   delay?: number;
   duration?: number;
   y?: number;
@@ -31,57 +26,15 @@ export function useFadeInAnimation(options?: {
     const element = elementRef.current;
     if (!element) return;
     
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (prefersReducedMotion) {
-      return;
-    }
-    
-    const {
-      delay = 0,
-      duration = 0.8,
-      y = 30,
-      trigger = true
-    } = options || {};
-    
-    // Set initial state
-    gsap.set(element, {
-      opacity: 0,
-      y: y,
-    });
-    
-    if (trigger) {
-      // Animate when element enters viewport
-      gsap.to(element, {
-        opacity: 1,
-        y: 0,
-        duration,
-        delay,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: element,
-          start: 'top 80%',
-          end: 'bottom 20%',
-          toggleActions: 'play none none reverse',
-        },
-      });
-    } else {
-      // Animate immediately
-      gsap.to(element, {
-        opacity: 1,
-        y: 0,
-        duration,
-        delay,
-        ease: 'power2.out',
-      });
-    }
-  }, [options]);
+    // Simply make element visible immediately
+    element.style.opacity = '1';
+    element.style.transform = 'translateY(0)';
+  }, []);
   
   return elementRef;
 }
 
-export function useStaggerAnimation(options?: {
+export function useStaggerAnimation(_options?: {
   stagger?: number;
   delay?: number;
   duration?: number;
@@ -93,44 +46,16 @@ export function useStaggerAnimation(options?: {
     const container = containerRef.current;
     if (!container) return;
     
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (prefersReducedMotion) {
-      return;
-    }
-    
-    const {
-      stagger = 0.1,
-      delay = 0,
-      duration = 0.6,
-      y = 20
-    } = options || {};
-    
+    // Simply make all children visible immediately
     const children = container.children;
-    
-    // Set initial state for all children
-    gsap.set(children, {
-      opacity: 0,
-      y: y,
-    });
-    
-    // Animate children with stagger
-    gsap.to(children, {
-      opacity: 1,
-      y: 0,
-      duration,
-      delay,
-      stagger,
-      ease: 'power2.out',
-      scrollTrigger: {
-        trigger: container,
-        start: 'top 80%',
-        end: 'bottom 20%',
-        toggleActions: 'play none none reverse',
-      },
-    });
-  }, [options]);
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (child instanceof HTMLElement) {
+        child.style.opacity = '1';
+        child.style.transform = 'translateY(0)';
+      }
+    }
+  }, []);
   
   return containerRef;
 }
@@ -138,41 +63,6 @@ export function useStaggerAnimation(options?: {
 export function useHoverAnimation() {
   const elementRef = useRef<HTMLDivElement>(null);
   
-  useEffect(() => {
-    const element = elementRef.current;
-    if (!element) return;
-    
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (prefersReducedMotion) {
-      return;
-    }
-    
-    const handleMouseEnter = () => {
-      gsap.to(element, {
-        scale: 1.02,
-        duration: 0.3,
-        ease: 'power2.out',
-      });
-    };
-    
-    const handleMouseLeave = () => {
-      gsap.to(element, {
-        scale: 1,
-        duration: 0.3,
-        ease: 'power2.out',
-      });
-    };
-    
-    element.addEventListener('mouseenter', handleMouseEnter);
-    element.addEventListener('mouseleave', handleMouseLeave);
-    
-    return () => {
-      element.removeEventListener('mouseenter', handleMouseEnter);
-      element.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
-  
+  // No hover animations - just return the ref
   return elementRef;
 }

@@ -1,4 +1,5 @@
 import { ValidationError } from './errors';
+import type { PrismaClient } from '@prisma/client';
 
 export interface ValidationRule {
   field: string;
@@ -161,3 +162,52 @@ export const ValidationRules = {
     pattern: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$|^[0-9a-zA-Z-]+$/,
   }),
 } as const;
+
+// Domain-specific validation helpers (T013)
+
+// Ensure Year.label is unique. Optionally exclude an existing record by id (for updates).
+export async function assertYearLabelUnique(
+  prisma: PrismaClient,
+  label: string,
+  excludeId?: string
+) {
+  const found = await prisma.year.findFirst({
+    where: excludeId
+      ? { label, NOT: { id: excludeId } }
+      : { label },
+    select: { id: true },
+  });
+  if (found) {
+    throw new ValidationError(`year label must be unique`);
+  }
+}
+
+// Ensure Collection.slug is unique within the same year.
+export async function assertCollectionSlugUnique(
+  prisma: PrismaClient,
+  yearId: string,
+  slug: string,
+  excludeId?: string
+) {
+  const found = await prisma.collection.findFirst({
+    where: excludeId
+      ? { year_id: yearId, slug, NOT: { id: excludeId } }
+      : { year_id: yearId, slug },
+    select: { id: true },
+  });
+  if (found) {
+    throw new ValidationError(`collection slug must be unique within the year`);
+  }
+}
+
+// Require fields when publishing an entity
+export function requirePublishFields(
+  entity: 'collection' | 'year' | 'asset',
+  data: Record<string, any>,
+  fields: string[]
+) {
+  const missing = fields.filter((f) => data[f] === undefined || data[f] === null || data[f] === '');
+  if (missing.length > 0) {
+    throw new ValidationError(`${entity} publish requires: ${missing.join(', ')}`);
+  }
+}
