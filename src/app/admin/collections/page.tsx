@@ -5,9 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 interface Year { id: string; label: string; }
-interface Collection { id: string; title: string; slug: string; status: 'draft' | 'published'; year_id: string; order_index?: string }
+interface Collection { id: string; title: string; slug: string; status: 'draft' | 'published'; year_id: string; order_index?: string; updated_at?: string; }
 
 export default function AdminCollectionsPage() {
   const [years, setYears] = useState<Year[]>([]);
@@ -16,7 +17,7 @@ export default function AdminCollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [mounted, setMounted] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<{ slug: string; title: string; summary?: string; status: 'draft' | 'published' }>({ slug: '', title: '', status: 'draft' });
+  const [form, setForm] = useState<{ slug: string; title: string; summary?: string; status: 'draft' | 'published'; updated_at?: string }>({ slug: '', title: '', status: 'draft' });
   const [editing, setEditing] = useState<Collection | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -154,7 +155,9 @@ export default function AdminCollectionsPage() {
 
   function startEdit(c: Collection) {
     setEditing(c);
-    setForm({ slug: c.slug, title: c.title, status: c.status });
+    // Format date for input (YYYY-MM-DD)
+    const dateStr = c.updated_at ? new Date(c.updated_at).toISOString().split('T')[0] : '';
+    setForm({ slug: c.slug, title: c.title, status: c.status, updated_at: dateStr });
     setShowForm(true);
     // 讓表單聚焦並捲動到可視區，避免使用者誤以為沒反應
     requestAnimationFrame(() => {
@@ -210,6 +213,7 @@ export default function AdminCollectionsPage() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-5xl mx-auto">
+        <Breadcrumb items={[{ label: 'Collections' }]} />
         <h1 className="text-2xl font-semibold mb-4">Collections</h1>
         {/* ARIA live region for announcements (screen-reader only) */}
         <div role="status" aria-live="polite" aria-atomic="true" data-testid="collections-announce" className="sr-only">{liveText}</div>
@@ -309,6 +313,18 @@ export default function AdminCollectionsPage() {
                   <option value="published">published</option>
                 </select>
               </div>
+              <div>
+                <label className="block text-sm mb-1" htmlFor="collection-updated-at-input">更新日期（選填）</label>
+                <input
+                  type="date"
+                  id="collection-updated-at-input"
+                  data-testid="collection-updated-at-input"
+                  value={form.updated_at || ''}
+                  onChange={e => setForm({ ...form, updated_at: e.target.value })}
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <div className="text-xs text-gray-500 mt-1">留空則使用系統自動時間</div>
+              </div>
             </div>
             <div className="mt-3 flex gap-2">
               <button data-testid="save-collection-btn" onClick={saveCollection} className="px-3 py-2 border rounded">Save</button>
@@ -321,7 +337,20 @@ export default function AdminCollectionsPage() {
           {mounted && collections.map((c, idx) => (
             <li key={c.id} data-testid="collection-item" className="flex items-center justify-between border-b py-2" tabIndex={0} onKeyDown={(e) => onItemKeyDown(e, idx)}>
               <div className="flex items-center gap-2">
-                <div>{c.title} <span className="text-xs text-gray-500">({c.status})</span></div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    {c.title} <span className="text-xs text-gray-500">({c.status})</span>
+                  </div>
+                  {c.updated_at && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      更新於 {new Date(c.updated_at).toLocaleDateString('zh-TW', { 
+                        year: 'numeric', 
+                        month: '2-digit', 
+                        day: '2-digit'
+                      })}
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-1" aria-label="reorder controls">
                   <button type="button" data-testid="move-collection-up" className="px-2 py-1 border rounded" onClick={() => moveCollection(idx, -1)} disabled={idx === 0} aria-disabled={idx === 0} title="Move up">↑</button>
                   <button type="button" data-testid="move-collection-down" className="px-2 py-1 border rounded" onClick={() => moveCollection(idx, 1)} disabled={idx === collections.length - 1} aria-disabled={idx === collections.length - 1} title="Move down">↓</button>

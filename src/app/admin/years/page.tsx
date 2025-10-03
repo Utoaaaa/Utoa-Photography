@@ -1,6 +1,7 @@
 "use client";
 
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 
@@ -183,6 +184,7 @@ export default function AdminYearsPage() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-3xl mx-auto">
+        <Breadcrumb items={[{ label: 'Years' }]} />
         <h1 className="text-2xl font-semibold mb-4">Years</h1>
         {/* ARIA live region for announcements (screen-reader only) */}
         <div role="status" aria-live="polite" aria-atomic="true" data-testid="years-announce" className="sr-only">{liveText}</div>

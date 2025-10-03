@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth required unless bypass enabled for tests
-    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    // Auth required unless bypass enabled for tests or in development
+    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true' || process.env.NODE_ENV === 'development';
     if (process.env.NODE_ENV !== 'production') {
       console.log('[POST /api/years] bypass:', bypass, 'env:', { NODE_ENV: process.env.NODE_ENV });
     }

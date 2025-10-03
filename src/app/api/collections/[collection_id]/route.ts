@@ -105,7 +105,7 @@ export async function PUT(
       );
     }
 
-    const { title, summary, cover_asset_id, status, order_index } = body;
+    const { title, summary, cover_asset_id, status, order_index, updated_at } = body;
 
     // Validate status if provided
     if (status && !['draft', 'published'].includes(status)) {
@@ -121,6 +121,14 @@ export async function PUT(
     if (summary !== undefined) updateData.summary = summary;
     if (cover_asset_id !== undefined) updateData.cover_asset_id = cover_asset_id;
     if (order_index !== undefined) updateData.order_index = order_index;
+    
+    // Allow manual override of updated_at
+    if (updated_at !== undefined) {
+      const date = new Date(updated_at);
+      if (!isNaN(date.getTime())) {
+        updateData.updated_at = date;
+      }
+    }
     
     if (status !== undefined) {
       updateData.status = status as CollectionStatus;

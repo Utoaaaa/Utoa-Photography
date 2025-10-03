@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-  "bundle-analyze": "ANALYZE=true next build",
+    "bundle-analyze": "ANALYZE=true next build",
     "opennext": "open-next build",
     "start": "next start",
     "lint": "eslint",
@@ -24,15 +24,17 @@
     "test:contract": "node tools/run-contract-tests.js",
     "test:watch": "jest --watch",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:contract",
-  "test:e2e": "playwright test",
-  "lint:testids": "node tools/check-testids.js",
-  "ci:testids": "node tools/check-testids.js",
-  "lighthouse": "lhci autorun",
-  "ci:lighthouse": "lhci autorun --config=./lighthouserc.json",
-  "ci:link-check": "npm run build && (BYPASS_ACCESS_FOR_TESTS=true next start -p 3021 >/dev/null 2>&1 & echo $! > .next/tmp.pid); trap 'PID=$(cat .next/tmp.pid 2>/dev/null || true); [ -n \"$PID\" ] && kill -9 $PID 2>/dev/null || true; rm -f .next/tmp.pid' EXIT INT TERM; npx wait-on --timeout 60000 http://localhost:3021; mkdir -p test-results/linkinator; npx linkinator http://localhost:3021 --recurse --json --timeout 60000 --max-depth 2 --concurrency 8 --skip \"(mailto:|tel:|javascript:|//|/_next/|https?://(?!localhost(:3021)?/)|/api/|/admin($|/))\" > test-results/linkinator/report.json",
-  "ci:perf": "npm run build && (BYPASS_ACCESS_FOR_TESTS=true next start -p 3022 >/dev/null 2>&1 & echo $! > .next/perf.pid); trap 'PID=$(cat .next/perf.pid 2>/dev/null || true); [ -n \"$PID\" ] && kill -9 $PID 2>/dev/null || true; rm -f .next/perf.pid' EXIT INT TERM; npx wait-on --timeout 60000 http://localhost:3022; PERF_BASE_URL=http://localhost:3022 node tools/perf/measure.js",
+    "test:e2e": "playwright test",
+    "lint:testids": "node tools/check-testids.js",
+    "ci:testids": "node tools/check-testids.js",
+    "lighthouse": "lhci autorun",
+    "ci:lighthouse": "lhci autorun --config=./lighthouserc.json",
+    "ci:link-check": "npm run build && (BYPASS_ACCESS_FOR_TESTS=true next start -p 3021 >/dev/null 2>&1 & echo $! > .next/tmp.pid); trap 'PID=$(cat .next/tmp.pid 2>/dev/null || true); [ -n \"$PID\" ] && kill -9 $PID 2>/dev/null || true; rm -f .next/tmp.pid' EXIT INT TERM; npx wait-on --timeout 60000 http://localhost:3021; mkdir -p test-results/linkinator; npx linkinator http://localhost:3021 --recurse --json --timeout 60000 --max-depth 2 --concurrency 8 --skip \"(mailto:|tel:|javascript:|//|/_next/|https?://(?!localhost(:3021)?/)|/api/|/admin($|/))\" > test-results/linkinator/report.json",
+    "ci:perf": "npm run build && (BYPASS_ACCESS_FOR_TESTS=true next start -p 3022 >/dev/null 2>&1 & echo $! > .next/perf.pid); trap 'PID=$(cat .next/perf.pid 2>/dev/null || true); [ -n \"$PID\" ] && kill -9 $PID 2>/dev/null || true; rm -f .next/perf.pid' EXIT INT TERM; npx wait-on --timeout 60000 http://localhost:3022; PERF_BASE_URL=http://localhost:3022 node tools/perf/measure.js",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
+    "deploy:check": "node tools/check-deployment.js",
+    "predeploy": "npm run deploy:check",
     "ci:check:optional-calls": "sh -c \"if git grep -nE '\\\\?\\\\.\\\\(' -- src; then echo 'Found optional call, fail'; exit 1; fi; if git grep -nE '\\\\?\\\\.[A-Za-z_$][\\\\w$]*\\\\s*\\\\(' -- src; then echo 'Found optional method call, fail'; exit 1; fi\"",
     "diag:scan-call": "rg -n \\\"\\.call\\(\\\" .next/static/chunks/app --no-ignore || true"
   },
@@ -43,7 +45,7 @@
     "@prisma/client": "^6.16.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "gsap": "^3.12.2",
+    "gsap": "^3.13.0",
     "lenis": "^1.3.11",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
@@ -55,8 +57,6 @@
     "wrangler": "^4.38.0"
   },
   "devDependencies": {
-    "wait-on": "^7.2.0",
-    "linkinator": "^6.1.2",
     "@axe-core/playwright": "^4.10.2",
     "@eslint/eslintrc": "^3",
     "@lhci/cli": "^0.14.0",
@@ -75,11 +75,13 @@
     "jest": "^30.1.3",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.1.2",
+    "linkinator": "^6.1.2",
     "prettier": "^3.6.2",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5",
-    "undici": "^7.16.0"
+    "undici": "^7.16.0",
+    "wait-on": "^7.2.0"
   }
 }

@@ -189,6 +189,17 @@ export function CollectionsList({
                 {checklistStatus.badge}
               </div>
 
+              {/* Updated date */}
+              {collection.updatedAt && (
+                <p className="text-xs text-gray-500 mt-1">
+                  更新於 {new Date(collection.updatedAt).toLocaleDateString('zh-TW', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                  })}
+                </p>
+              )}
+
               {/* Published date */}
               {collection.publishedAt && (
                 <p className="text-xs text-gray-500 mt-1">

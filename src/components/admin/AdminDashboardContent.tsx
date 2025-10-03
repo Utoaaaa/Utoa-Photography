@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 interface AdminDashboardContentProps {
   publishedYears: number;
@@ -21,6 +22,7 @@ export default function AdminDashboardContent({
     return (
       <div className="min-h-screen bg-gray-50 p-8" data-testid="admin-dashboard">
         <div className="max-w-7xl mx-auto">
+          <Breadcrumb items={[{ label: 'Dashboard' }]} />
           <div className="text-center py-16">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Dashboard</h1>
             <p className="text-gray-600 mb-8">Welcome to UTOA Photography Admin</p>
@@ -54,6 +56,7 @@ export default function AdminDashboardContent({
   return (
     <div className="min-h-screen bg-gray-50 p-8" data-testid="admin-dashboard">
       <div className="max-w-7xl mx-auto">
+        <Breadcrumb items={[{ label: 'Dashboard' }]} />
         {/* User info from Cloudflare Access */}
         <div className="flex items-center justify-end gap-3 mb-4">
           <div data-testid="user-info" className="text-sm text-gray-600">

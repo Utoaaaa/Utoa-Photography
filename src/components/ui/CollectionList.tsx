@@ -69,16 +69,16 @@ export function CollectionList({ collections, yearLabel }: CollectionListProps) 
                 </p>
               )}
               
-              {/* Publication date */}
-              {collection.published_at && (
+              {/* Updated date */}
+              {collection.updated_at && (
                 <time 
                   className="text-xs text-gray-400 mt-3 block"
-                  dateTime={collection.published_at.toISOString()}
+                  dateTime={collection.updated_at.toISOString()}
                 >
-                  {collection.published_at.toLocaleDateString('en-US', {
+                  {collection.updated_at.toLocaleDateString('zh-TW', {
                     year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                    month: '2-digit',
+                    day: '2-digit'
                   })}
                 </time>
               )}

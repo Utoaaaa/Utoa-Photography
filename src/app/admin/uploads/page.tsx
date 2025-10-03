@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 interface Asset { id: string; alt: string; caption?: string | null; width: number; height: number; }
 type AssetMaybeUsed = Asset & { used?: boolean };
@@ -246,6 +247,7 @@ export default function AdminUploadsPage() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-5xl mx-auto">
+        <Breadcrumb items={[{ label: 'Uploads' }]} />
         <h1 className="text-2xl font-semibold mb-4">Uploads</h1>
         <div data-testid="upload-area" className="border rounded p-4 mb-4">
           <div className="mb-2 flex items-center gap-2">

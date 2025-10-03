@@ -56,8 +56,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid ID format', message: 'Year ID must be a valid UUID' }, { status: 400 });
     }
 
-    // Auth (bypass for tests) - align with POST /api/years
-    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    // Auth (bypass for tests and development) - align with POST /api/years
+    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true' || process.env.NODE_ENV === 'development';
     const auth = request.headers.get('authorization');
     if (!bypass) {
       if (!auth || !auth.startsWith('Bearer ')) {

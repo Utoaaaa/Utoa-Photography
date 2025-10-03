@@ -1,0 +1,30 @@
+/* CameraWireAnimation 主題支援 */
+
+/* 預設樣式 (深灰線條) */
+.camera-wire-svg {
+  color: #2d2d2d;
+  opacity: 0.8;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+/* 亮色主題 */
+[data-theme="light"] .camera-wire-svg {
+  color: #1a1a1a;
+  opacity: 0.85;
+}
+
+/* 深色主題 */
+[data-theme="dark"] .camera-wire-svg {
+  color: #e5e5e5;
+  opacity: 0.7;
+}
+
+/* hover 效果 (可選) */
+.camera-wire-svg:hover {
+  opacity: 1;
+}
+
+/* 確保動畫平滑 */
+.camera-wire-svg path {
+  transition: stroke 0.3s ease;
+}

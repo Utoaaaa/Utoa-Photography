@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { CollectionsList } from '@/components/admin/CollectionsList';
 import { CollectionPreview } from '@/components/admin/CollectionPreview';
 import { PublishingFilters } from '@/components/admin/PublishingFilters';
+import Breadcrumb from '@/components/admin/Breadcrumb';
 
 interface CollectionSummary {
   id: string;
@@ -154,6 +155,7 @@ export default function PublishingPage() {
         {/* Left sidebar - Collections list */}
         <div className="w-1/3 border-r border-gray-200 bg-white overflow-hidden flex flex-col">
           <div className="border-b border-gray-200 p-6">
+            <Breadcrumb items={[{ label: 'Publishing' }]} />
             <h1 className="text-2xl font-bold text-gray-900">Publishing</h1>
             <p className="mt-1 text-sm text-gray-600">
               管理作品集的發布狀態、SEO 設定與版本控制

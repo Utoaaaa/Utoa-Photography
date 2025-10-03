@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import MenuWrapper from '@/components/ui/MenuWrapper';
 
 export const metadata: Metadata = {
   title: 'UTOA Photography',
@@ -10,5 +11,10 @@ export default function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <MenuWrapper />
+      {children}
+    </>
+  );
 }
