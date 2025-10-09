@@ -180,11 +180,9 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             duration: 3.0,
           }, 1.4);
 
-          // 動畫完成後:清除 dash 屬性
+          // 動畫完成
           loadTimeline.add(() => {
-            gsap.set(toAnim, { 
-              clearProps: 'strokeDasharray,strokeDashoffset' 
-            });
+            console.log('✅ Camera animation complete');
           });
         }, svgRef);
 
@@ -211,6 +209,10 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-auto max-w-2xl"
+        style={{ 
+          opacity: loaderDone ? 1 : 0,
+          transition: 'opacity 0.1s ease-in'
+        }}
       >
         <g id="camera-wire">
           {/* 高光 - 最底層 */}

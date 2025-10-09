@@ -5,6 +5,7 @@
     "**/.hg/store/**": true,
     "**/.git/**": true,
     "**/node_modules/**": true,
+    "**/.vscode/**": true
   },
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {

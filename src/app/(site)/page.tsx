@@ -1,5 +1,6 @@
 import { YearGrid } from '@/components/ui/YearGrid';
 import { CameraWireAnimation } from '@/components/ui/CameraWireAnimation';
+import { FadeInText } from '@/components/ui/FadeInText';
 import { getPublishedYears } from '@/lib/queries/years';
 
 export const dynamic = 'force-dynamic';
@@ -51,25 +52,31 @@ export default async function Homepage() {
         </div>
       </header>
 
-      <main role="main" className="flex flex-col" data-main-content>
+  <main role="main" className="relative z-[2]" data-main-content>
         {/* Hidden h1 for a11y and tests */}
         <h1 className="sr-only">Home</h1>
 
-        {/* First Page: Camera Animation - Full viewport height */}
-        <section className="min-h-screen flex items-center justify-center px-8 md:px-12">
-          {/* Desktop: Right half | Mobile: Center */}
-          <div className="w-full lg:ml-[50%] lg:pr-12 flex items-center justify-center">
-            <CameraWireAnimation className="text-gray-800 opacity-80" />
+        <section className="min-h-screen px-8 md:px-12 pt-28 pb-16 lg:pb-24 flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-16">
+          <div className="w-full lg:w-1/2 flex items-center justify-center">
+            <FadeInText>
+              <h2 className="font-serif text-4xl xl:text-5xl font-bold text-gray-900 leading-tight tracking-wide text-center">
+                Moments in
+                <br />
+                Photography
+              </h2>
+            </FadeInText>
+          </div>
+          <div className="w-full lg:w-1/2 flex items-center justify-center">
+            <CameraWireAnimation className="text-gray-800 opacity-80 max-w-[500px] w-full h-auto" />
           </div>
         </section>
 
-        {/* Second Page: Years Timeline - Starts after first viewport */}
-        <section className="min-h-screen px-8 md:px-12 py-20 flex items-center justify-center">
+        <section className="min-h-screen px-8 md:px-12 py-20 flex items-center justify-center bg-background">
           <div className="w-full max-w-7xl mx-auto">
             {hasError && (
               <p className="text-center text-red-600 mb-8">Error loading years. Please try again.</p>
             )}
-            
+
             <YearGrid years={years} />
           </div>
         </section>

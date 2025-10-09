@@ -47,7 +47,11 @@ export default function Loader({ onDone, minDurationMs = 4000 }: LoaderProps) {
       if (!isActive) return;
       
       const tl = gsap.timeline({
-        onComplete: () => onDone?.(),
+        onComplete: () => {
+          if (onDone) {
+            onDone();
+          }
+        },
       });
 
       if (prefersReducedMotion) {
@@ -77,8 +81,6 @@ export default function Loader({ onDone, minDurationMs = 4000 }: LoaderProps) {
     
     const showNextNumber = () => {
       if (!isActive || currentIndex >= targetNumbers.length) return;
-      
-      const isLastNumber = currentIndex === targetNumbers.length - 1;
       
       setProgress(String(targetNumbers[currentIndex]).padStart(2, '0'));
       const currentDelay = randomDelays[currentIndex];

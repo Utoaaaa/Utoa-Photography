@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import LoaderClient from "./loader-client";
+import { SmoothScroll } from "@/components/SmoothScroll";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{ overscrollBehaviorX: 'auto' }}
       >
+        {/* 全站平滑滾動 */}
+        <SmoothScroll />
+        
         {/* 全螢幕前導 Loader - 只在首次載入顯示 */}
         <LoaderClient />
         {children}

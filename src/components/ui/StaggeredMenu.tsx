@@ -344,10 +344,14 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     setOpen(target);
 
     if (target) {
-      onMenuOpen?.();
+      if (onMenuOpen) {
+        onMenuOpen();
+      }
       playOpen();
     } else {
-      onMenuClose?.();
+      if (onMenuClose) {
+        onMenuClose();
+      }
       playClose();
     }
 
@@ -372,7 +376,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         >
           {(() => {
             const raw = colors && colors.length ? colors.slice(0, 4) : ['#f5f5f5', '#ffffff'];
-            let arr = [...raw];
+            const arr = [...raw];
             if (arr.length >= 3) {
               const mid = Math.floor(arr.length / 2);
               arr.splice(mid, 1);
