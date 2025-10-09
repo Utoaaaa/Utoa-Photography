@@ -2,7 +2,7 @@
 
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import Breadcrumb from '@/components/admin/Breadcrumb';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 
 interface Year {
@@ -11,6 +11,55 @@ interface Year {
   status: 'draft' | 'published';
   order_index: string;
   hasCollections?: boolean; // client-side augmentation
+}
+
+const isYearArray = (value: unknown): value is Year[] =>
+  Array.isArray(value) &&
+  value.every((item) =>
+    item &&
+    typeof item === 'object' &&
+    typeof (item as Partial<Year>).id === 'string' &&
+    typeof (item as Partial<Year>).label === 'string' &&
+    ((item as Partial<Year>).status === 'draft' || (item as Partial<Year>).status === 'published') &&
+    typeof (item as Partial<Year>).order_index === 'string',
+  );
+
+const isUnknownArray = (value: unknown): value is unknown[] => Array.isArray(value);
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+
+const getStringProp = (obj: Record<string, unknown>, key: string): string | undefined => {
+  const value = obj[key];
+  return typeof value === 'string' ? value : undefined;
+};
+
+async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknown) => value is T): Promise<T> {
+  try {
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok || !ct.includes('application/json')) return fallback;
+    const text = await res.text();
+    if (!text) return fallback;
+    const parsed: unknown = JSON.parse(text);
+    if (validate && !validate(parsed)) return fallback;
+    return parsed as T;
+  } catch {
+    return fallback;
+  }
+}
+
+async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retries = 2, backoffMs = 200): Promise<Response> {
+  let lastErr: unknown = null;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(input, init);
+      if (res.ok) return res;
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      lastErr = e;
+    }
+    if (i < retries) await new Promise(r => setTimeout(r, backoffMs * (i + 1)));
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Fetch failed');
 }
 
 export default function AdminYearsPage() {
@@ -26,45 +75,18 @@ export default function AdminYearsPage() {
   // A11y live announcer for reorder and destructive actions
   const [liveText, setLiveText] = useState('');
 
-  async function safeJson<T = any>(res: Response, fallback: T): Promise<T> {
-    try {
-      const ct = res.headers.get('content-type') || '';
-      if (!res.ok || !ct.includes('application/json')) return fallback;
-      const text = await res.text();
-      if (!text) return fallback;
-      return JSON.parse(text) as T;
-    } catch {
-      return fallback;
-    }
-  }
-
-  async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retries = 2, backoffMs = 200): Promise<Response> {
-    let lastErr: unknown = null;
-    for (let i = 0; i <= retries; i++) {
-      try {
-        const res = await fetch(input, init);
-        if (res.ok) return res;
-        lastErr = new Error(`HTTP ${res.status}`);
-      } catch (e) {
-        lastErr = e;
-      }
-      if (i < retries) await new Promise(r => setTimeout(r, backoffMs * (i + 1)));
-    }
-    throw lastErr instanceof Error ? lastErr : new Error('Fetch failed');
-  }
-
-  async function loadYears() {
+  const loadYears = useCallback(async () => {
     try {
       // Use asc to align with recomputed padded order_index sequencing
       const res = await fetchWithRetry('/api/years?status=all&order=asc', { cache: 'no-store' });
-      const data = await safeJson<Year[]>(res, []);
+      const data = await safeJson<Year[]>(res, [], isYearArray);
       // Fetch collections count per year to determine delete guard
       const augmented = await Promise.all(
         data.map(async (y) => {
           try {
             const cRes = await fetchWithRetry(`/api/years/${y.id}/collections?status=all`, { cache: 'no-store' });
-            const cols = await safeJson<any[]>(cRes, []);
-            return { ...y, hasCollections: Array.isArray(cols) && cols.length > 0 };
+            const cols = await safeJson<unknown[]>(cRes, [], isUnknownArray);
+            return { ...y, hasCollections: cols.length > 0 };
           } catch {
             return { ...y, hasCollections: false };
           }
@@ -75,9 +97,9 @@ export default function AdminYearsPage() {
       // Swallow to avoid breaking UI flows; keep previous list or empty
       setYears([]);
     }
-  }
+  }, []);
 
-  useEffect(() => { loadYears(); }, []);
+  useEffect(() => { void loadYears(); }, [loadYears]);
 
   const startCreate = () => { setEditing(null); setLabel(''); setStatus('draft'); setShowForm(true); };
   const startEdit = (y: Year) => { setEditing(y); setLabel(y.label); setStatus(y.status); setShowForm(true); };
@@ -127,9 +149,11 @@ export default function AdminYearsPage() {
       return;
     }
     try {
-      const body = await safeJson(res, {} as any);
-      const text = (body && (body as any).message || (body as any).error)
-        ? `${(body as any).error || 'Error'}: ${(body as any).message || ''}`
+      const body = await safeJson<Record<string, unknown>>(res, {}, isRecord);
+      const error = getStringProp(body, 'error');
+      const detail = getStringProp(body, 'message');
+      const text = (error || detail)
+        ? `${error || 'Error'}${detail ? `: ${detail}` : ''}`
         : 'Delete failed';
       setMessage({ type: 'error', text });
     } catch {

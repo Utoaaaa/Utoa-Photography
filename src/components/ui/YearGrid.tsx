@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-interface Year {
+export interface Year {
   id: string;
   label: string;
 }

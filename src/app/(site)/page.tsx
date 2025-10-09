@@ -1,13 +1,37 @@
+import type { Year } from '@prisma/client';
+
 import { YearGrid } from '@/components/ui/YearGrid';
 import { CameraWireAnimation } from '@/components/ui/CameraWireAnimation';
 import { FadeInText } from '@/components/ui/FadeInText';
 import { getPublishedYears } from '@/lib/queries/years';
 
+type PublishedYear = Pick<Year, 'id' | 'label'>;
+
 export const dynamic = 'force-dynamic';
 
+function isPublishedYearArray(value: unknown): value is PublishedYear[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        item !== null &&
+        typeof item === 'object' &&
+        'id' in item &&
+        'label' in item &&
+        typeof (item as { id: unknown }).id === 'string' &&
+        typeof (item as { label: unknown }).label === 'string',
+    )
+  );
+}
+
+function toPublishedYears(data: Year[]): PublishedYear[] {
+  return data.map(({ id, label }) => ({ id, label }));
+}
+
 export default async function Homepage() {
-  let years: any[] = [];
+  let years: PublishedYear[] = [];
   let hasError = false;
+
   const getApiBaseUrl = () => {
     const vercel = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
     const site = process.env.NEXT_PUBLIC_SITE_URL || vercel || 'http://localhost:3000';
@@ -16,7 +40,8 @@ export default async function Homepage() {
   try {
   const res = await fetch(`${getApiBaseUrl()}/api/years?status=published&order=asc`, { cache: 'no-store' });
     if (res.ok) {
-      years = await res.json();
+      const data = (await res.json()) as unknown;
+      years = isPublishedYearArray(data) ? data : [];
     } else {
       hasError = true;
       years = [];
@@ -30,7 +55,7 @@ export default async function Homepage() {
     try {
       const fallbackYears = await getPublishedYears();
       if (Array.isArray(fallbackYears) && fallbackYears.length > 0) {
-        years = fallbackYears as any[];
+        years = toPublishedYears(fallbackYears);
         // keep hasError to indicate API issue while showing data from fallback
       }
     } catch {
@@ -59,7 +84,7 @@ export default async function Homepage() {
         <section className="min-h-screen px-8 md:px-12 pt-28 pb-16 lg:pb-24 flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-16">
           <div className="w-full lg:w-1/2 flex items-center justify-center">
             <FadeInText>
-              <h2 className="font-serif text-4xl xl:text-5xl font-bold text-gray-900 leading-tight tracking-wide text-center">
+              <h2 className="font-serif text-4xl xl:text-5xl font-bold text-gray-900 leading-tight tracking-wide text-left">
                 Moments in
                 <br />
                 Photography

@@ -9,10 +9,10 @@ export default async function AdminDashboard() {
       getAllCollections()
     ]);
     
-    const publishedYears = years.filter((y: any) => y.status === 'published');
-    const draftYears = years.filter((y: any) => y.status === 'draft');
-    const publishedCollections = collections.filter((c: any) => c.status === 'published');
-    const draftCollections = collections.filter((c: any) => c.status === 'draft');
+  const publishedYears = years.filter((year) => year.status === 'published');
+  const draftYears = years.filter((year) => year.status === 'draft');
+  const publishedCollections = collections.filter((collection) => collection.status === 'published');
+  const draftCollections = collections.filter((collection) => collection.status === 'draft');
     
     return (
       <AdminDashboardContent

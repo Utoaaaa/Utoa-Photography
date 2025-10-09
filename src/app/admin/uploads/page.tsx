@@ -1,11 +1,87 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import Breadcrumb from '@/components/admin/Breadcrumb';
 
 interface Asset { id: string; alt: string; caption?: string | null; width: number; height: number; }
 type AssetMaybeUsed = Asset & { used?: boolean };
+
+type YearOption = { id: string; label: string };
+type CollectionOption = { id: string; title: string };
+
+type DirectUploadResult = {
+  upload_url?: string;
+  form_data?: Record<string, string>;
+  image_id?: string;
+  result?: { id?: string };
+};
+
+type BatchDeleteResponse = {
+  failed?: Array<{ id: string; reason: 'not_found' | 'referenced' | 'error'; details?: unknown }>;
+};
+
+const isAssetArray = (value: unknown): value is Asset[] =>
+  Array.isArray(value) &&
+  value.every((item) => {
+    if (!item || typeof item !== 'object') return false;
+    const { id, alt, caption, width, height } = item as Asset;
+    return (
+      typeof id === 'string' &&
+      typeof alt === 'string' &&
+      (typeof caption === 'string' || caption === null || typeof caption === 'undefined') &&
+      typeof width === 'number' &&
+      typeof height === 'number'
+    );
+  });
+
+const isYearArray = (value: unknown): value is YearOption[] =>
+  Array.isArray(value) &&
+  value.every((item) =>
+    item &&
+    typeof item === 'object' &&
+    typeof (item as YearOption).id === 'string' &&
+    typeof (item as YearOption).label === 'string',
+  );
+
+const isCollectionArray = (value: unknown): value is CollectionOption[] =>
+  Array.isArray(value) &&
+  value.every((item) =>
+    item &&
+    typeof item === 'object' &&
+    typeof (item as CollectionOption).id === 'string' &&
+    typeof (item as CollectionOption).title === 'string',
+  );
+
+const isDirectUploadResult = (value: unknown): value is DirectUploadResult => {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as DirectUploadResult;
+  const validUploadUrl = typeof obj.upload_url === 'string' || typeof obj.upload_url === 'undefined';
+  const validFormData =
+    typeof obj.form_data === 'undefined' ||
+    (typeof obj.form_data === 'object' && obj.form_data !== null && Object.values(obj.form_data).every((val) => typeof val === 'string'));
+  const validImageId = typeof obj.image_id === 'string' || typeof obj.image_id === 'undefined';
+  const validResult =
+    typeof obj.result === 'undefined' ||
+    (typeof obj.result === 'object' && obj.result !== null && (typeof obj.result.id === 'string' || typeof obj.result.id === 'undefined'));
+  return validUploadUrl && validFormData && validImageId && validResult;
+};
+
+const isBatchDeleteResponse = (value: unknown): value is BatchDeleteResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as BatchDeleteResponse;
+  return (
+    typeof obj.failed === 'undefined' ||
+    (Array.isArray(obj.failed) &&
+      obj.failed.every(
+        (entry) =>
+          entry &&
+          typeof entry === 'object' &&
+          typeof entry.id === 'string' &&
+          (entry.reason === 'not_found' || entry.reason === 'referenced' || entry.reason === 'error'),
+      ))
+  );
+};
 
 export default function AdminUploadsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -19,45 +95,47 @@ export default function AdminUploadsPage() {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
-  const [years, setYears] = useState<Array<{ id: string; label: string }>>([]);
+  const [years, setYears] = useState<YearOption[]>([]);
   const [assignYearId, setAssignYearId] = useState<string>('');
-  const [collections, setCollections] = useState<Array<{ id: string; title: string }>>([]);
+  const [collections, setCollections] = useState<CollectionOption[]>([]);
   const [assignCollectionId, setAssignCollectionId] = useState<string>('');
 
-  async function safeJson<T = any>(res: Response, fallback: T): Promise<T> {
+  async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknown) => value is T): Promise<T> {
     try {
       const ct = res.headers.get('content-type') || '';
-      if (!res.ok || !ct.includes('application/json')) return fallback;
+      if (!ct.includes('application/json')) return fallback;
       const text = await res.text();
       if (!text) return fallback;
-      return JSON.parse(text) as T;
+      const parsed: unknown = JSON.parse(text);
+      if (validate && !validate(parsed)) return fallback;
+      return parsed as T;
     } catch {
       return fallback;
     }
   }
 
-  async function loadAssets() {
+  const loadAssets = useCallback(async () => {
     try {
       const res = await fetch('/api/assets?limit=50&offset=0', { cache: 'no-store' });
-      const list = await safeJson<Asset[]>(res, []);
+      const list = await safeJson<Asset[]>(res, [], isAssetArray);
       setAssets(Array.isArray(list) ? list : []);
     } catch {
       setAssets([]);
     }
-  }
+  }, []);
 
   async function loadYearsAndCollectionsForAssign(yearId?: string) {
     try {
       const yRes = await fetch('/api/years?status=all&order=asc', { cache: 'no-store' });
       if (!yRes.ok) return;
-      const ys = await safeJson<Array<{ id: string; label: string }>>(yRes, []);
+      const ys = await safeJson<YearOption[]>(yRes, [], isYearArray);
       setYears(ys);
       const yId = yearId || ys?.[0]?.id || '';
       setAssignYearId(yId);
       if (yId) {
         const cRes = await fetch(`/api/years/${yId}/collections?status=all`, { cache: 'no-store' });
         if (cRes.ok) {
-          const cs = await safeJson<Array<{ id: string; title: string }>>(cRes, []);
+          const cs = await safeJson<CollectionOption[]>(cRes, [], isCollectionArray);
           setCollections(cs);
           // Preserve current selection if still valid; otherwise default to first
           setAssignCollectionId(prev => (prev && cs.some(c => c.id === prev)) ? prev : (cs?.[0]?.id || ''));
@@ -68,7 +146,7 @@ export default function AdminUploadsPage() {
     }
   }
 
-  useEffect(() => { loadAssets(); }, []);
+  useEffect(() => { void loadAssets(); }, [loadAssets]);
 
   async function saveAsset() {
     setMessage('');
@@ -84,22 +162,14 @@ export default function AdminUploadsPage() {
         body: JSON.stringify({ filename, content_type: contentType })
       });
       if (!direct.ok) { setMessage('Direct upload failed'); return; }
-      const directJson = await (async () => {
-        try {
-          const ct = direct.headers.get('content-type') || '';
-          if (!ct.includes('application/json')) return {} as any;
-          const text = await direct.text();
-          if (!text) return {} as any;
-          return JSON.parse(text);
-        } catch { return {} as any; }
-      })();
+      const directJson = await safeJson<DirectUploadResult>(direct, {}, isDirectUploadResult);
 
       // If upload_url provided and we have a file, post it now
       if (file && directJson.upload_url) {
         const fd = new FormData();
         // Attach provider form fields if any
         if (directJson.form_data && typeof directJson.form_data === 'object') {
-          Object.entries(directJson.form_data as Record<string, string>).forEach(([k, v]) => fd.append(k, v));
+          Object.entries(directJson.form_data).forEach(([key, value]) => fd.append(key, value));
         }
         fd.append('file', file, file.name);
         try {
@@ -157,15 +227,7 @@ export default function AdminUploadsPage() {
       if (!res.ok) {
         setMessage('Bulk delete failed');
       } else {
-        const json = await (async () => {
-          try {
-            const ct = res.headers.get('content-type') || '';
-            if (!ct.includes('application/json')) return {} as any;
-            const text = await res.text();
-            if (!text) return {} as any;
-            return JSON.parse(text);
-          } catch { return {} as any; }
-        })();
+        const json = await safeJson<BatchDeleteResponse>(res, {}, isBatchDeleteResponse);
         const failed = json.failed?.length ?? 0;
         if (failed > 0) {
           setMessage(`Some deletes failed (${failed}/${ids.length})`);
@@ -205,7 +267,6 @@ export default function AdminUploadsPage() {
     try {
       if (process.env.NODE_ENV !== 'production') {
         // Debug log for E2E to verify payload
-        // eslint-disable-next-line no-console
         console.log('[uploads:addSelectedToCollection] posting', {
           collection: assignCollectionId,
           asset_ids: Array.from(selectedIds)
