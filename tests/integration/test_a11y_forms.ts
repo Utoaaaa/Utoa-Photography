@@ -17,12 +17,12 @@ test.describe('Admin forms a11y', () => {
   });
 
   test('Collections form shows field errors', async ({ page }) => {
-    await page.goto('/admin/collections');
-
-    // 若沒有年份，先建立一個
     const res = await page.request.post('/api/years', { data: { label: `A11y ${Date.now()}`, status: 'draft' } });
     expect(res.ok()).toBeTruthy();
-    await page.reload();
+    const year = await res.json();
+
+    await page.goto(`/admin/years/${encodeURIComponent(year.id)}`);
+    await page.waitForSelector('[data-testid="collection-manager"]');
 
     await page.click('[data-testid="create-collection-btn"]');
     await page.click('[data-testid="save-collection-btn"]');

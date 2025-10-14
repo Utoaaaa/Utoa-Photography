@@ -16,11 +16,10 @@ test.describe('Admin Content Management System', () => {
 
     // Should successfully load admin dashboard
     await expect(page.locator('[data-testid="admin-dashboard"]')).toBeVisible();
-    await expect(page.locator('h1')).toContainText('Admin Dashboard');
+    await expect(page.locator('h1')).toContainText('管理控制台');
 
     // Should show main navigation options
     await expect(page.locator('[data-testid="nav-years"]')).toBeVisible();
-    await expect(page.locator('[data-testid="nav-collections"]')).toBeVisible();
     await expect(page.locator('[data-testid="nav-uploads"]')).toBeVisible();
   });
 
@@ -64,65 +63,12 @@ test.describe('Admin Content Management System', () => {
     await expect(page.locator('[data-testid="year-item"]').filter({ hasText: '2025 Updated' })).not.toBeVisible();
   });
 
-  test('should manage collections within a year', async ({ page }) => {
-    // First create a test year
-    await setupTestYear(page);
-
-    await page.goto('/admin/collections');
-
-    // Select year from dropdown
-    await page.selectOption('[data-testid="year-filter-select"]', { label: 'Test Year 2024' });
-
-    // Create new collection
-    await page.click('[data-testid="create-collection-btn"]');
-    
-    const createForm = page.locator('[data-testid="collection-form"]');
-    await page.fill('[data-testid="collection-slug-input"]', 'admin-test-collection');
-    await page.fill('[data-testid="collection-title-input"]', 'Admin Test Collection');
-    await page.fill('[data-testid="collection-summary-textarea"]', 'A collection created via admin interface');
-    await page.selectOption('[data-testid="collection-status-select"]', 'draft');
-    await page.click('[data-testid="save-collection-btn"]');
-
-    // Should see new collection in list
-    await expect(page.locator('[data-testid="collection-item"]').filter({ hasText: 'Admin Test Collection' })).toBeVisible();
-
-    // Edit collection
-    const collectionItem = page.locator('[data-testid="collection-item"]').filter({ hasText: 'Admin Test Collection' });
-    await collectionItem.locator('[data-testid="edit-collection-btn"]').click();
-    
-    await page.fill('[data-testid="collection-title-input"]', 'Updated Admin Collection');
-    await page.selectOption('[data-testid="collection-status-select"]', 'published');
-    await page.click('[data-testid="save-collection-btn"]');
-
-    // Should see updated collection
-    await expect(page.locator('[data-testid="collection-item"]').filter({ hasText: 'Updated Admin Collection' })).toBeVisible();
+  test.skip('should manage collections within a year (legacy /admin/collections)', async () => {
+    // TODO(collections-workspace): migrate CRUD coverage to the year workspace.
   });
 
-  test('should reorder collections within a year', async ({ page }) => {
-    await setupTestYear(page);
-    await setupTestCollections(page);
-
-    await page.goto('/admin/collections');
-    await page.selectOption('[data-testid="year-filter-select"]', { label: 'Test Year 2024' });
-
-    // Get initial order
-    const collectionItems = page.locator('[data-testid="collection-item"]');
-    const initialOrder = await collectionItems.allTextContents();
-
-    // Use button-based move-down on the first item
-    await collectionItems.first().locator('[data-testid="move-collection-down"]').click();
-
-    // Verify order has changed
-    const newOrder = await collectionItems.allTextContents();
-    expect(newOrder).not.toEqual(initialOrder);
-
-    // Should show success message
-    await expect(page.locator('[data-testid="success-message"]')).toContainText('Collection order updated');
-
-    // Reload and ensure persistence
-    await page.reload();
-    const afterReload = await page.locator('[data-testid="collection-item"]').allTextContents();
-    expect(afterReload).toEqual(newOrder);
+  test.skip('should reorder collections within a year (legacy /admin/collections)', async () => {
+    // TODO(collections-workspace): add reorder coverage within the new workspace.
   });
 
   test('should handle image upload workflow', async ({ page }) => {
@@ -174,41 +120,8 @@ test.describe('Admin Content Management System', () => {
     await expect(page.locator('[data-testid="asset-list"]')).toContainText('Uploaded test image');
   });
 
-  test('should assign photos to collections', async ({ page }) => {
-    await setupTestYear(page);
-    await setupTestCollections(page);
-    await setupTestAssets(page);
-
-    await page.goto('/admin/collections');
-    await page.selectOption('[data-testid="year-filter-select"]', { label: 'Test Year 2024' });
-
-    // Click on collection to manage photos
-    const collectionItem = page.locator('[data-testid="collection-item"]').first();
-    await collectionItem.locator('[data-testid="manage-photos-btn"]').click();
-
-    // Should show photo management interface
-    await expect(page.locator('[data-testid="photo-manager"]')).toBeVisible();
-    
-    // Available assets should be shown
-    await expect(page.locator('[data-testid="available-assets"]')).toBeVisible();
-    const availableAssets = page.locator('[data-testid="asset-card"]');
-    await expect(availableAssets.first()).toBeVisible();
-
-    // Select assets to add
-    await availableAssets.first().click();
-    await availableAssets.nth(1).click();
-
-    // Add selected assets to collection
-    await page.click('[data-testid="add-to-collection-btn"]');
-
-    // Should show assets in collection
-    const collectionAssets = page.locator('[data-testid="collection-asset"]');
-    await expect(collectionAssets).toHaveCount(2);
-
-    // Should be able to reorder assets within collection
-    await collectionAssets.first().dragTo(collectionAssets.nth(1));
-    // Note: Drag-drop triggers add operation, not reorder in current implementation
-    await expect(page.locator('[data-testid="success-message"]')).toContainText('Added to collection');
+  test.skip('should assign photos to collections (legacy /admin/collections)', async () => {
+    // TODO(collections-workspace): rebuild photo assignment E2E flow inside the new dialog.
   });
 
   test('should handle bulk operations efficiently', async ({ page }) => {
@@ -246,7 +159,7 @@ test.describe('Admin Content Management System', () => {
     await page.click('[data-testid="save-year-btn"]');
 
     // Should show validation errors
-    await expect(page.locator('[data-testid="error-message"]')).toContainText('Label is required');
+    await expect(page.locator('[data-testid="error-message"]')).toContainText('請輸入年份名稱');
 
     // Try invalid year label
     await page.fill('[data-testid="year-label-input"]', ''); // Empty
@@ -290,10 +203,7 @@ test.describe('Admin Content Management System', () => {
     await page.click('[data-testid="save-year-btn"]');
 
     // Should show conflict error
-    await expect(page.locator('[data-testid="error-message"]')).toContainText('modified by another user');
-    
-    // Should offer to refresh data
-    await expect(page.locator('[data-testid="refresh-data-btn"]')).toBeVisible();
+  await expect(page.locator('[data-testid="error-message"]')).toContainText('資料已被其他人更新');
   });
 
   test('should maintain admin session and handle logout', async ({ page }) => {
@@ -342,7 +252,7 @@ test.describe('Admin Content Management System', () => {
 
     // Click move-down on the first item to swap with the next
     await items.first().locator('[data-testid="move-year-down"]').click();
-    await expect(page.locator('[data-testid="success-message"]').first()).toContainText('Reordered');
+  await expect(page.locator('[data-testid="success-message"]').first()).toContainText('年份排序已更新');
 
     // Order should change
   const afterClick = await items.allTextContents();

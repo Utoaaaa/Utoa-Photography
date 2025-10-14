@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
           orderBy: { order_index: 'asc' },
         },
         year: true,
+        location: true,
       },
     });
     // In development, allow viewing collections from any year status for easier local testing
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
             orderBy: { order_index: 'asc' },
           },
           year: true,
+          location: true,
         },
       });
     }
@@ -74,6 +76,7 @@ export async function GET(request: NextRequest) {
             orderBy: { order_index: 'asc' },
           },
           year: true,
+          location: true,
         },
       });
       if (process.env.NODE_ENV !== 'production') {
@@ -89,6 +92,14 @@ export async function GET(request: NextRequest) {
     // Build response using the joined year relation on collection
     const response = {
       year: { id: collection.year!.id, label: collection.year!.label },
+      location: collection.location
+        ? {
+            id: collection.location.id,
+            slug: collection.location.slug,
+            name: collection.location.name,
+            summary: collection.location.summary ?? null,
+          }
+        : null,
       collection: {
         id: collection.id,
         slug: collection.slug,

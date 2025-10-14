@@ -55,6 +55,12 @@ export async function GET(request: NextRequest) {
         year: {
           select: { label: true }
         },
+        location: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         collection_assets: {
           include: {
             asset: {
@@ -101,7 +107,9 @@ export async function GET(request: NextRequest) {
         status: collection.status,
         version: collectionData.version,
         lastPublishedAt: collectionData.last_published_at,
-        updatedAt: collection.updated_at
+        updatedAt: collection.updated_at,
+        locationId: collection.location_id,
+        locationName: collection.location?.name ?? null
       };
     });
 

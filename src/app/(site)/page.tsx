@@ -1,67 +1,20 @@
-import type { Year } from '@prisma/client';
-
-import { YearGrid } from '@/components/ui/YearGrid';
 import { CameraWireAnimation } from '@/components/ui/CameraWireAnimation';
 import { FadeInText } from '@/components/ui/FadeInText';
-import { getPublishedYears } from '@/lib/queries/years';
-
-type PublishedYear = Pick<Year, 'id' | 'label'>;
+import { LocationCard } from '@/components/LocationCard';
+import { loadYearLocationData } from '@/lib/year-location';
 
 export const dynamic = 'force-dynamic';
 
-function isPublishedYearArray(value: unknown): value is PublishedYear[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (item) =>
-        item !== null &&
-        typeof item === 'object' &&
-        'id' in item &&
-        'label' in item &&
-        typeof (item as { id: unknown }).id === 'string' &&
-        typeof (item as { label: unknown }).label === 'string',
-    )
-  );
-}
-
-function toPublishedYears(data: Year[]): PublishedYear[] {
-  return data.map(({ id, label }) => ({ id, label }));
-}
-
 export default async function Homepage() {
-  let years: PublishedYear[] = [];
-  let hasError = false;
+  const data = await loadYearLocationData().catch((error) => {
+    console.error('Failed to load year-location data for homepage:', error);
+    return { generatedAt: '', years: [] };
+  });
 
-  const getApiBaseUrl = () => {
-    const vercel = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '';
-    const site = process.env.NEXT_PUBLIC_SITE_URL || vercel || 'http://localhost:3000';
-    return site.replace(/\/$/, '');
-  };
-  try {
-  const res = await fetch(`${getApiBaseUrl()}/api/years?status=published&order=asc`, { cache: 'no-store' });
-    if (res.ok) {
-      const data = (await res.json()) as unknown;
-      years = isPublishedYearArray(data) ? data : [];
-    } else {
-      hasError = true;
-      years = [];
-    }
-  } catch {
-    hasError = true;
-    years = [];
-  }
-  // Only fallback when primary fetch failed
-  if (hasError && years.length === 0) {
-    try {
-      const fallbackYears = await getPublishedYears();
-      if (Array.isArray(fallbackYears) && fallbackYears.length > 0) {
-        years = toPublishedYears(fallbackYears);
-        // keep hasError to indicate API issue while showing data from fallback
-      }
-    } catch {
-      // ignore; keep empty state
-    }
-  }
+  const years = data.years
+    .filter((year) => year.status === 'published')
+    .sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+  const hasYears = years.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,13 +49,48 @@ export default async function Homepage() {
           </div>
         </section>
 
-        <section className="min-h-screen px-8 md:px-12 py-20 flex items-center justify-center bg-background">
-          <div className="w-full max-w-7xl mx-auto">
-            {hasError && (
-              <p className="text-center text-red-600 mb-8">Error loading years. Please try again.</p>
-            )}
+        <section className="px-8 md:px-12 pb-20 bg-background">
+          <div className="w-full max-w-7xl mx-auto space-y-24">
+            {hasYears ? (
+              years.map((year) => (
+                <section
+                  key={year.id}
+                  id={`year-${year.label}`}
+                  data-testid="year-section"
+                  className="scroll-mt-24 space-y-10"
+                  aria-labelledby={`year-heading-${year.label}`}
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      <h2 id={`year-heading-${year.label}`} className="font-serif text-4xl font-light tracking-wide text-gray-900">
+                        {year.label}
+                      </h2>
+                      <p className="mt-2 text-sm text-gray-600">
+                        {year.locations.length > 0
+                          ? `${year.locations.length} 個地點`
+                          : '地點即將揭曉，敬請期待。'}
+                      </p>
+                    </div>
+                  </div>
 
-            <YearGrid years={years} />
+                  {year.locations.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="location-grid">
+                      {year.locations.map((location) => (
+                        <LocationCard key={location.id} yearLabel={year.label} location={location} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 p-10 text-center text-gray-500" data-testid="empty-locations">
+                      該年份的地點即將揭曉，敬請期待。
+                    </div>
+                  )}
+                </section>
+              ))
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 p-12 text-center text-gray-500" data-testid="empty-years">
+                尚無發佈的年份與地點。請稍後再回來探索新的作品。
+              </div>
+            )}
           </div>
         </section>
       </main>

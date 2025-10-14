@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Breadcrumb from '@/components/admin/Breadcrumb';
+import AdminPageLayout from '@/components/admin/AdminPageLayout';
 
 interface AdminDashboardContentProps {
   publishedYears: number;
@@ -20,94 +20,90 @@ export default function AdminDashboardContent({
 }: AdminDashboardContentProps) {
   if (hasError) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8" data-testid="admin-dashboard">
-        <div className="max-w-7xl mx-auto">
-          <Breadcrumb items={[{ label: 'Dashboard' }]} />
-          <div className="text-center py-16">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Dashboard</h1>
-            <p className="text-gray-600 mb-8">Welcome to UTOA Photography Admin</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <QuickActionLink
-                href="/admin/years"
-                title="Years"
-                description="Manage timeline years"
-                dataTestId="nav-years"
-              />
-              <QuickActionLink
-                href="/admin/collections"
-                title="Collections"
-                description="Manage photo collections"
-                dataTestId="nav-collections"
-              />
-              <QuickActionLink
-                href="/admin/uploads"
-                title="Uploads"
-                description="Upload new images"
-                dataTestId="nav-uploads"
-              />
+      <div className="min-h-screen bg-slate-50/80" data-testid="admin-dashboard">
+        <AdminPageLayout
+          breadcrumbItems={[{ label: '控制台' }]}
+          title="管理控制台"
+          description="載入控制台資料時發生錯誤，請稍後再試。"
+          headerExtra={(
+            <div className="rounded-2xl border border-red-200 bg-red-50/70 p-6 text-sm text-red-700">
+              <p>目前無法取得統計資料，您仍可直接前往各管理頁面。</p>
             </div>
-          </div>
-        </div>
+          )}
+        >
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <QuickActionLink
+              href="/admin/years"
+              title="年份管理"
+              description="維護時間軸年份與草稿狀態。"
+              dataTestId="nav-years"
+            />
+            <QuickActionLink
+              href="/admin/uploads"
+              title="素材上傳"
+              description="上傳照片並管理現有檔案。"
+              dataTestId="nav-uploads"
+            />
+          </section>
+        </AdminPageLayout>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8" data-testid="admin-dashboard">
-      <div className="max-w-7xl mx-auto">
-        <Breadcrumb items={[{ label: 'Dashboard' }]} />
-        {/* User info from Cloudflare Access */}
-        <div className="flex items-center justify-end gap-3 mb-4">
-          <div data-testid="user-info" className="text-sm text-gray-600">
-            Cloudflare Access User
+    <div className="min-h-screen bg-slate-50/80" data-testid="admin-dashboard">
+      <AdminPageLayout
+        breadcrumbItems={[{ label: '控制台' }]}
+        title="管理控制台"
+        description="快速檢視作品集內容統計並前往各項設定。"
+        actions={(
+          <div data-testid="user-info" className="rounded-full bg-white/70 px-4 py-1 text-sm text-gray-600 shadow-sm ring-1 ring-gray-200/70">
+            Cloudflare Access 使用者
           </div>
-        </div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="mt-2 text-gray-600">Manage your photography portfolio content</p>
-        </div>
+        )}
+        contentClassName="space-y-8"
+      >
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="已發布年份" value={publishedYears} accent="emerald" />
+          <StatCard label="草稿年份" value={draftYears} accent="amber" />
+          <StatCard label="已發布作品集" value={publishedCollections} accent="sky" />
+          <StatCard label="草稿作品集" value={draftCollections} accent="slate" />
+        </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard label="Published Years" value={publishedYears} />
-          <StatCard label="Draft Years" value={draftYears} />
-          <StatCard label="Published Collections" value={publishedCollections} />
-          <StatCard label="Draft Collections" value={draftCollections} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <QuickActionPanel
             href="/admin/years"
-            title="Years Management"
-            description="Create and organize timeline years for your photography collections."
-            cta="Manage Years"
+            title="年份管理"
+            description="建立或調整作品集使用的年份，並管理各年份的狀態。"
+            cta="前往年份管理"
             dataTestId="nav-years"
           />
           <QuickActionPanel
-            href="/admin/collections"
-            title="Collections Management"
-            description="Create photo collections and organize them within years."
-            cta="Manage Collections"
-            dataTestId="nav-collections"
-          />
-          <QuickActionPanel
             href="/admin/uploads"
-            title="Image Uploads"
-            description="Upload new photos and manage existing assets in your collections."
-            cta="Upload Images"
+            title="素材上傳"
+            description="批次上傳照片、指派地點資料夾並維護描述資訊。"
+            cta="開啟素材上傳"
             dataTestId="nav-uploads"
           />
-        </div>
-      </div>
+        </section>
+      </AdminPageLayout>
     </div>
   );
 }
+type AccentKey = 'emerald' | 'amber' | 'sky' | 'slate';
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value, accent }: { label: string; value: number; accent: AccentKey }) {
+  const accentClasses: Record<AccentKey, string> = {
+    emerald: 'border-emerald-200/70 shadow-emerald-100/40',
+    amber: 'border-amber-200/70 shadow-amber-100/40',
+    sky: 'border-sky-200/70 shadow-sky-100/40',
+    slate: 'border-gray-200/80 shadow-gray-100/50',
+  };
+
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">{label}</h3>
-      <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
+    <div className={`rounded-2xl border bg-white/95 p-6 shadow-sm ring-1 ring-gray-100/60 backdrop-blur ${accentClasses[accent]}`}>
+      <h3 className="text-sm font-medium text-gray-600">{label}</h3>
+      <p className="mt-2 text-3xl font-semibold text-gray-900">{value}</p>
     </div>
   );
 }
@@ -126,12 +122,12 @@ function QuickActionPanel({
   dataTestId?: string;
 }) {
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm" data-testid={dataTestId}>
-      <h3 className="text-lg font-medium text-gray-900 mb-3">{title}</h3>
-      <p className="text-gray-600 mb-4">{description}</p>
+    <div className="rounded-2xl border border-gray-200 bg-white/95 p-6 shadow-sm ring-1 ring-gray-100/60" data-testid={dataTestId}>
+      <h3 className="text-lg font-semibold text-gray-900 mb-3">{title}</h3>
+      <p className="text-sm text-gray-600 mb-4">{description}</p>
       <Link
         href={href}
-        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+        className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
       >
         {cta}
       </Link>
@@ -153,11 +149,11 @@ function QuickActionLink({
   return (
     <Link
       href={href}
-      className="block p-6 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+      className="block rounded-2xl border border-gray-200 bg-white/95 p-6 shadow-sm ring-1 ring-gray-100/60 transition-shadow hover:shadow-md"
       data-testid={dataTestId}
     >
-      <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      <p className="text-sm text-gray-600">{description}</p>
     </Link>
   );
 }

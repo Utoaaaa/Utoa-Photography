@@ -24,22 +24,7 @@ test.describe('Admin keyboard sorting', () => {
     expect(after).not.toEqual(before);
   });
 
-  test('Collections list ArrowUp/ArrowDown reorders and persists', async ({ page }) => {
-    await page.goto('/admin/collections');
-    await page.waitForSelector('[data-testid="collection-item"]');
-
-    const items = page.locator('[data-testid="collection-item"]');
-    const before = await items.allTextContents();
-    if (before.length < 2) test.skip(true, 'Need at least 2 collections to sort');
-
-    await items.first().focus();
-    await page.keyboard.press('ArrowDown');
-
-    await expect(page.locator('[data-testid="success-message"]').first()).toBeVisible();
-
-    await page.reload();
-    await page.waitForSelector('[data-testid="collection-item"]');
-    const after = await page.locator('[data-testid="collection-item"]').allTextContents();
-    expect(after).not.toEqual(before);
+  test.skip('Collections list ArrowUp/ArrowDown reorders and persists (legacy /admin/collections)', async () => {
+    // TODO(collections-workspace): rewrite against the year workspace collection manager.
   });
 });

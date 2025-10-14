@@ -57,6 +57,8 @@ describe('Publish route audit integration (T025)', () => {
       order_index: '1.0',
       version: 2,
       published_at: null,
+      location_id: 'loc-1111-1111-1111-111111111111',
+      location: { id: 'loc-1111-1111-1111-111111111111', name: 'Main Gallery' },
       collection_assets: [
         { asset_id: 'a1', order_index: '1', asset: { id: 'a1', alt: 'Alt', caption: null, description: null, title: null, photographer: null, location: null, tags: null, width: 100, height: 100 } },
       ],

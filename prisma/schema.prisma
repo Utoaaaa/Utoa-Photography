@@ -24,15 +24,38 @@ model Year {
 
   // Relations
   collections Collection[]
+  locations   Location[]
 
   @@index([status, order_index])
   @@map("years")
+}
+
+model Location {
+  id             String       @id @default(uuid())
+  year_id        String
+  slug           String
+  name           String
+  summary        String?
+  cover_asset_id String?
+  order_index    String
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+
+  // Relations
+  year        Year        @relation(fields: [year_id], references: [id], onDelete: Cascade)
+  collections Collection[]
+  assets      Asset[]     @relation("AssetLocationFolder")
+
+  @@unique([year_id, slug])
+  @@index([year_id, order_index])
+  @@map("locations")
 }
 
 // Collections model - Photo groups within years, with slug-based URLs
 model Collection {
   id               String            @id @default(uuid())
   year_id          String
+  location_id      String?
   slug             String            // URL-friendly identifier
   title            String
   summary          String?           // Optional short description
@@ -55,12 +78,14 @@ model Collection {
 
   // Relations
   year             Year               @relation(fields: [year_id], references: [id], onDelete: Cascade)
+  location         Location?          @relation(fields: [location_id], references: [id], onDelete: SetNull)
   collection_assets CollectionAsset[]
   publish_history  PublishHistory[]
 
   @@unique([year_id, slug])
   @@index([year_id, status, order_index])
   @@index([status, published_at])
+  @@index([location_id])
   @@map("collections")
 }
 
@@ -77,15 +102,18 @@ model Asset {
   width           Int      // Original dimensions
   height          Int
   metadata_json   String?  // EXIF, camera settings, etc. (JSON string)
+  location_folder_id String?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
+  locationFolder  Location? @relation("AssetLocationFolder", fields: [location_folder_id], references: [id], onDelete: SetNull)
   // Relations
   collection_assets   CollectionAsset[]
   seo_metadata_assets SEOMetadata[]
 
   @@index([photographer])
   @@index([location])
+  @@index([location_folder_id])
   @@map("assets")
 }
 

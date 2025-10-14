@@ -1,13 +1,27 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, SEOEntityType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create sample years
-  const year2024 = await prisma.year.create({
-    data: {
+  // Ensure MOCK year exists for contract tests
+  await prisma.year.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440000' },
+    update: {},
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      label: 'MOCK',
+      order_index: '2000.0',
+      status: 'draft',
+    },
+  });
+
+  // Sample years
+  const year2024 = await prisma.year.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440001' },
+    update: {},
+    create: {
       id: '550e8400-e29b-41d4-a716-446655440001',
       label: '2024',
       order_index: '2024.0',
@@ -15,8 +29,10 @@ async function main() {
     },
   });
 
-  const year2023 = await prisma.year.create({
-    data: {
+  const year2023 = await prisma.year.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440002' },
+    update: {},
+    create: {
       id: '550e8400-e29b-41d4-a716-446655440002',
       label: '2023',
       order_index: '2023.0',
@@ -24,8 +40,10 @@ async function main() {
     },
   });
 
-  const year2022 = await prisma.year.create({
-    data: {
+  const year2022 = await prisma.year.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440003' },
+    update: {},
+    create: {
       id: '550e8400-e29b-41d4-a716-446655440003',
       label: '2022',
       order_index: '2022.0',
@@ -35,9 +53,11 @@ async function main() {
 
   console.log('✅ Created years:', { year2024, year2023, year2022 });
 
-  // Create sample assets
-  const asset1 = await prisma.asset.create({
-    data: {
+  // Sample assets
+  const asset1 = await prisma.asset.upsert({
+    where: { id: 'cloudflare-image-id-1' },
+    update: {},
+    create: {
       id: 'cloudflare-image-id-1',
       alt: 'Beautiful landscape photo',
       caption: 'A stunning sunset over the mountains',
@@ -53,8 +73,10 @@ async function main() {
     },
   });
 
-  const asset2 = await prisma.asset.create({
-    data: {
+  const asset2 = await prisma.asset.upsert({
+    where: { id: 'cloudflare-image-id-2' },
+    update: {},
+    create: {
       id: 'cloudflare-image-id-2',
       alt: 'Street photography scene',
       caption: 'City life in black and white',
@@ -63,8 +85,10 @@ async function main() {
     },
   });
 
-  const asset3 = await prisma.asset.create({
-    data: {
+  const asset3 = await prisma.asset.upsert({
+    where: { id: 'cloudflare-image-id-3' },
+    update: {},
+    create: {
       id: 'cloudflare-image-id-3',
       alt: 'Portrait photography',
       caption: 'Natural light portrait',
@@ -75,10 +99,134 @@ async function main() {
 
   console.log('✅ Created assets:', { asset1, asset2, asset3 });
 
-  // Create sample collections
-  const collection1 = await prisma.collection.create({
-    data: {
+  // Sample locations (delegate typed as any until Prisma client regenerates)
+  const locationDelegate = (prisma as any).location;
+
+  const locationPeaks2024 = await locationDelegate.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440101' },
+    update: {
       year_id: year2024.id,
+      slug: 'northern-peaks-24',
+      name: 'Northern Peaks',
+      summary: 'High-altitude adventures across alpine ridges.',
+      cover_asset_id: asset1.id,
+      order_index: '1.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440101',
+      year_id: year2024.id,
+      slug: 'northern-peaks-24',
+      name: 'Northern Peaks',
+      summary: 'High-altitude adventures across alpine ridges.',
+      cover_asset_id: asset1.id,
+      order_index: '1.0',
+    },
+  });
+
+  const locationCity2024 = await locationDelegate.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440102' },
+    update: {
+      year_id: year2024.id,
+      slug: 'city-lights-24',
+      name: 'City Lights',
+      summary: 'Neon-drenched explorations through late-night streets.',
+      cover_asset_id: asset2.id,
+      order_index: '2.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440102',
+      year_id: year2024.id,
+      slug: 'city-lights-24',
+      name: 'City Lights',
+      summary: 'Neon-drenched explorations through late-night streets.',
+      cover_asset_id: asset2.id,
+      order_index: '2.0',
+    },
+  });
+
+  const locationHarbor2023 = await locationDelegate.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440201' },
+    update: {
+      year_id: year2023.id,
+      slug: 'harbor-glow-23',
+      name: 'Harbor Glow',
+      summary: 'Golden-hour reflections along the harbor front.',
+      cover_asset_id: asset2.id,
+      order_index: '1.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440201',
+      year_id: year2023.id,
+      slug: 'harbor-glow-23',
+      name: 'Harbor Glow',
+      summary: 'Golden-hour reflections along the harbor front.',
+      cover_asset_id: asset2.id,
+      order_index: '1.0',
+    },
+  });
+
+  const locationForest2023 = await locationDelegate.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440202' },
+    update: {
+      year_id: year2023.id,
+      slug: 'forest-whispers-23',
+      name: 'Forest Whispers',
+      summary: 'Moody woodland portraits with ambient fog.',
+      cover_asset_id: asset3.id,
+      order_index: '2.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440202',
+      year_id: year2023.id,
+      slug: 'forest-whispers-23',
+      name: 'Forest Whispers',
+      summary: 'Moody woodland portraits with ambient fog.',
+      cover_asset_id: asset3.id,
+      order_index: '2.0',
+    },
+  });
+
+  const locationDraft2022 = await locationDelegate.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440301' },
+    update: {
+      year_id: year2022.id,
+      slug: 'in-progress-22',
+      name: 'In Progress',
+      summary: 'Draft collections awaiting curation.',
+      order_index: '1.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440301',
+      year_id: year2022.id,
+      slug: 'in-progress-22',
+      name: 'In Progress',
+      summary: 'Draft collections awaiting curation.',
+      order_index: '1.0',
+    },
+  });
+
+  console.log('✅ Created locations:', {
+    locationPeaks2024,
+    locationCity2024,
+    locationHarbor2023,
+    locationForest2023,
+    locationDraft2022,
+  });
+
+  // Sample collections with location assignments
+  const collection1 = await prisma.collection.upsert({
+    where: { year_id_slug: { year_id: year2024.id, slug: 'spring-vibes' } },
+    update: {
+      summary: 'Capturing the beauty of spring season',
+      cover_asset_id: asset1.id,
+      status: 'published',
+      order_index: '1.0',
+      published_at: new Date('2024-03-15'),
+      location_id: locationPeaks2024.id,
+    } as any,
+    create: {
+      year_id: year2024.id,
+      location_id: locationPeaks2024.id,
       slug: 'spring-vibes',
       title: 'Spring Vibes',
       summary: 'Capturing the beauty of spring season',
@@ -86,12 +234,22 @@ async function main() {
       status: 'published',
       order_index: '1.0',
       published_at: new Date('2024-03-15'),
-    },
+    } as any,
   });
 
-  const collection2 = await prisma.collection.create({
-    data: {
+  const collection2 = await prisma.collection.upsert({
+    where: { year_id_slug: { year_id: year2024.id, slug: 'urban-stories' } },
+    update: {
+      summary: 'Stories from the city streets',
+      cover_asset_id: asset2.id,
+      status: 'published',
+      order_index: '2.0',
+      published_at: new Date('2024-06-01'),
+      location_id: locationCity2024.id,
+    } as any,
+    create: {
       year_id: year2024.id,
+      location_id: locationCity2024.id,
       slug: 'urban-stories',
       title: 'Urban Stories',
       summary: 'Stories from the city streets',
@@ -99,12 +257,22 @@ async function main() {
       status: 'published',
       order_index: '2.0',
       published_at: new Date('2024-06-01'),
-    },
+    } as any,
   });
 
-  const collection3 = await prisma.collection.create({
-    data: {
+  const collection3 = await prisma.collection.upsert({
+    where: { year_id_slug: { year_id: year2023.id, slug: 'portraits' } },
+    update: {
+      summary: 'Character studies and portraits',
+      cover_asset_id: asset3.id,
+      status: 'published',
+      order_index: '1.0',
+      published_at: new Date('2023-08-20'),
+      location_id: locationHarbor2023.id,
+    } as any,
+    create: {
       year_id: year2023.id,
+      location_id: locationHarbor2023.id,
       slug: 'portraits',
       title: 'Portraits',
       summary: 'Character studies and portraits',
@@ -112,64 +280,74 @@ async function main() {
       status: 'published',
       order_index: '1.0',
       published_at: new Date('2023-08-20'),
-    },
+    } as any,
   });
 
   console.log('✅ Created collections:', { collection1, collection2, collection3 });
 
-  // Create collection-asset associations
-  await prisma.collectionAsset.createMany({
-    data: [
-      {
-        collection_id: collection1.id,
-        asset_id: asset1.id,
-        order_index: '1.0',
+  // Collection-asset associations
+  const collectionAssets = [
+    { collection_id: collection1.id, asset_id: asset1.id, order_index: '1.0' },
+    { collection_id: collection1.id, asset_id: asset2.id, order_index: '2.0' },
+    { collection_id: collection2.id, asset_id: asset2.id, order_index: '1.0' },
+    { collection_id: collection3.id, asset_id: asset3.id, order_index: '1.0' },
+  ];
+
+  for (const ca of collectionAssets) {
+    await prisma.collectionAsset.upsert({
+      where: {
+        collection_id_asset_id: {
+          collection_id: ca.collection_id,
+          asset_id: ca.asset_id,
+        },
       },
-      {
-        collection_id: collection1.id,
-        asset_id: asset2.id,
-        order_index: '2.0',
-      },
-      {
-        collection_id: collection2.id,
-        asset_id: asset2.id,
-        order_index: '1.0',
-      },
-      {
-        collection_id: collection3.id,
-        asset_id: asset3.id,
-        order_index: '1.0',
-      },
-    ],
-  });
+      update: { order_index: ca.order_index },
+      create: ca,
+    });
+  }
 
   console.log('✅ Created collection-asset associations');
 
-  // Create sample SEO metadata
-  await prisma.sEOMetadata.createMany({
-    data: [
-      {
-        entity_type: 'homepage',
-        entity_id: 'homepage',
-        title: 'Utoa Photography - 攝影作品展示',
-        description: '個人攝影作品集，以極簡風格展示多年創作成果',
-        og_asset_id: asset1.id,
+  // Sample SEO metadata
+  const seoItems = [
+    {
+      entity_type: SEOEntityType.homepage,
+      entity_id: 'homepage',
+      title: 'Utoa Photography - 攝影作品展示',
+      description: '個人攝影作品集，以極簡風格展示多年創作成果',
+      og_asset_id: asset1.id,
+    },
+    {
+      entity_type: SEOEntityType.year,
+      entity_id: year2024.id,
+      title: '2024 攝影作品 - Utoa Photography',
+      description: '2024年度攝影作品集合',
+    },
+    {
+      entity_type: SEOEntityType.collection,
+      entity_id: collection1.id,
+      title: 'Spring Vibes - 2024 攝影作品',
+      description: 'Capturing the beauty of spring season',
+      og_asset_id: asset1.id,
+    },
+  ];
+
+  for (const s of seoItems) {
+    await prisma.sEOMetadata.upsert({
+      where: {
+        entity_type_entity_id: {
+          entity_type: s.entity_type,
+          entity_id: s.entity_id,
+        },
       },
-      {
-        entity_type: 'year',
-        entity_id: year2024.id,
-        title: '2024 攝影作品 - Utoa Photography',
-        description: '2024年度攝影作品集合',
+      update: {
+        title: s.title ?? null,
+        description: s.description ?? null,
+        og_asset_id: s.og_asset_id ?? null,
       },
-      {
-        entity_type: 'collection',
-        entity_id: collection1.id,
-        title: 'Spring Vibes - 2024 攝影作品',
-        description: 'Capturing the beauty of spring season',
-        og_asset_id: asset1.id,
-      },
-    ],
-  });
+  create: s as any,
+    });
+  }
 
   console.log('✅ Created SEO metadata');
   console.log('🎉 Database seeding completed!');

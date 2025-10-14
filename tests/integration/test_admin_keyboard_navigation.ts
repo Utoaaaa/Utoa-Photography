@@ -59,37 +59,8 @@ test.describe('Admin keyboard navigation (T062)', () => {
     expect(tabSequence.join(',')).toMatch(/year/);
   });
 
-  test('Admin Collections page: Tab navigation and focus indicators', async ({ page }) => {
-    await page.goto('/admin/collections', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="collection-create-button"]', { timeout: 15000, state: 'visible' });
-
-    // Tab through elements
-    await page.keyboard.press('Tab');
-    
-    const tabSequence: string[] = [];
-    for (let i = 0; i < 8; i++) {
-      const element = await page.evaluate(() => {
-        const el = document.activeElement;
-        return {
-          testid: el?.getAttribute('data-testid'),
-          tag: el?.tagName.toLowerCase(),
-          hasFocusStyle: window.getComputedStyle(el as Element).outlineWidth !== '0px' ||
-                         window.getComputedStyle(el as Element).boxShadow !== 'none'
-        };
-      });
-      
-      if (element.testid) tabSequence.push(element.testid);
-      
-      // Verify interactive elements have visible focus
-      if (element.tag === 'button' || element.tag === 'a') {
-        expect(element.hasFocusStyle).toBe(true);
-      }
-      
-      await page.keyboard.press('Tab');
-    }
-
-    // Should include collection-related controls
-    expect(tabSequence.join(',')).toMatch(/collection/);
+  test.skip('Admin Collections page: Tab navigation and focus indicators (legacy /admin/collections)', async () => {
+    // TODO(collections-workspace): recreate keyboard coverage for the consolidated year workspace.
   });
 
   test('Arrow keys navigate between list items (Years)', async ({ page }) => {
@@ -121,29 +92,8 @@ test.describe('Admin keyboard navigation (T062)', () => {
     expect(afterArrow).toBeDefined();
   });
 
-  test('Arrow keys navigate between list items (Collections)', async ({ page }) => {
-    await page.goto('/admin/collections', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="collection-item"]', { timeout: 15000 });
-
-    const items = page.locator('[data-testid="collection-item"]');
-    const count = await items.count();
-    
-    if (count < 2) {
-      test.skip(true, 'Need at least 2 collections to test arrow navigation');
-      return;
-    }
-
-    // Focus first collection
-    await items.first().focus();
-    
-    const firstItem = await page.evaluate(() => document.activeElement?.textContent);
-    
-    // ArrowDown interaction
-    await page.keyboard.press('ArrowDown');
-    await page.waitForTimeout(300);
-    
-    const afterArrow = await page.evaluate(() => document.activeElement?.textContent);
-    expect(afterArrow).toBeDefined();
+  test.skip('Arrow keys navigate between list items (Collections)', async () => {
+    // TODO(collections-workspace): port arrow navigation coverage to the year workspace collection manager.
   });
 
   test('Escape key closes dialogs and returns focus', async ({ page }) => {

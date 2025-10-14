@@ -99,12 +99,132 @@ async function main() {
 
   console.log('✅ Created assets:', { asset1, asset2, asset3 });
 
+  // Create sample locations (idempotent)
+  const locationPeaks2024 = await prisma.location.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440101' },
+    update: {
+      year_id: year2024.id,
+      slug: 'northern-peaks-24',
+      name: 'Northern Peaks',
+      summary: 'High-altitude adventures across alpine ridges.',
+      cover_asset_id: asset1.id,
+      order_index: '1.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440101',
+      year_id: year2024.id,
+      slug: 'northern-peaks-24',
+      name: 'Northern Peaks',
+      summary: 'High-altitude adventures across alpine ridges.',
+      cover_asset_id: asset1.id,
+      order_index: '1.0',
+    },
+  });
+
+  const locationCity2024 = await prisma.location.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440102' },
+    update: {
+      year_id: year2024.id,
+      slug: 'city-lights-24',
+      name: 'City Lights',
+      summary: 'Neon-drenched explorations through late-night streets.',
+      cover_asset_id: asset2.id,
+      order_index: '2.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440102',
+      year_id: year2024.id,
+      slug: 'city-lights-24',
+      name: 'City Lights',
+      summary: 'Neon-drenched explorations through late-night streets.',
+      cover_asset_id: asset2.id,
+      order_index: '2.0',
+    },
+  });
+
+  const locationHarbor2023 = await prisma.location.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440201' },
+    update: {
+      year_id: year2023.id,
+      slug: 'harbor-glow-23',
+      name: 'Harbor Glow',
+      summary: 'Golden-hour reflections along the harbor front.',
+      cover_asset_id: asset2.id,
+      order_index: '1.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440201',
+      year_id: year2023.id,
+      slug: 'harbor-glow-23',
+      name: 'Harbor Glow',
+      summary: 'Golden-hour reflections along the harbor front.',
+      cover_asset_id: asset2.id,
+      order_index: '1.0',
+    },
+  });
+
+  const locationForest2023 = await prisma.location.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440202' },
+    update: {
+      year_id: year2023.id,
+      slug: 'forest-whispers-23',
+      name: 'Forest Whispers',
+      summary: 'Moody woodland portraits with ambient fog.',
+      cover_asset_id: asset3.id,
+      order_index: '2.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440202',
+      year_id: year2023.id,
+      slug: 'forest-whispers-23',
+      name: 'Forest Whispers',
+      summary: 'Moody woodland portraits with ambient fog.',
+      cover_asset_id: asset3.id,
+      order_index: '2.0',
+    },
+  });
+
+  const locationDraft2022 = await prisma.location.upsert({
+    where: { id: '550e8400-e29b-41d4-a716-446655440301' },
+    update: {
+      year_id: year2022.id,
+      slug: 'in-progress-22',
+      name: 'In Progress',
+      summary: 'Draft collections awaiting curation.',
+      order_index: '1.0',
+    },
+    create: {
+      id: '550e8400-e29b-41d4-a716-446655440301',
+      year_id: year2022.id,
+      slug: 'in-progress-22',
+      name: 'In Progress',
+      summary: 'Draft collections awaiting curation.',
+      order_index: '1.0',
+    },
+  });
+
+  console.log('✅ Created locations:', {
+    locationPeaks2024,
+    locationCity2024,
+    locationHarbor2023,
+    locationForest2023,
+    locationDraft2022,
+  });
+
   // Create sample collections
   const collection1 = await prisma.collection.upsert({
     where: { year_id_slug: { year_id: year2024.id, slug: 'spring-vibes' } },
-    update: {},
+    update: {
+      summary: 'Capturing the beauty of spring season',
+      cover_asset_id: asset1.id,
+      status: 'published',
+      order_index: '1.0',
+      published_at: new Date('2024-03-15'),
+      location_id: locationPeaks2024.id,
+    },
     create: {
       year_id: year2024.id,
+      location_id: locationPeaks2024.id,
       slug: 'spring-vibes',
       title: 'Spring Vibes',
       summary: 'Capturing the beauty of spring season',
@@ -117,9 +237,17 @@ async function main() {
 
   const collection2 = await prisma.collection.upsert({
     where: { year_id_slug: { year_id: year2024.id, slug: 'urban-stories' } },
-    update: {},
+    update: {
+      summary: 'Stories from the city streets',
+      cover_asset_id: asset2.id,
+      status: 'published',
+      order_index: '2.0',
+      published_at: new Date('2024-06-01'),
+      location_id: locationCity2024.id,
+    },
     create: {
       year_id: year2024.id,
+      location_id: locationCity2024.id,
       slug: 'urban-stories',
       title: 'Urban Stories',
       summary: 'Stories from the city streets',
@@ -132,9 +260,17 @@ async function main() {
 
   const collection3 = await prisma.collection.upsert({
     where: { year_id_slug: { year_id: year2023.id, slug: 'portraits' } },
-    update: {},
+    update: {
+      summary: 'Character studies and portraits',
+      cover_asset_id: asset3.id,
+      status: 'published',
+      order_index: '1.0',
+      published_at: new Date('2023-08-20'),
+      location_id: locationHarbor2023.id,
+    },
     create: {
       year_id: year2023.id,
+      location_id: locationHarbor2023.id,
       slug: 'portraits',
       title: 'Portraits',
       summary: 'Character studies and portraits',

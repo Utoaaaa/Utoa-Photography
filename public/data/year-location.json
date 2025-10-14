@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2025-10-14T15:27:32.716Z",
+  "years": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "label": "2024",
+      "orderIndex": "000002",
+      "status": "published",
+      "locations": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440101",
+          "yearId": "550e8400-e29b-41d4-a716-446655440001",
+          "slug": "northern-peaks-24",
+          "name": "Northern Peaks",
+          "summary": "High-altitude adventures across alpine ridges.",
+          "coverAssetId": "cloudflare-image-id-1",
+          "orderIndex": "1.0",
+          "collectionCount": 1,
+          "collections": [
+            {
+              "id": "0b130d8d-0273-4b55-a530-ed46bb00a0aa",
+              "slug": "spring-vibes",
+              "title": "Spring Vibes",
+              "summary": "Capturing the beauty of spring season",
+              "coverAssetId": "cloudflare-image-id-1",
+              "orderIndex": "1.0",
+              "publishedAt": "2024-03-15T00:00:00.000Z",
+              "updatedAt": "2025-10-10T12:24:20.558Z"
+            }
+          ]
+        },
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440102",
+          "yearId": "550e8400-e29b-41d4-a716-446655440001",
+          "slug": "city-lights-24",
+          "name": "City Lights",
+          "summary": "Neon-drenched explorations through late-night streets.",
+          "coverAssetId": "cloudflare-image-id-2",
+          "orderIndex": "2.0",
+          "collectionCount": 1,
+          "collections": [
+            {
+              "id": "83c7703c-7755-47db-9879-80e0c1c446ba",
+              "slug": "urban-stories",
+              "title": "Urban Stories",
+              "summary": "Stories from the city streets",
+              "coverAssetId": "cloudflare-image-id-2",
+              "orderIndex": "2.0",
+              "publishedAt": "2024-06-01T00:00:00.000Z",
+              "updatedAt": "2025-10-10T12:24:20.560Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "label": "2023",
+      "orderIndex": "000003",
+      "status": "published",
+      "locations": [
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440201",
+          "yearId": "550e8400-e29b-41d4-a716-446655440002",
+          "slug": "harbor-glow-23",
+          "name": "Harbor Glow",
+          "summary": "Golden-hour reflections along the harbor front.",
+          "coverAssetId": "cloudflare-image-id-2",
+          "orderIndex": "1.0",
+          "collectionCount": 1,
+          "collections": [
+            {
+              "id": "28ea3851-26c5-4f51-8c17-b0ba3f54dc0e",
+              "slug": "portraits",
+              "title": "Portraits",
+              "summary": "Character studies and portraits",
+              "coverAssetId": "cloudflare-image-id-3",
+              "orderIndex": "1.0",
+              "publishedAt": "2023-08-20T00:00:00.000Z",
+              "updatedAt": "2025-10-10T12:24:20.561Z"
+            }
+          ]
+        },
+        {
+          "id": "550e8400-e29b-41d4-a716-446655440202",
+          "yearId": "550e8400-e29b-41d4-a716-446655440002",
+          "slug": "forest-whispers-23",
+          "name": "Forest Whispers",
+          "summary": "Moody woodland portraits with ambient fog.",
+          "coverAssetId": "cloudflare-image-id-3",
+          "orderIndex": "2.0",
+          "collectionCount": 1,
+          "collections": [
+            {
+              "id": "2cc21e1b-f2b2-4131-ba92-e44ecca7ff57",
+              "slug": "345",
+              "title": "345",
+              "summary": null,
+              "coverAssetId": null,
+              "orderIndex": "1.0",
+              "publishedAt": "2025-10-14T13:49:14.224Z",
+              "updatedAt": "2025-10-14T13:49:14.225Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

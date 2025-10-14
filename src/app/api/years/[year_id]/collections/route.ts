@@ -62,7 +62,7 @@ export async function POST(
     } catch {
       body = {};
     }
-    const { slug, title, summary, status = 'draft', order_index, cover_asset_id } = body;
+    const { slug, title, summary, status = 'draft', order_index, cover_asset_id, location_id: rawLocationId } = body;
 
     if (!slug) {
       return NextResponse.json({ error: 'missing required field', message: 'slug is required' }, { status: 400 });
@@ -86,8 +86,24 @@ export async function POST(
       return NextResponse.json({ error: 'Not found', message: 'Year not found' }, { status: 404 });
     }
 
-  const data: any = { year_id, slug, title, summary, status, order_index: order_index || '1.0' };
-  if (cover_asset_id) data.cover_asset_id = cover_asset_id;
+    let locationId: string | null = null;
+    if (rawLocationId !== undefined) {
+      if (rawLocationId === null || rawLocationId === '') {
+        locationId = null;
+      } else if (typeof rawLocationId === 'string') {
+        const location = await prisma.location.findUnique({ where: { id: rawLocationId } });
+        if (!location || location.year_id !== year_id) {
+          return NextResponse.json({ error: 'invalid location', message: 'Location does not exist for this year' }, { status: 400 });
+        }
+        locationId = location.id;
+      } else {
+        return NextResponse.json({ error: 'invalid location', message: 'location_id must be a string or null' }, { status: 400 });
+      }
+    }
+
+    const data: any = { year_id, slug, title, summary, status, order_index: order_index || '1.0' };
+    if (cover_asset_id) data.cover_asset_id = cover_asset_id;
+    if (locationId) data.location_id = locationId;
     if (status === 'published') data.published_at = new Date();
 
     const created = await prisma.collection.create({ data });

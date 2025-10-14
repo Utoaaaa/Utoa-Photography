@@ -1,531 +1,76 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
-  - generic [ref=e3]:
-    - heading "Years" [level=1] [ref=e4]
-    - status [ref=e5]
-    - generic [ref=e6]:
-      - button "Create Year" [ref=e7]
-      - generic [ref=e8]: Failed to update
-    - generic [ref=e9]:
-      - generic [ref=e10]:
-        - generic [ref=e11]: Label
-        - textbox "Label" [ref=e12]: Conflicted Update
-      - generic [ref=e13]:
-        - generic [ref=e14]: Status
-        - combobox [ref=e15]:
-          - option "draft"
-          - option "published" [selected]
-      - generic [ref=e16]:
-        - button "Save" [active] [ref=e17]
-        - button "Cancel" [ref=e18]
-    - list [ref=e19]:
-      - listitem "Test Year 2024 (published)" [ref=e20]:
-        - generic [ref=e21]:
-          - generic [ref=e22]:
-            - text: Test Year 2024
-            - generic [ref=e23]: (published)
-          - generic "reorder controls" [ref=e24]:
-            - button "↑" [disabled] [ref=e25]
-            - button "↓" [ref=e26]
-        - generic [ref=e27]:
-          - button "Edit" [ref=e28]
-          - button "Delete" [disabled] [ref=e29]
-          - button "Force Delete…" [ref=e30]
-      - listitem "2024 (draft)" [ref=e31]:
-        - generic [ref=e32]:
-          - generic [ref=e33]:
-            - text: "2024"
-            - generic [ref=e34]: (draft)
-          - generic "reorder controls" [ref=e35]:
-            - button "↑" [ref=e36]
-            - button "↓" [ref=e37]
-        - generic [ref=e38]:
-          - button "Edit" [ref=e39]
-          - button "Delete" [disabled] [ref=e40]
-          - button "Force Delete…" [ref=e41]
-      - listitem "Test Year 2024 (published)" [ref=e42]:
-        - generic [ref=e43]:
-          - generic [ref=e44]:
-            - text: Test Year 2024
-            - generic [ref=e45]: (published)
-          - generic "reorder controls" [ref=e46]:
-            - button "↑" [ref=e47]
-            - button "↓" [ref=e48]
-        - generic [ref=e49]:
-          - button "Edit" [ref=e50]
-          - button "Delete" [ref=e51]
-      - listitem "Test Year 2024 (published)" [ref=e52]:
-        - generic [ref=e53]:
-          - generic [ref=e54]:
-            - text: Test Year 2024
-            - generic [ref=e55]: (published)
-          - generic "reorder controls" [ref=e56]:
-            - button "↑" [ref=e57]
-            - button "↓" [ref=e58]
-        - generic [ref=e59]:
-          - button "Edit" [ref=e60]
-          - button "Delete" [ref=e61]
-      - listitem "Test Year 2024 (published)" [ref=e62]:
-        - generic [ref=e63]:
-          - generic [ref=e64]:
-            - text: Test Year 2024
-            - generic [ref=e65]: (published)
-          - generic "reorder controls" [ref=e66]:
-            - button "↑" [ref=e67]
-            - button "↓" [ref=e68]
-        - generic [ref=e69]:
-          - button "Edit" [ref=e70]
-          - button "Delete" [ref=e71]
-      - listitem "Test Year 2024 (published)" [ref=e72]:
-        - generic [ref=e73]:
-          - generic [ref=e74]:
-            - text: Test Year 2024
-            - generic [ref=e75]: (published)
-          - generic "reorder controls" [ref=e76]:
-            - button "↑" [ref=e77]
-            - button "↓" [ref=e78]
-        - generic [ref=e79]:
-          - button "Edit" [ref=e80]
-          - button "Delete" [ref=e81]
-      - listitem "Test Year 2024 (published)" [ref=e82]:
+- generic:
+  - generic [active]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - navigation [ref=e6]:
+            - button "previous" [disabled] [ref=e7]:
+              - img "previous" [ref=e8]
+            - generic [ref=e10]:
+              - generic [ref=e11]: 1/
+              - generic [ref=e12]: "1"
+            - button "next" [disabled] [ref=e13]:
+              - img "next" [ref=e14]
+          - img
+        - generic [ref=e16]:
+          - link "Next.js 15.5.3 (stale) Webpack" [ref=e17] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e18] [cursor=pointer]
+            - generic "There is a newer version (15.5.5) available, upgrade recommended!" [ref=e20] [cursor=pointer]: Next.js 15.5.3 (stale)
+            - generic [ref=e21] [cursor=pointer]: Webpack
+          - img
+      - dialog "Build Error" [ref=e23]:
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - generic [ref=e30]: Build Error
+              - generic [ref=e31]:
+                - button "Copy Error Info" [ref=e32] [cursor=pointer]:
+                  - img [ref=e33] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e35]:
+                  - img [ref=e36]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e38] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e39] [cursor=pointer]
+            - paragraph [ref=e48]: x Unterminated regexp literal
+          - generic [ref=e50]:
+            - generic [ref=e52]:
+              - img [ref=e54]
+              - generic [ref=e57]: ./src/app/admin/years/page.tsx
+              - button "Open in editor" [ref=e58] [cursor=pointer]:
+                - img [ref=e60] [cursor=pointer]
+            - generic [ref=e63]:
+              - generic [ref=e64]: "Error:"
+              - generic [ref=e65]: x
+              - generic [ref=e66]: Unterminated regexp literal ,-[
+              - generic [ref=e67]: /Users/utoaaaa/檔案/Web app/Utoa-Photography/src/app/admin/years/page.tsx
+              - generic [ref=e68]: :674:1]
+              - generic [ref=e69]: "671"
+              - generic [ref=e70]: "| </AccessibleDialog>"
+              - generic [ref=e71]: "672"
+              - generic [ref=e72]: "| )}"
+              - generic [ref=e73]: "673"
+              - generic [ref=e74]: "| </div>"
+              - generic [ref=e75]: "674"
+              - generic [ref=e76]: "| </div> :"
+              - generic [ref=e77]: ^^^^^
+              - generic [ref=e79]: "675"
+              - generic [ref=e80]: "| );"
+              - generic [ref=e81]: "676"
+              - generic [ref=e82]: "| } `---- Caused by: Syntax Error"
         - generic [ref=e83]:
-          - generic [ref=e84]:
-            - text: Test Year 2024
-            - generic [ref=e85]: (published)
-          - generic "reorder controls" [ref=e86]:
-            - button "↑" [ref=e87]
-            - button "↓" [ref=e88]
-        - generic [ref=e89]:
-          - button "Edit" [ref=e90]
-          - button "Delete" [disabled] [ref=e91]
-          - button "Force Delete…" [ref=e92]
-      - listitem "Test Year 2024 (published)" [ref=e93]:
-        - generic [ref=e94]:
-          - generic [ref=e95]:
-            - text: Test Year 2024
-            - generic [ref=e96]: (published)
-          - generic "reorder controls" [ref=e97]:
-            - button "↑" [ref=e98]
-            - button "↓" [ref=e99]
-        - generic [ref=e100]:
-          - button "Edit" [ref=e101]
-          - button "Delete" [ref=e102]
-      - listitem "Test Year 2024 (published)" [ref=e103]:
-        - generic [ref=e104]:
-          - generic [ref=e105]:
-            - text: Test Year 2024
-            - generic [ref=e106]: (published)
-          - generic "reorder controls" [ref=e107]:
-            - button "↑" [ref=e108]
-            - button "↓" [ref=e109]
-        - generic [ref=e110]:
-          - button "Edit" [ref=e111]
-          - button "Delete" [ref=e112]
-      - listitem "Test Year 2024 (published)" [ref=e113]:
-        - generic [ref=e114]:
-          - generic [ref=e115]:
-            - text: Test Year 2024
-            - generic [ref=e116]: (published)
-          - generic "reorder controls" [ref=e117]:
-            - button "↑" [ref=e118]
-            - button "↓" [ref=e119]
-        - generic [ref=e120]:
-          - button "Edit" [ref=e121]
-          - button "Delete" [ref=e122]
-      - listitem "2024 (draft)" [ref=e123]:
-        - generic [ref=e124]:
-          - generic [ref=e125]:
-            - text: "2024"
-            - generic [ref=e126]: (draft)
-          - generic "reorder controls" [ref=e127]:
-            - button "↑" [ref=e128]
-            - button "↓" [ref=e129]
-        - generic [ref=e130]:
-          - button "Edit" [ref=e131]
-          - button "Delete" [ref=e132]
-      - listitem "Test Year 2024 (published)" [ref=e133]:
-        - generic [ref=e134]:
-          - generic [ref=e135]:
-            - text: Test Year 2024
-            - generic [ref=e136]: (published)
-          - generic "reorder controls" [ref=e137]:
-            - button "↑" [ref=e138]
-            - button "↓" [ref=e139]
-        - generic [ref=e140]:
-          - button "Edit" [ref=e141]
-          - button "Delete" [ref=e142]
-      - listitem "Test Year 2024 (published)" [ref=e143]:
-        - generic [ref=e144]:
-          - generic [ref=e145]:
-            - text: Test Year 2024
-            - generic [ref=e146]: (published)
-          - generic "reorder controls" [ref=e147]:
-            - button "↑" [ref=e148]
-            - button "↓" [ref=e149]
-        - generic [ref=e150]:
-          - button "Edit" [ref=e151]
-          - button "Delete" [disabled] [ref=e152]
-          - button "Force Delete…" [ref=e153]
-      - listitem "Test Year 2024 (published)" [ref=e154]:
-        - generic [ref=e155]:
-          - generic [ref=e156]:
-            - text: Test Year 2024
-            - generic [ref=e157]: (published)
-          - generic "reorder controls" [ref=e158]:
-            - button "↑" [ref=e159]
-            - button "↓" [ref=e160]
-        - generic [ref=e161]:
-          - button "Edit" [ref=e162]
-          - button "Delete" [ref=e163]
-      - listitem "Test Year 2024 (published)" [ref=e164]:
-        - generic [ref=e165]:
-          - generic [ref=e166]:
-            - text: Test Year 2024
-            - generic [ref=e167]: (published)
-          - generic "reorder controls" [ref=e168]:
-            - button "↑" [ref=e169]
-            - button "↓" [ref=e170]
-        - generic [ref=e171]:
-          - button "Edit" [ref=e172]
-          - button "Delete" [ref=e173]
-      - listitem "Test Year 2024 (published)" [ref=e174]:
-        - generic [ref=e175]:
-          - generic [ref=e176]:
-            - text: Test Year 2024
-            - generic [ref=e177]: (published)
-          - generic "reorder controls" [ref=e178]:
-            - button "↑" [ref=e179]
-            - button "↓" [ref=e180]
-        - generic [ref=e181]:
-          - button "Edit" [ref=e182]
-          - button "Delete" [ref=e183]
-      - listitem "2024 (draft)" [ref=e184]:
-        - generic [ref=e185]:
-          - generic [ref=e186]:
-            - text: "2024"
-            - generic [ref=e187]: (draft)
-          - generic "reorder controls" [ref=e188]:
-            - button "↑" [ref=e189]
-            - button "↓" [ref=e190]
-        - generic [ref=e191]:
-          - button "Edit" [ref=e192]
-          - button "Delete" [ref=e193]
-      - listitem "Test Year 2024 (published)" [ref=e194]:
-        - generic [ref=e195]:
-          - generic [ref=e196]:
-            - text: Test Year 2024
-            - generic [ref=e197]: (published)
-          - generic "reorder controls" [ref=e198]:
-            - button "↑" [ref=e199]
-            - button "↓" [ref=e200]
-        - generic [ref=e201]:
-          - button "Edit" [ref=e202]
-          - button "Delete" [ref=e203]
-      - listitem "Test Year 2024 (published)" [ref=e204]:
-        - generic [ref=e205]:
-          - generic [ref=e206]:
-            - text: Test Year 2024
-            - generic [ref=e207]: (published)
-          - generic "reorder controls" [ref=e208]:
-            - button "↑" [ref=e209]
-            - button "↓" [ref=e210]
-        - generic [ref=e211]:
-          - button "Edit" [ref=e212]
-          - button "Delete" [disabled] [ref=e213]
-          - button "Force Delete…" [ref=e214]
-      - listitem "Test Year 2024 (published)" [ref=e215]:
-        - generic [ref=e216]:
-          - generic [ref=e217]:
-            - text: Test Year 2024
-            - generic [ref=e218]: (published)
-          - generic "reorder controls" [ref=e219]:
-            - button "↑" [ref=e220]
-            - button "↓" [ref=e221]
-        - generic [ref=e222]:
-          - button "Edit" [ref=e223]
-          - button "Delete" [ref=e224]
-      - listitem "Test Year 2024 (published)" [ref=e225]:
-        - generic [ref=e226]:
-          - generic [ref=e227]:
-            - text: Test Year 2024
-            - generic [ref=e228]: (published)
-          - generic "reorder controls" [ref=e229]:
-            - button "↑" [ref=e230]
-            - button "↓" [ref=e231]
-        - generic [ref=e232]:
-          - button "Edit" [ref=e233]
-          - button "Delete" [ref=e234]
-      - listitem "Test Year 2024 (published)" [ref=e235]:
-        - generic [ref=e236]:
-          - generic [ref=e237]:
-            - text: Test Year 2024
-            - generic [ref=e238]: (published)
-          - generic "reorder controls" [ref=e239]:
-            - button "↑" [ref=e240]
-            - button "↓" [ref=e241]
-        - generic [ref=e242]:
-          - button "Edit" [ref=e243]
-          - button "Delete" [ref=e244]
-      - listitem "2024 (draft)" [ref=e245]:
-        - generic [ref=e246]:
-          - generic [ref=e247]:
-            - text: "2024"
-            - generic [ref=e248]: (draft)
-          - generic "reorder controls" [ref=e249]:
-            - button "↑" [ref=e250]
-            - button "↓" [ref=e251]
-        - generic [ref=e252]:
-          - button "Edit" [ref=e253]
-          - button "Delete" [ref=e254]
-      - listitem "Test Year 2024 (published)" [ref=e255]:
-        - generic [ref=e256]:
-          - generic [ref=e257]:
-            - text: Test Year 2024
-            - generic [ref=e258]: (published)
-          - generic "reorder controls" [ref=e259]:
-            - button "↑" [ref=e260]
-            - button "↓" [ref=e261]
-        - generic [ref=e262]:
-          - button "Edit" [ref=e263]
-          - button "Delete" [disabled] [ref=e264]
-          - button "Force Delete…" [ref=e265]
-      - listitem "Test Year 2024 (published)" [ref=e266]:
-        - generic [ref=e267]:
-          - generic [ref=e268]:
-            - text: Test Year 2024
-            - generic [ref=e269]: (published)
-          - generic "reorder controls" [ref=e270]:
-            - button "↑" [ref=e271]
-            - button "↓" [ref=e272]
-        - generic [ref=e273]:
-          - button "Edit" [ref=e274]
-          - button "Delete" [ref=e275]
-      - listitem "Test Year 2024 (published)" [ref=e276]:
-        - generic [ref=e277]:
-          - generic [ref=e278]:
-            - text: Test Year 2024
-            - generic [ref=e279]: (published)
-          - generic "reorder controls" [ref=e280]:
-            - button "↑" [ref=e281]
-            - button "↓" [ref=e282]
-        - generic [ref=e283]:
-          - button "Edit" [ref=e284]
-          - button "Delete" [ref=e285]
-      - listitem "Test Year 2024 (published)" [ref=e286]:
-        - generic [ref=e287]:
-          - generic [ref=e288]:
-            - text: Test Year 2024
-            - generic [ref=e289]: (published)
-          - generic "reorder controls" [ref=e290]:
-            - button "↑" [ref=e291]
-            - button "↓" [ref=e292]
-        - generic [ref=e293]:
-          - button "Edit" [ref=e294]
-          - button "Delete" [ref=e295]
-      - listitem "2024 (draft)" [ref=e296]:
-        - generic [ref=e297]:
-          - generic [ref=e298]:
-            - text: "2024"
-            - generic [ref=e299]: (draft)
-          - generic "reorder controls" [ref=e300]:
-            - button "↑" [ref=e301]
-            - button "↓" [ref=e302]
-        - generic [ref=e303]:
-          - button "Edit" [ref=e304]
-          - button "Delete" [ref=e305]
-      - listitem "Test Year 2024 (published)" [ref=e306]:
-        - generic [ref=e307]:
-          - generic [ref=e308]:
-            - text: Test Year 2024
-            - generic [ref=e309]: (published)
-          - generic "reorder controls" [ref=e310]:
-            - button "↑" [ref=e311]
-            - button "↓" [ref=e312]
-        - generic [ref=e313]:
-          - button "Edit" [ref=e314]
-          - button "Delete" [ref=e315]
-      - listitem "Test Year 2024 (published)" [ref=e316]:
-        - generic [ref=e317]:
-          - generic [ref=e318]:
-            - text: Test Year 2024
-            - generic [ref=e319]: (published)
-          - generic "reorder controls" [ref=e320]:
-            - button "↑" [ref=e321]
-            - button "↓" [ref=e322]
-        - generic [ref=e323]:
-          - button "Edit" [ref=e324]
-          - button "Delete" [disabled] [ref=e325]
-          - button "Force Delete…" [ref=e326]
-      - listitem "Test Year 2024 (published)" [ref=e327]:
-        - generic [ref=e328]:
-          - generic [ref=e329]:
-            - text: Test Year 2024
-            - generic [ref=e330]: (published)
-          - generic "reorder controls" [ref=e331]:
-            - button "↑" [ref=e332]
-            - button "↓" [ref=e333]
-        - generic [ref=e334]:
-          - button "Edit" [ref=e335]
-          - button "Delete" [ref=e336]
-      - listitem "Test Year 2024 (published)" [ref=e337]:
-        - generic [ref=e338]:
-          - generic [ref=e339]:
-            - text: Test Year 2024
-            - generic [ref=e340]: (published)
-          - generic "reorder controls" [ref=e341]:
-            - button "↑" [ref=e342]
-            - button "↓" [ref=e343]
-        - generic [ref=e344]:
-          - button "Edit" [ref=e345]
-          - button "Delete" [ref=e346]
-      - listitem "Test Year 2024 (published)" [ref=e347]:
-        - generic [ref=e348]:
-          - generic [ref=e349]:
-            - text: Test Year 2024
-            - generic [ref=e350]: (published)
-          - generic "reorder controls" [ref=e351]:
-            - button "↑" [ref=e352]
-            - button "↓" [ref=e353]
-        - generic [ref=e354]:
-          - button "Edit" [ref=e355]
-          - button "Delete" [ref=e356]
-      - listitem "Test Year 2024 (published)" [ref=e357]:
-        - generic [ref=e358]:
-          - generic [ref=e359]:
-            - text: Test Year 2024
-            - generic [ref=e360]: (published)
-          - generic "reorder controls" [ref=e361]:
-            - button "↑" [ref=e362]
-            - button "↓" [ref=e363]
-        - generic [ref=e364]:
-          - button "Edit" [ref=e365]
-          - button "Delete" [ref=e366]
-      - listitem "Test Year 2024 (published)" [ref=e367]:
-        - generic [ref=e368]:
-          - generic [ref=e369]:
-            - text: Test Year 2024
-            - generic [ref=e370]: (published)
-          - generic "reorder controls" [ref=e371]:
-            - button "↑" [ref=e372]
-            - button "↓" [ref=e373]
-        - generic [ref=e374]:
-          - button "Edit" [ref=e375]
-          - button "Delete" [disabled] [ref=e376]
-          - button "Force Delete…" [ref=e377]
-      - listitem "Test Year 2024 (published)" [ref=e378]:
-        - generic [ref=e379]:
-          - generic [ref=e380]:
-            - text: Test Year 2024
-            - generic [ref=e381]: (published)
-          - generic "reorder controls" [ref=e382]:
-            - button "↑" [ref=e383]
-            - button "↓" [ref=e384]
-        - generic [ref=e385]:
-          - button "Edit" [ref=e386]
-          - button "Delete" [ref=e387]
-      - listitem "Test Year 2024 (published)" [ref=e388]:
-        - generic [ref=e389]:
-          - generic [ref=e390]:
-            - text: Test Year 2024
-            - generic [ref=e391]: (published)
-          - generic "reorder controls" [ref=e392]:
-            - button "↑" [ref=e393]
-            - button "↓" [ref=e394]
-        - generic [ref=e395]:
-          - button "Edit" [ref=e396]
-          - button "Delete" [ref=e397]
-      - listitem "Test Year 2024 (published)" [ref=e398]:
-        - generic [ref=e399]:
-          - generic [ref=e400]:
-            - text: Test Year 2024
-            - generic [ref=e401]: (published)
-          - generic "reorder controls" [ref=e402]:
-            - button "↑" [ref=e403]
-            - button "↓" [ref=e404]
-        - generic [ref=e405]:
-          - button "Edit" [ref=e406]
-          - button "Delete" [ref=e407]
-      - listitem "Test Year 2024 (published)" [ref=e408]:
-        - generic [ref=e409]:
-          - generic [ref=e410]:
-            - text: Test Year 2024
-            - generic [ref=e411]: (published)
-          - generic "reorder controls" [ref=e412]:
-            - button "↑" [ref=e413]
-            - button "↓" [ref=e414]
-        - generic [ref=e415]:
-          - button "Edit" [ref=e416]
-          - button "Delete" [ref=e417]
-      - listitem "Test Year 2024 (published)" [ref=e418]:
-        - generic [ref=e419]:
-          - generic [ref=e420]:
-            - text: Test Year 2024
-            - generic [ref=e421]: (published)
-          - generic "reorder controls" [ref=e422]:
-            - button "↑" [ref=e423]
-            - button "↓" [ref=e424]
-        - generic [ref=e425]:
-          - button "Edit" [ref=e426]
-          - button "Delete" [disabled] [ref=e427]
-          - button "Force Delete…" [ref=e428]
-      - listitem "Test Year 2024 (published)" [ref=e429]:
-        - generic [ref=e430]:
-          - generic [ref=e431]:
-            - text: Test Year 2024
-            - generic [ref=e432]: (published)
-          - generic "reorder controls" [ref=e433]:
-            - button "↑" [ref=e434]
-            - button "↓" [ref=e435]
-        - generic [ref=e436]:
-          - button "Edit" [ref=e437]
-          - button "Delete" [ref=e438]
-      - listitem "Test Year 2024 (published)" [ref=e439]:
-        - generic [ref=e440]:
-          - generic [ref=e441]:
-            - text: Test Year 2024
-            - generic [ref=e442]: (published)
-          - generic "reorder controls" [ref=e443]:
-            - button "↑" [ref=e444]
-            - button "↓" [ref=e445]
-        - generic [ref=e446]:
-          - button "Edit" [ref=e447]
-          - button "Delete" [ref=e448]
-      - listitem "Test Year 2024 (published)" [ref=e449]:
-        - generic [ref=e450]:
-          - generic [ref=e451]:
-            - text: Test Year 2024
-            - generic [ref=e452]: (published)
-          - generic "reorder controls" [ref=e453]:
-            - button "↑" [ref=e454]
-            - button "↓" [ref=e455]
-        - generic [ref=e456]:
-          - button "Edit" [ref=e457]
-          - button "Delete" [ref=e458]
-      - listitem "2024 (draft)" [ref=e459]:
-        - generic [ref=e460]:
-          - generic [ref=e461]:
-            - text: "2024"
-            - generic [ref=e462]: (draft)
-          - generic "reorder controls" [ref=e463]:
-            - button "↑" [ref=e464]
-            - button "↓" [ref=e465]
-        - generic [ref=e466]:
-          - button "Edit" [ref=e467]
-          - button "Delete" [ref=e468]
-      - listitem "Test Year 2024 (published)" [ref=e469]:
-        - generic [ref=e470]:
-          - generic [ref=e471]:
-            - text: Test Year 2024
-            - generic [ref=e472]: (published)
-          - generic "reorder controls" [ref=e473]:
-            - button "↑" [ref=e474]
-            - button "↓" [disabled] [ref=e475]
-        - generic [ref=e476]:
-          - button "Edit" [ref=e477]
-          - button "Delete" [ref=e478]
-  - button "Open Next.js Dev Tools" [ref=e484] [cursor=pointer]:
-    - img [ref=e485] [cursor=pointer]
-  - alert [ref=e488]
+          - generic [ref=e84]: "1"
+          - generic [ref=e85]: "2"
+    - generic [ref=e90] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e91] [cursor=pointer]:
+        - img [ref=e92] [cursor=pointer]
+      - button "Open issues overlay" [ref=e96] [cursor=pointer]:
+        - generic [ref=e97] [cursor=pointer]:
+          - generic [ref=e98] [cursor=pointer]: "0"
+          - generic [ref=e99] [cursor=pointer]: "1"
+        - generic [ref=e100] [cursor=pointer]: Issue
+  - alert [ref=e101]
 ```

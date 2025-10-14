@@ -2,6 +2,45 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
+import { LOCATION_UUID_REGEX } from '@/lib/prisma/location-service';
+
+async function resolveLocationFolder(locationId: unknown) {
+  if (locationId === undefined) {
+    return { locationFolderId: undefined as string | null | undefined, error: null as NextResponse | null };
+  }
+  if (locationId === null || locationId === '') {
+    return { locationFolderId: null, error: null };
+  }
+  if (typeof locationId !== 'string') {
+    return {
+      locationFolderId: null,
+      error: NextResponse.json(
+        { error: 'invalid location', message: 'location_id must be a string or null' },
+        { status: 400 },
+      ),
+    };
+  }
+  if (!LOCATION_UUID_REGEX.test(locationId)) {
+    return {
+      locationFolderId: null,
+      error: NextResponse.json(
+        { error: 'invalid location', message: 'location_id must be a valid UUID' },
+        { status: 400 },
+      ),
+    };
+  }
+  const location = await prisma.location.findUnique({ where: { id: locationId } });
+  if (!location) {
+    return {
+      locationFolderId: null,
+      error: NextResponse.json(
+        { error: 'invalid location', message: 'Location not found' },
+        { status: 400 },
+      ),
+    };
+  }
+  return { locationFolderId: location.id, error: null };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +54,16 @@ export async function POST(request: NextRequest) {
     // }
 
   const body = await parseRequestJsonSafe(request, {} as any);
-    const { id, alt, caption, width, height, metadata_json } = body;
+    const {
+      id,
+      alt,
+      caption,
+      width,
+      height,
+      metadata_json,
+      location_id: requestedLocationId,
+      location_folder_id: requestedLocationFolderId,
+    } = body;
 
     // Validate required fields
     if (!id || !alt || !width || !height) {
@@ -75,6 +123,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const { locationFolderId, error: locationError } = await resolveLocationFolder(
+      requestedLocationId ?? requestedLocationFolderId,
+    );
+    if (locationError) {
+      return locationError;
+    }
+
     // Serialize metadata_json if it's an object
     let serializedMetadata = null;
     if (metadata_json) {
@@ -95,22 +150,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new asset
+    const createData: Record<string, any> = {
+      id,
+      alt,
+      caption,
+      width: parseInt(width.toString()),
+      height: parseInt(height.toString()),
+      metadata_json: serializedMetadata,
+    };
+    if (locationFolderId !== undefined) {
+      createData.location_folder_id = locationFolderId;
+    }
+
     const asset = await prisma.asset.create({
-      data: {
-        id,
-        alt,
-        caption,
-        width: parseInt(width.toString()),
-        height: parseInt(height.toString()),
-        metadata_json: serializedMetadata,
-      },
+      data: createData as any,
     });
 
     // Return metadata_json parsed back to object if possible
-    const response: any = { ...asset };
+    const response: Record<string, any> = { ...asset };
     if (response.metadata_json && typeof response.metadata_json === 'string') {
       try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
     }
+    const assetWithFolder = asset as Record<string, any>;
+    response.location_folder_id = assetWithFolder.location_folder_id ?? null;
 
     try {
       await invalidateCache([CACHE_TAGS.ASSETS]);
@@ -150,19 +212,41 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
+    const locationFilter = searchParams.get('location_id') ?? searchParams.get('location_folder_id');
+    const unassigned = searchParams.get('unassigned') === 'true';
+
+    const where: Record<string, any> = {};
+    if (locationFilter) {
+      where.location_folder_id = locationFilter;
+    } else if (unassigned) {
+      where.location_folder_id = null;
+    }
+
     const assets = await prisma.asset.findMany({
       orderBy: { created_at: 'desc' },
       take: Number.isNaN(limit) ? 50 : limit,
       skip: Number.isNaN(offset) ? 0 : offset,
-      include: { _count: { select: { collection_assets: true } } },
+      where,
+      include: {
+        _count: { select: { collection_assets: true } },
+        locationFolder: { include: { year: true } },
+      } as any,
     });
 
     // Parse metadata_json to objects when possible
     const result = assets.map((a: any) => {
-      const { _count, ...rest } = a;
-      const obj: any = { ...rest, used: (_count?.collection_assets ?? 0) > 0 };
+      const { _count, locationFolder, ...rest } = a;
+      const obj: Record<string, any> = { ...rest, used: (_count?.collection_assets ?? 0) > 0 };
       if (obj.metadata_json && typeof obj.metadata_json === 'string') {
         try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
+      }
+      obj.location_folder_id = rest.location_folder_id ?? null;
+      if (locationFolder) {
+        obj.location_folder_name = locationFolder.name;
+        obj.location_folder_year_id = locationFolder.year_id;
+        if (locationFolder.year?.label) {
+          obj.location_folder_year_label = locationFolder.year.label;
+        }
       }
       return obj;
     });

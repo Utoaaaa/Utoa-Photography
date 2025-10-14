@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useSmoothScroll } from '@/components/providers/SmoothScrollProvider';
 
 interface LenisLike {
   scroll: number;
@@ -16,11 +17,17 @@ type LenisConstructor = new (options?: Record<string, unknown>) => LenisLike;
 export function SmoothScroll() {
   const rafIdRef = useRef<number | null>(null);
   const lenisRef = useRef<LenisLike | null>(null);
+  const { prefersReducedMotion, setLenis } = useSmoothScroll();
 
   useEffect(() => {
-    // 檢查系統是否偏好減少動態效果
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
+    // 先參考 context 的設定，若仍未宣告再 fallback 到媒體查詢
+    let reduceMotion = prefersReducedMotion;
+
+    if (!reduceMotion && typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    if (reduceMotion) {
       console.info('[Lenis] prefers-reduced-motion = true → skip smooth scroll');
       return;
     }
@@ -49,6 +56,7 @@ export function SmoothScroll() {
           touchMultiplier: 2,
         });
         lenisRef.current = lenis;
+  setLenis(lenis);
 
         console.log('[Lenis] Instance created');
 
@@ -143,9 +151,10 @@ export function SmoothScroll() {
         }
         lenisRef.current = null;
       }
+      setLenis(null);
       console.log('[Lenis] Cleaned up');
     };
-  }, []);
+  }, [prefersReducedMotion, setLenis]);
 
   return null;
 }

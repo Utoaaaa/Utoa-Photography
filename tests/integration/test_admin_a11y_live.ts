@@ -25,18 +25,18 @@ test.describe('Admin A11y Live Announcements', () => {
     await expect(page.locator('[data-testid="years-announce"]')).toContainText('Reordered');
   });
 
-  test('collections page announces reorder', async ({ page }) => {
+  test('collections section announces reorder', async ({ page }) => {
     // Setup one year and two collections
     const y = await (await page.request.post('/api/years', { data: { label: 'Live-Y-Col', status: 'draft' } })).json();
     await page.request.post(`/api/years/${y.id}/collections`, { data: { slug: 'live-col-1', title: 'Live Col 1', status: 'draft' } });
     await page.request.post(`/api/years/${y.id}/collections`, { data: { slug: 'live-col-2', title: 'Live Col 2', status: 'draft' } });
 
-    await page.goto('/admin/collections');
-    await page.selectOption('[data-testid="year-filter-select"]', { label: 'Live-Y-Col' });
+    await page.goto(`/admin/years/${encodeURIComponent(y.id)}`);
+    await page.waitForSelector('[data-testid="collection-manager"]');
 
     const items = page.locator('[data-testid="collection-item"]');
     await items.first().locator('[data-testid="move-collection-down"]').click();
 
-    await expect(page.locator('[data-testid="collections-announce"]')).toContainText('Reordered');
+    await expect(page.locator('[data-testid="collection-announce"]')).toContainText('Reordered');
   });
 });

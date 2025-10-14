@@ -22,6 +22,8 @@ interface Collection {
   seoTitle: string | null;
   seoDescription: string | null;
   assets?: Asset[];
+  locationId?: string | null;
+  locationName?: string | null;
 }
 
 interface CollectionPreviewProps {
@@ -70,6 +72,7 @@ export function CollectionPreview({
   const rawAssets = collection.assets;
   const assets = Array.isArray(rawAssets) ? rawAssets : [];
   const assetCount = assets.length;
+  const hasLocation = typeof collection.locationId === 'string' && collection.locationId.length > 0;
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -101,6 +104,10 @@ export function CollectionPreview({
       if (collection.publishingStatus === 'published') {
         await onUnpublish(collection.id);
       } else {
+        if (!hasLocation) {
+          alert('請先在作品集工作區指定展示位置後再發布。');
+          return;
+        }
         await onPublish(collection.id);
       }
     } catch (error) {
@@ -137,12 +144,20 @@ export function CollectionPreview({
         label: '至少一張照片', 
         passed: assetCount > 0,
         value: `${assetCount} 張照片` 
+      },
+      {
+        label: '已指派展示位置',
+        passed: hasLocation,
+        value: hasLocation ? collection.locationName || '已設定' : '未設定'
       }
     ];
   };
 
   const checklist = getChecklistItems();
   const allChecksPassed = checklist.every(item => item.passed);
+  const publishDisabled = collection.publishingStatus === 'published'
+    ? isLoading
+    : isLoading || !allChecksPassed;
 
   // Prepare photos for PhotoViewer - convert to full Asset format
   const photos = assets.map(asset => ({
@@ -179,7 +194,7 @@ export function CollectionPreview({
             </span>
             <button
               onClick={handlePublishToggle}
-              disabled={isLoading || (!allChecksPassed && collection.publishingStatus !== 'published')}
+              disabled={publishDisabled}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                 collection.publishingStatus === 'published'
                   ? 'bg-red-100 text-red-800 hover:bg-red-200'
@@ -237,6 +252,11 @@ export function CollectionPreview({
             {!allChecksPassed && (
               <p className="text-xs text-orange-600 mt-2">
                 請完成所有檢查項目後才能發布
+              </p>
+            )}
+            {!hasLocation && (
+              <p className="text-xs text-red-600 mt-1">
+                尚未設定展示位置，請先在作品集工作區指派位置。
               </p>
             )}
           </div>

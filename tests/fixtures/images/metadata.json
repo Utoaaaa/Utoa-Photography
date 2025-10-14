@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2025-10-14T13:06:08.792Z",
+  "images": [
+    {
+      "filename": "test-landscape.png",
+      "width": 1920,
+      "height": 1080,
+      "title": "Test Landscape",
+      "subtitle": "Warm dusk gradient",
+      "accent": "#fcd34d",
+      "gradient": [
+        "#1d4ed8",
+        "#38bdf8"
+      ]
+    },
+    {
+      "filename": "test-portrait.png",
+      "width": 1080,
+      "height": 1600,
+      "title": "Test Portrait",
+      "subtitle": "Bold sunset hues",
+      "accent": "#2563eb",
+      "gradient": [
+        "#f97316",
+        "#facc15"
+      ]
+    },
+    {
+      "filename": "test-square.png",
+      "width": 1280,
+      "height": 1280,
+      "title": "Test Square",
+      "subtitle": "Fresh meadow tones",
+      "accent": "#f472b6",
+      "gradient": [
+        "#0f766e",
+        "#34d399"
+      ]
+    },
+    {
+      "filename": "test-editorial.png",
+      "width": 2048,
+      "height": 1365,
+      "title": "Test Editorial",
+      "subtitle": "Muted studio style",
+      "accent": "#e2e8f0",
+      "gradient": [
+        "#0f172a",
+        "#334155"
+      ]
+    }
+  ]
+}

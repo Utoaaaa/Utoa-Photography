@@ -27,6 +27,8 @@ interface Collection {
   seoTitle?: string | null;
   seoDescription?: string | null;
   assets?: Asset[];
+  locationId?: string | null;
+  locationName?: string | null;
 }
 
 interface CollectionsListProps {
@@ -187,6 +189,15 @@ export function CollectionsList({
                   )}
                 </div>
                 {checklistStatus.badge}
+              </div>
+
+              {/* Location info */}
+              <div className="flex items-center mt-2 text-xs">
+                {collection.locationId ? (
+                  <span className="text-gray-600">展示位置：{collection.locationName || '已設定'}</span>
+                ) : (
+                  <span className="text-orange-600">⚠ 尚未設定展示位置</span>
+                )}
               </div>
 
               {/* Updated date */}

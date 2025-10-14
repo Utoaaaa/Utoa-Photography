@@ -51,7 +51,13 @@ export async function POST(
             order_index: 'asc'
           }
         },
-        year: true
+        year: true,
+        location: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       }
     }) as any;
 
@@ -59,6 +65,17 @@ export async function POST(
       return NextResponse.json(
         { error: 'Collection not found' },
         { status: 404 }
+      );
+    }
+
+    if (!collection.location_id) {
+      return NextResponse.json(
+        {
+          error: 'MissingLocation',
+          message: 'Collection must be assigned to a location before publishing.',
+          details: ['Assign this collection to a location in the workspace before publishing.']
+        },
+        { status: 409 }
       );
     }
 

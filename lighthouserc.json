@@ -6,7 +6,8 @@
       "url": [
         "http://localhost:3020",
         "http://localhost:3020/2024",
-        "http://localhost:3020/2024/urban-stories"
+        "http://localhost:3020/2024/city-lights-24",
+        "http://localhost:3020/2024/city-lights-24/urban-stories"
       ],
       "numberOfRuns": 3
     },

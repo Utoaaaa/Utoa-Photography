@@ -84,10 +84,39 @@ jest.mock('gsap/ScrollTrigger', () => ({
 }));
 
 // Mock SmoothScrollProvider to avoid importing Lenis (ESM) in tests
-jest.mock('@/components/providers/SmoothScrollProvider', () => ({
-  __esModule: true,
-  SmoothScrollProvider: ({ children }) => children,
-}));
+jest.mock('@/components/providers/SmoothScrollProvider', () => {
+	const React = require('react');
+	const contextValue = {
+		lenis: null,
+		prefersReducedMotion: false,
+		setLenis: () => {},
+	};
+	const Context = React.createContext(contextValue);
+	return {
+		__esModule: true,
+		SmoothScrollProvider: ({ children }) => React.createElement(Context.Provider, { value: contextValue }, children),
+		useSmoothScroll: () => contextValue,
+		useLenisInstance: () => null,
+	};
+});
+
+jest.mock('@/components/ui/CameraWireAnimation', () => {
+	const React = require('react');
+	return {
+		__esModule: true,
+		CameraWireAnimation: ({ className = '' }) =>
+			React.createElement('div', { 'data-testid': 'camera-wire-animation', className }, null),
+	};
+});
+
+jest.mock('@/components/ui/FadeInText', () => {
+	const React = require('react');
+	return {
+		__esModule: true,
+		FadeInText: ({ children, className = '' }) =>
+			React.createElement('div', { 'data-testid': 'fade-in-text', className }, children),
+	};
+});
 
 // Mock animations hooks to avoid React hook execution in tests
 jest.mock('@/lib/animations', () => {

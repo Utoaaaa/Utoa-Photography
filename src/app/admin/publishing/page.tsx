@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { CollectionsList } from '@/components/admin/CollectionsList';
 import { CollectionPreview } from '@/components/admin/CollectionPreview';
 import { PublishingFilters } from '@/components/admin/PublishingFilters';
-import Breadcrumb from '@/components/admin/Breadcrumb';
+import AdminPageLayout from '@/components/admin/AdminPageLayout';
 
 interface CollectionSummary {
   id: string;
@@ -24,6 +24,8 @@ interface CollectionSummary {
   seoTitle?: string | null;
   seoDescription?: string | null;
   assets?: { id: string; cloudflareId: string; alt: string; filename: string; }[];
+  locationId?: string | null;
+  locationName?: string | null;
 }
 
 interface Filters {
@@ -73,6 +75,7 @@ export default function PublishingPage() {
   const loadCollections = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       
       if (filters.year) params.append('year', filters.year);
@@ -86,7 +89,7 @@ export default function PublishingPage() {
 
       const result = await safeJson<{ success: boolean; data: CollectionSummary[]; error?: string }>(response, { success: false, data: [] });
       if (!response.ok || !result.success) {
-        throw new Error(result?.error || 'Failed to load collections');
+        throw new Error(result?.error || '載入作品集列表失敗');
       }
       
       let filteredCollections = result.data || [];
@@ -107,7 +110,7 @@ export default function PublishingPage() {
       
     } catch (err) {
       console.error('Error loading collections:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+  setError('載入作品集列表時發生錯誤，請稍後再試。');
     } finally {
       setLoading(false);
     }
@@ -138,54 +141,98 @@ export default function PublishingPage() {
   };
 
   const handlePublish = async (collectionId: string) => {
-    // Placeholder for publish functionality
-    console.log('Publishing collection:', collectionId);
-    await loadCollections();
+    try {
+      const response = await fetch(`/api/publishing/collections/${collectionId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+
+      const result = await safeJson<{ message?: string; error?: string; details?: string[] }>(response, {} as any);
+
+      if (!response.ok) {
+        const errorMessage = Array.isArray(result?.details) && result.details.length > 0
+          ? result.details.join('\n')
+          : result?.message || result?.error || '發布失敗，請稍後再試';
+        alert(errorMessage);
+        return;
+      }
+
+      console.info('Collection published:', collectionId, result?.message);
+      await loadCollections();
+    } catch (error) {
+      console.error('Failed to publish collection:', error);
+      alert('發布失敗，請稍後再試');
+    }
   };
 
   const handleUnpublish = async (collectionId: string) => {
-    // Placeholder for unpublish functionality
-    console.log('Unpublishing collection:', collectionId);
-    await loadCollections();
+    try {
+      const response = await fetch(`/api/publishing/collections/${collectionId}/unpublish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+
+      const result = await safeJson<{ message?: string; error?: string; details?: string[] }>(response, {} as any);
+
+      if (!response.ok) {
+        const errorMessage = Array.isArray(result?.details) && result.details.length > 0
+          ? result.details.join('\n')
+          : result?.message || result?.error || '取消發布失敗，請稍後再試';
+        alert(errorMessage);
+        return;
+      }
+
+      console.info('Collection unpublished:', collectionId, result?.message);
+      await loadCollections();
+    } catch (error) {
+      console.error('Failed to unpublish collection:', error);
+      alert('取消發布失敗，請稍後再試');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex h-screen">
-        {/* Left sidebar - Collections list */}
-        <div className="w-1/3 border-r border-gray-200 bg-white overflow-hidden flex flex-col">
-          <div className="border-b border-gray-200 p-6">
-            <Breadcrumb items={[{ label: 'Publishing' }]} />
-            <h1 className="text-2xl font-bold text-gray-900">Publishing</h1>
-            <p className="mt-1 text-sm text-gray-600">
-              管理作品集的發布狀態、SEO 設定與版本控制
-            </p>
+    <div className="min-h-screen bg-slate-50/80">
+      <AdminPageLayout
+        breadcrumbItems={[{ label: '作品集發布' }]}
+        title="作品集發布"
+        description="管理作品集的發布狀態、SEO 設定與版本歷程。"
+        contentClassName="grid gap-6 lg:grid-cols-[minmax(320px,360px)_1fr] lg:items-start"
+        dataTestId="admin-publishing-page"
+      >
+        <section className="flex min-h-[480px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-sm ring-1 ring-gray-100/60">
+          <div className="border-b border-gray-100 px-5 py-4">
+            <h2 className="text-sm font-semibold text-gray-700">作品集列表</h2>
+            <p className="text-xs text-gray-500">篩選並選擇需要發布或維護的作品集。</p>
           </div>
-          
-          <div className="p-4 border-b border-gray-200">
+
+          <div className="border-b border-gray-100 px-5 py-4">
             <PublishingFilters
               filters={filters}
               onFilterChange={handleFilterChange}
               totalCollections={collections.length}
             />
           </div>
-          
-          <div className="flex-1 overflow-y-auto">
+
+          <div className="flex-1 overflow-y-auto px-5 py-4">
             {loading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="flex h-32 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" aria-label="載入中" />
               </div>
             ) : error ? (
-              <div className="p-4">
-                <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                  <p className="text-sm text-red-600">{error}</p>
-                  <button
-                    onClick={loadCollections}
-                    className="mt-2 text-sm text-red-800 hover:text-red-900 underline"
-                  >
-                    重試
-                  </button>
-                </div>
+              <div className="rounded-xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-700">
+                <p>{error}</p>
+                <button
+                  onClick={loadCollections}
+                  className="mt-2 inline-flex items-center text-xs font-medium text-red-700 underline-offset-4 hover:underline"
+                >
+                  重新整理列表
+                </button>
               </div>
             ) : (
               <CollectionsList
@@ -197,13 +244,12 @@ export default function PublishingPage() {
               />
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Right main area - Collection preview */}
-        <div className="flex-1 bg-gray-50">
+        <section className="min-h-[480px] rounded-2xl border border-gray-200 bg-white/95 shadow-sm ring-1 ring-gray-100/60">
           {selectedCollection ? (
             (() => {
-              const collection = collections.find(c => c.id === selectedCollection);
+              const collection = collections.find((item) => item.id === selectedCollection);
               return collection ? (
                 <CollectionPreview
                   collection={collection as any}
@@ -212,16 +258,16 @@ export default function PublishingPage() {
                   onUnpublish={handleUnpublish}
                 />
               ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-gray-500">找不到所選集合</p>
+                <div className="flex h-full items-center justify-center p-10 text-sm text-gray-500">
+                  找不到所選作品集
                 </div>
               );
             })()
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
+            <div className="flex h-full items-center justify-center p-10 text-center">
+              <div>
                 <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
+                  className="mx-auto h-12 w-12 text-gray-300"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -235,15 +281,15 @@ export default function PublishingPage() {
                     d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
                   />
                 </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">選擇作品集</h3>
+                <h3 className="mt-3 text-sm font-medium text-gray-900">尚未選擇作品集</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  請從左側列表選擇一個作品集來查看詳細資訊和編輯設定
+                  請先在左側列表選擇作品集，便可查看預覽與發布設定。
                 </p>
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </section>
+      </AdminPageLayout>
     </div>
   );
 }

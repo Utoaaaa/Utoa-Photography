@@ -1,0 +1,269 @@
+openapi: 3.1.0
+info:
+  title: Utoa Admin Location API
+  version: 1.0.0
+  description: CRUD and assignment endpoints for the Year → Location → Collection hierarchy.
+servers:
+  - url: https://admin.utoa.photography
+paths:
+  /api/admin/years/{yearId}/locations:
+    post:
+      summary: Create a location under a year
+      operationId: createLocation
+      tags: [Locations]
+      parameters:
+        - in: path
+          name: yearId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationCreateInput'
+      responses:
+        '201':
+          description: Location created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Duplicate slug within the year
+  /api/admin/locations/{locationId}:
+    patch:
+      summary: Update location metadata
+      operationId: updateLocation
+      tags: [Locations]
+      parameters:
+        - in: path
+          name: locationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationUpdateInput'
+      responses:
+        '200':
+          description: Location updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          description: Location not found
+    delete:
+      summary: Delete a location
+      operationId: deleteLocation
+      tags: [Locations]
+      parameters:
+        - in: path
+          name: locationId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '409':
+          description: Cannot delete while collections remain assigned
+  /api/admin/locations/{locationId}/reorder:
+    patch:
+      summary: Update the order_index for a location under its year
+      operationId: reorderLocation
+      tags: [Locations]
+      parameters:
+        - in: path
+          name: locationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderIndex:
+                  type: string
+              required: [orderIndex]
+      responses:
+        '200':
+          description: New ordering applied
+  /api/admin/collections/{collectionId}/location:
+    patch:
+      summary: Assign or move a collection to a location
+      operationId: assignCollectionLocation
+      tags: [Collections]
+      parameters:
+        - in: path
+          name: collectionId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationId:
+                  type: string
+              required: [locationId]
+      responses:
+        '200':
+          description: Assignment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '400':
+          description: Location must belong to the same year
+        '404':
+          description: Collection or Location not found
+  /api/admin/collections/{collectionId}/publish:
+    post:
+      summary: Publish a collection (enforces location requirement)
+      operationId: publishCollection
+      tags: [Collections]
+      parameters:
+        - in: path
+          name: collectionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '409':
+          description: Collection missing required location assignment
+components:
+  schemas:
+    Location:
+      type: object
+      required: [id, yearId, slug, name, orderIndex]
+      properties:
+        id:
+          type: string
+        yearId:
+          type: string
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+-[0-9]{2}$'
+        name:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        coverAssetId:
+          type: string
+          nullable: true
+        orderIndex:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LocationCreateInput:
+      type: object
+      required: [slug, name, orderIndex]
+      properties:
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+-[0-9]{2}$'
+        name:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        coverAssetId:
+          type: string
+          nullable: true
+        orderIndex:
+          type: string
+    LocationUpdateInput:
+      type: object
+      properties:
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+-[0-9]{2}$'
+        name:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        coverAssetId:
+          type: string
+          nullable: true
+    Collection:
+      type: object
+      required: [id, yearId, slug, title, status]
+      properties include:
+        id:
+          type: string
+        yearId:
+          type: string
+        locationId:
+          type: string
+          nullable: true
+        slug:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+        summary:
+          type: string
+          nullable: true
+        coverAssetId:
+          type: string
+          nullable: true
+        orderIndex:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+  responses:
+    ValidationError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, fields]
+            properties:
+              error:
+                type: string
+              fields:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string

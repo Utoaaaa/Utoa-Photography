@@ -26,7 +26,7 @@ async function scanAndSave(page: Page, url: string, filename: string) {
 }
 
 // Pages to scan
-const pages = ['/admin/years', '/admin/collections', '/admin/uploads'];
+const pages = ['/admin/years', '/admin/uploads'];
 
 for (const p of pages) {
   test(`axe scan ${p}`, async ({ page }) => {

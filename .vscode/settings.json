@@ -1,26 +1,18 @@
 {
-  "files.watcherExclude": {
-    "**/.git/objects/**": true,
-    "**/.git/subtree-cache/**": true,
-    "**/.hg/store/**": true,
-    "**/.git/**": true,
-    "**/node_modules/**": true,
-    "**/.vscode/**": true
-  },
-  "explorer.fileNesting.enabled": true,
-  "explorer.fileNesting.patterns": {
-    "package.json": "eslint.config.mjs, postcss.config.mjs, jest.config.ts, jest.setup.js, jest.setup.contract.ts, .prettierrc, wrangler.toml, open-next.config.mjs, tsconfig.json, package-lock.json, components.json, lighthouserc.json, next.config.ts, middleware.ts, tsconfig.tsbuildinfo"
-  },
-  "files.exclude": {
-    "**/.next": true,
-    "**/.swc": true,
-    "**/.cache": true
-  },
-  "search.exclude": {
-    "**/.next": true,
-    "**/.swc": true,
-    "**/node_modules": true,
-    "**/.cache": true
-  },
-  "chat.agent.maxRequests": 50
+    "chat.promptFilesRecommendations": {
+        "speckit.constitution": true,
+        "speckit.specify": true,
+        "speckit.plan": true,
+        "speckit.tasks": true,
+        "speckit.implement": true
+    },
+    "chat.tools.terminal.autoApprove": {
+        ".specify/scripts/bash/": true,
+        ".specify/scripts/ps/": true
+    },
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        "package.json": "package-lock.json, pnpm-lock.yaml, yarn.lock, .npmrc, components.json, eslint.config.mjs, jest.config.ts, jest.contract.config.ts, jest.setup.contract.ts, jest.setup.js, jest.setup.pre-env.js, lighthouserc.json, middleware.ts, next-env.d.ts, next.config.ts, open-next.config.mjs, playwright.config.ts, postcss.config.mjs, tsconfig.json, tsconfig.tsbuildinfo, wrangler.toml"
+    }
 }

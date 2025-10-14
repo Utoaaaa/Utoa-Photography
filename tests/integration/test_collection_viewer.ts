@@ -8,7 +8,13 @@
 
 import { test, expect, Page } from '@playwright/test';
 import '@testing-library/jest-dom';
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+
+const TEST_YEAR_LABEL = '2024';
+const TEST_LOCATION_SLUG = 'test-location-24';
+const TEST_LOCATION_NAME = 'Test Location 24';
+const COLLECTION_ROUTE = `/${TEST_YEAR_LABEL}/${TEST_LOCATION_SLUG}/test-collection`;
 
 // Mock Next.js router for React Testing Library tests
 jest.mock('next/navigation', () => ({
@@ -16,44 +22,59 @@ jest.mock('next/navigation', () => ({
     push: jest.fn(),
     refresh: jest.fn(),
   }),
-  usePathname: () => '/2024/test-collection',
+  usePathname: () => COLLECTION_ROUTE,
+  useParams: () => ({
+    year: TEST_YEAR_LABEL,
+    location: TEST_LOCATION_SLUG,
+    collection: 'test-collection',
+  }),
 }));
 
 describe('Integration: Single-Screen Collection Viewer (React Testing Library)', () => {
   const mockCollectionData = {
-    id: 'test-collection-id',
-    title: 'Test Photography Collection',
-    year: 2024,
-    assets: [
+    year: { id: 'year-2024', label: TEST_YEAR_LABEL },
+    location: {
+      id: 'location-2024',
+      slug: TEST_LOCATION_SLUG,
+      name: TEST_LOCATION_NAME,
+      summary: 'Test location summary',
+    },
+    collection: {
+      id: 'test-collection-id',
+      slug: 'test-collection',
+      title: 'Test Photography Collection',
+      summary: 'Test collection description',
+    },
+    photos: [
       {
         id: 'asset-1',
-        image_url: 'https://example.com/image1.jpg',
         alt: 'First test image description',
-        text: 'This is the first slide with detailed text content.',
-        slide_index: 0
+        caption: 'This is the first slide with detailed text content.',
+        width: 1920,
+        height: 1080,
       },
       {
         id: 'asset-2',
-        image_url: 'https://example.com/image2.jpg',
         alt: 'Second test image description',
-        text: 'This is the second slide.',
-        slide_index: 1
+        caption: 'This is the second slide.',
+        width: 1920,
+        height: 1080,
       },
       {
         id: 'asset-3',
-        image_url: 'https://example.com/image3.jpg',
         alt: 'Third test image description',
-        text: null, // Some slides may not have text
-        slide_index: 2
+        caption: null,
+        width: 1920,
+        height: 1080,
       },
       {
         id: 'asset-4',
-        image_url: 'https://example.com/image4.jpg',
         alt: 'Fourth test image description',
-        text: 'Final slide in the collection.',
-        slide_index: 3
-      }
-    ]
+        caption: 'Final slide in the collection.',
+        width: 1920,
+        height: 1080,
+      },
+    ],
   };
 
   beforeEach(() => {
@@ -79,9 +100,8 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
 
   describe('Single-screen display and navigation', () => {
     it('should display one image per screen with corresponding text', async () => {
-      const CollectionPage = await import('@/app/(site)/[year]/[collection]/page').then(m => m.default);
-      const element = <CollectionPage params={Promise.resolve({ year: '2024', collection: 'test-collection' })} />;
-      render(element as any);
+      const CollectionPage = await import('@/app/(site)/[year]/[location]/[collection]/page').then(m => m.default);
+    render(React.createElement(CollectionPage) as any);
 
       await waitFor(() => {
         expect(screen.getByAltText('First test image description')).toBeInTheDocument();
@@ -100,8 +120,8 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
     });
 
     it('should support swipe navigation for touch devices', async () => {
-      const CollectionPage = await import('@/app/(site)/[year]/[collection]/page').then(m => m.default);
-      render(<CollectionPage params={{ year: '2024', collection: 'test-collection' }} />);
+      const CollectionPage = await import('@/app/(site)/[year]/[location]/[collection]/page').then(m => m.default);
+    render(React.createElement(CollectionPage));
 
       await waitFor(() => {
         expect(screen.getByAltText('First test image description')).toBeInTheDocument();
@@ -127,8 +147,8 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
     });
 
     it('should support keyboard navigation (arrow keys)', async () => {
-      const CollectionPage = await import('@/app/(site)/[year]/[collection]/page').then(m => m.default);
-      render(<CollectionPage params={{ year: '2024', collection: 'test-collection' }} />);
+      const CollectionPage = await import('@/app/(site)/[year]/[location]/[collection]/page').then(m => m.default);
+    render(React.createElement(CollectionPage));
 
       await waitFor(() => {
         expect(screen.getByAltText('First test image description')).toBeInTheDocument();
@@ -153,8 +173,8 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
     });
 
     it('should provide dot navigation for direct slide access', async () => {
-      const CollectionPage = await import('@/app/(site)/[year]/[collection]/page').then(m => m.default);
-      render(<CollectionPage params={{ year: '2024', collection: 'test-collection' }} />);
+      const CollectionPage = await import('@/app/(site)/[year]/[location]/[collection]/page').then(m => m.default);
+    render(React.createElement(CollectionPage));
 
       await waitFor(() => {
         expect(screen.getByTestId('dot-navigation')).toBeInTheDocument();
@@ -180,8 +200,8 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
 
   describe('ARIA and accessibility support', () => {
     it('should have proper ARIA roles and labels', async () => {
-      const CollectionPage = await import('@/app/(site)/[year]/[collection]/page').then(m => m.default);
-      render(<CollectionPage params={{ year: '2024', collection: 'test-collection' }} />);
+      const CollectionPage = await import('@/app/(site)/[year]/[location]/[collection]/page').then(m => m.default);
+    render(React.createElement(CollectionPage));
 
       await waitFor(() => {
         expect(screen.getByRole('region', { name: /collection viewer/i })).toBeInTheDocument();
@@ -202,8 +222,8 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
     });
 
     it('should announce slide changes to screen readers', async () => {
-      const CollectionPage = await import('@/app/(site)/[year]/[collection]/page').then(m => m.default);
-      render(<CollectionPage params={{ year: '2024', collection: 'test-collection' }} />);
+      const CollectionPage = await import('@/app/(site)/[year]/[location]/[collection]/page').then(m => m.default);
+    render(React.createElement(CollectionPage));
 
       await waitFor(() => {
         expect(screen.getByTestId('slide-container')).toBeInTheDocument();
@@ -239,8 +259,8 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
         })),
       });
 
-      const CollectionPage = await import('@/app/(site)/[year]/[collection]/page').then(m => m.default);
-      render(<CollectionPage params={{ year: '2024', collection: 'test-collection' }} />);
+      const CollectionPage = await import('@/app/(site)/[year]/[location]/[collection]/page').then(m => m.default);
+      render(React.createElement(CollectionPage));
 
       await waitFor(() => {
         expect(screen.getByTestId('slide-container')).toBeInTheDocument();
@@ -259,96 +279,88 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
 
 // Existing Playwright tests continue below...
 
+test.describe('Integration: Single-Screen Collection Viewer (Playwright)', () => {
+  let testYearId: string | null = null;
+  let testLocationId: string | null = null;
+  let testCollectionId: string | null = null;
+  let testAssetIds: string[] = [];
+
   test.beforeEach(async ({ page }) => {
+    testAssetIds = [];
     await setupTestData(page);
   });
 
-  test('should display collection header with title and geometric pattern', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+  test.afterEach(async ({ page }) => {
+    await teardownTestData(page);
+  });
 
-    // Check collection header
+  test('should display collection header with title and geometric pattern', async ({ page }) => {
+    await page.goto(COLLECTION_ROUTE);
+
     const header = page.locator('[data-testid="collection-header"]');
     await expect(header).toBeVisible();
-    
+
     const title = header.locator('[data-testid="collection-title"]');
     await expect(title).toContainText('Test Collection');
-    
+
     const geometricPattern = header.locator('[data-testid="header-geometric"]');
     await expect(geometricPattern).toBeVisible();
   });
 
   test('should display photo viewer with first photo centered', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
-    // Check photo viewer
     const photoViewer = page.locator('[data-testid="photo-viewer"]');
     await expect(photoViewer).toBeVisible();
-    
+
     const currentPhoto = photoViewer.locator('[data-testid="current-photo"]');
     await expect(currentPhoto).toBeVisible();
-    
-    // Should display first photo by default
+
     await expect(currentPhoto.locator('img')).toHaveAttribute('alt', 'Test photo 1');
   });
 
   test('should display dot navigation with correct number of dots', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
     const dotNavigation = page.locator('[data-testid="dot-navigation"]');
     await expect(dotNavigation).toBeVisible();
-    
-    // Should have 3 dots for 3 photos
+
     const dots = dotNavigation.locator('[data-testid="nav-dot"]');
     await expect(dots).toHaveCount(3);
-    
-    // First dot should be active
     await expect(dots.first()).toHaveClass(/active|current/);
   });
 
   test('should navigate between photos by clicking dots', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
     const currentPhoto = page.locator('[data-testid="current-photo"] img');
     const dots = page.locator('[data-testid="nav-dot"]');
 
-    // Click second dot
     await dots.nth(1).click();
-    
-    // Should display second photo
     await expect(currentPhoto).toHaveAttribute('alt', 'Test photo 2');
-    
-    // Second dot should be active
     await expect(dots.nth(1)).toHaveClass(/active|current/);
-    
-    // Click third dot
+
     await dots.nth(2).click();
-    
-    // Should display third photo
     await expect(currentPhoto).toHaveAttribute('alt', 'Test photo 3');
   });
 
   test('should sync dot navigation with photo scroll position', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
     const photoContainer = page.locator('[data-testid="photo-container"]');
     const dots = page.locator('[data-testid="nav-dot"]');
 
-    // Scroll to second photo area
-    await photoContainer.evaluate(el => {
+    await photoContainer.evaluate((el) => {
       el.scrollTo({ top: el.scrollHeight / 3, behavior: 'smooth' });
     });
 
-    // Wait for intersection observer to update
     await page.waitForTimeout(500);
-
-    // Second dot should become active
     await expect(dots.nth(1)).toHaveClass(/active|current/);
   });
 
   test('should display photo captions when available', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
-    // Click to navigate to photo with caption
     const dots = page.locator('[data-testid="nav-dot"]');
     await dots.nth(1).click();
 
@@ -358,54 +370,55 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
   });
 
   test('should display collection description in sidebar', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
     const sidebar = page.locator('[data-testid="collection-sidebar"]');
     await expect(sidebar).toBeVisible();
-    
+
     const description = sidebar.locator('[data-testid="collection-description"]');
     await expect(description).toBeVisible();
     await expect(description).toContainText('Test collection description');
   });
 
   test('should display breadcrumb navigation', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
     const breadcrumb = page.locator('[data-testid="breadcrumb"]');
     await expect(breadcrumb).toBeVisible();
-    
-    // Should show: Home > 2024 > Test Collection
+
     const breadcrumbLinks = breadcrumb.locator('a');
+    await expect(breadcrumbLinks).toHaveCount(3);
     await expect(breadcrumbLinks.nth(0)).toContainText('Home');
-    await expect(breadcrumbLinks.nth(1)).toContainText('2024');
-    
+    await expect(breadcrumbLinks.nth(1)).toContainText(TEST_YEAR_LABEL);
+    await expect(breadcrumbLinks.nth(2)).toContainText(TEST_LOCATION_NAME);
+
     const currentCrumb = breadcrumb.locator('span').last();
     await expect(currentCrumb).toContainText('Test Collection');
   });
 
-  test('should navigate back to year page via breadcrumb', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+  test('should navigate back to year section via breadcrumb', async ({ page }) => {
+    await page.goto(COLLECTION_ROUTE);
 
-    const yearBreadcrumb = page.locator('[data-testid="breadcrumb"] a').nth(1);
-    await yearBreadcrumb.click();
+    const breadcrumb = page.locator('[data-testid="breadcrumb"]');
+    const yearBreadcrumb = breadcrumb.locator('a').nth(1);
+    await Promise.all([
+      page.waitForURL(new RegExp(`#year-${TEST_YEAR_LABEL}$`)),
+      yearBreadcrumb.click(),
+    ]);
 
-    await expect(page).toHaveURL('/2024');
-    await expect(page.locator('h1')).toContainText('2024');
+    await expect(page.locator(`[id="year-${TEST_YEAR_LABEL}"]`)).toBeVisible();
   });
 
   test('should handle responsive layout on mobile devices', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
-    await page.goto('/2024/test-collection');
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto(COLLECTION_ROUTE);
 
-    // Header should stack vertically on mobile
     const header = page.locator('[data-testid="collection-header"]');
     await expect(header).toHaveCSS('flex-direction', 'column');
 
-    // Photo viewer should be full width
     const photoViewer = page.locator('[data-testid="photo-viewer"]');
     await expect(photoViewer).toBeVisible();
 
-    // Dot navigation should remain functional
     const dots = page.locator('[data-testid="nav-dot"]');
     await expect(dots).toHaveCount(3);
     await dots.nth(1).click();
@@ -413,140 +426,177 @@ describe('Integration: Single-Screen Collection Viewer (React Testing Library)',
   });
 
   test('should handle keyboard navigation for accessibility', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
-    // Tab to dot navigation
     await page.keyboard.press('Tab');
     const firstDot = page.locator('[data-testid="nav-dot"]').first();
     await expect(firstDot).toBeFocused();
 
-    // Use arrow keys to navigate
     await page.keyboard.press('ArrowRight');
     const secondDot = page.locator('[data-testid="nav-dot"]').nth(1);
     await expect(secondDot).toBeFocused();
 
-    // Press Enter to activate
     await page.keyboard.press('Enter');
     const currentPhoto = page.locator('[data-testid="current-photo"] img');
     await expect(currentPhoto).toHaveAttribute('alt', 'Test photo 2');
   });
 
   test('should load images progressively and handle loading states', async ({ page }) => {
-    // Slow down image loading
-    await page.route('**/test-asset-*', route => {
+    await page.route('**/test-asset-*', (route) => {
       setTimeout(() => route.continue(), 1000);
     });
 
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
-    // Should show loading placeholder
     const loadingPlaceholder = page.locator('[data-testid="image-loading"]');
     await expect(loadingPlaceholder).toBeVisible();
 
-    // Wait for image to load
     const currentPhoto = page.locator('[data-testid="current-photo"] img');
     await expect(currentPhoto).toBeVisible({ timeout: 5000 });
-    
-    // Loading placeholder should disappear
     await expect(loadingPlaceholder).not.toBeVisible();
   });
 
   test('should handle aspect ratio preservation', async ({ page }) => {
-    await page.goto('/2024/test-collection');
+    await page.goto(COLLECTION_ROUTE);
 
     const photoContainer = page.locator('[data-testid="photo-container"]');
     const currentPhoto = page.locator('[data-testid="current-photo"] img');
 
-    // Wait for image to load
     await expect(currentPhoto).toBeVisible();
 
-    // Check that aspect ratio is maintained
     const containerBounds = await photoContainer.boundingBox();
     const imageBounds = await currentPhoto.boundingBox();
-    
+
     expect(containerBounds).toBeTruthy();
     expect(imageBounds).toBeTruthy();
-    
-    // Image should fit within container while maintaining aspect ratio
     expect(imageBounds!.width).toBeLessThanOrEqual(containerBounds!.width);
     expect(imageBounds!.height).toBeLessThanOrEqual(containerBounds!.height);
   });
 
   test('should handle empty collection gracefully', async ({ page }) => {
-    // Create empty collection
     const yearResponse = await page.request.post('/api/years', {
-      data: { label: '2023', status: 'published' }
+      data: { label: '2023', status: 'published' },
     });
     const year = await yearResponse.json();
-    
+
+    const locationResponse = await page.request.post(`/api/admin/years/${year.id}/locations`, {
+      data: {
+        name: 'Empty Location',
+        slug: 'empty-location',
+        summary: null,
+      },
+    });
+    const location = await locationResponse.json();
+
     const collectionResponse = await page.request.post(`/api/years/${year.id}/collections`, {
       data: {
         slug: 'empty-collection',
         title: 'Empty Collection',
-        status: 'published'
-      }
+        status: 'published',
+      },
+    });
+    const collection = await collectionResponse.json();
+
+    await page.request.post(`/api/admin/collections/${collection.id}/location`, {
+      data: { locationId: location.id },
     });
 
-    await page.goto('/2023/empty-collection');
+    await page.goto(`/${encodeURIComponent(year.label)}/${location.slug}/empty-collection`);
 
-    // Should show empty state
     const emptyState = page.locator('[data-testid="empty-collection"]');
     await expect(emptyState).toBeVisible();
     await expect(emptyState).toContainText('No photos in this collection yet');
 
-    // Dot navigation should not be visible
     const dotNavigation = page.locator('[data-testid="dot-navigation"]');
     await expect(dotNavigation).not.toBeVisible();
+
+    await page.request.delete(`/api/years/${year.id}?force=true`);
   });
 
   test('should return 404 for non-existent collection', async ({ page }) => {
-    const response = await page.goto('/2024/non-existent-collection');
+    const response = await page.goto(`/${TEST_YEAR_LABEL}/${TEST_LOCATION_SLUG}/non-existent-collection`);
     expect(response?.status()).toBe(404);
   });
 
   async function setupTestData(page: Page) {
-    // Create test year
+    await cleanupExistingTestYear(page);
+
     const yearResponse = await page.request.post('/api/years', {
-      data: {
-        label: '2024',
-        status: 'published'
-      }
+      data: { label: TEST_YEAR_LABEL, status: 'published' },
     });
     const year = await yearResponse.json();
     testYearId = year.id;
 
-    // Create test collection
+    const locationResponse = await page.request.post(`/api/admin/years/${testYearId}/locations`, {
+      data: {
+        name: TEST_LOCATION_NAME,
+        slug: TEST_LOCATION_SLUG,
+        summary: 'Test location summary',
+      },
+    });
+    const location = await locationResponse.json();
+    testLocationId = location.id;
+
     const collectionResponse = await page.request.post(`/api/years/${testYearId}/collections`, {
       data: {
         slug: 'test-collection',
         title: 'Test Collection',
         summary: 'Test collection description',
-        status: 'published'
-      }
+        status: 'published',
+      },
     });
     const collection = await collectionResponse.json();
     testCollectionId = collection.id;
 
-    // Create test assets
     const assets = [
       { id: 'test-asset-1', alt: 'Test photo 1', width: 1920, height: 1080 },
       { id: 'test-asset-2', alt: 'Test photo 2', caption: 'Caption for test photo 2', width: 1920, height: 1080 },
-      { id: 'test-asset-3', alt: 'Test photo 3', width: 1920, height: 1080 }
+      { id: 'test-asset-3', alt: 'Test photo 3', width: 1920, height: 1080 },
     ];
 
     for (const assetData of assets) {
-      const assetResponse = await page.request.post('/api/assets', {
-        data: assetData
-      });
+      const assetResponse = await page.request.post('/api/assets', { data: assetData });
       const asset = await assetResponse.json();
       testAssetIds.push(asset.id);
     }
 
-    // Add assets to collection
     await page.request.post(`/api/collections/${testCollectionId}/assets`, {
-      data: {
-        asset_ids: testAssetIds
-      }
+      data: { asset_ids: testAssetIds },
     });
+
+    await page.request.post(`/api/admin/collections/${testCollectionId}/location`, {
+      data: { locationId: testLocationId },
+    });
+  }
+
+  async function teardownTestData(page: Page) {
+    if (testYearId) {
+      await page.request.delete(`/api/years/${testYearId}?force=true`);
+    } else {
+      await cleanupExistingTestYear(page);
+    }
+
+    for (const assetId of testAssetIds) {
+      await page.request.delete(`/api/assets/${assetId}`);
+    }
+
+    testYearId = null;
+    testLocationId = null;
+    testCollectionId = null;
+    testAssetIds = [];
+  }
+
+  async function cleanupExistingTestYear(page: Page) {
+    const response = await page.request.get('/api/years?status=all&order=asc');
+    if (!response.ok()) return;
+
+    const years = await response.json();
+    const deletions = years
+      .filter((year: { id: string; label: string }) => year.label === TEST_YEAR_LABEL)
+      .map((year: { id: string }) => page.request.delete(`/api/years/${year.id}?force=true`));
+
+    if (deletions.length > 0) {
+      await Promise.all(deletions);
+    }
   }
 });

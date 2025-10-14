@@ -1,17 +1,25 @@
-# Utoa's Photography
+# Utoa Photography
 
-個人攝影作品展示網站。此專案用來整理與展示按年份與作品集分類的相片，提供簡易的後台管理介面上傳與管理影像，並以現代化前端與後端 API 架構提供快速、可擴充的使用體驗。
+個人攝影作品展示網站。透過「年份 → 地點 → 作品集」三層階層呈現相片故事，並提供後台管理界面以維護地點、指派作品集與發佈控管。
 
-## 主要特色
+## 導覽階層與資料產出
 
-# UTOA Photography
+- **年份 / 地點階層**：首頁於伺服器端直接以 Prisma 查詢「年份 → 地點 → 作品集」階層資料，每次請求皆可取得最新排序與狀態，遠離手動重建靜態 JSON 的落差。
+- **地點詳情頁**：`/[year]/[location]` 路由改為動態讀取同一份資料樹，隨著後台調整即時呈現正確的麵包屑與作品集列表。
+- **資料來源生成**：若需要預先快照或在離線環境備份資料，可執行 `npm run generate:data:year-location`（呼叫 `tools/year-location/generate-year-location.js`）將資料輸出為 `public/data/year-location.json`。此步驟已非前台更新所必須，但仍可做為部署前檢查或靜態備援用途。
+- **站點地圖**：`npm run generate:sitemap`（已納入 `npm run build` 預設 prebuild 流程）會在 `public/sitemap.xml` 輸出僅含 `/[year]/[location]` 等現行路由。
 
-## Feature Quickstart
+### Slug 與命名規範
 
-本專案包含一個「後台發布＋首頁/作品集視覺更新」功能模組。快速上手與流程請見：
+- **地點 slug**：必須符合 `^[a-z0-9-]+-[0-9]{2}$`，例如 `kyoto-24`。最後兩碼為年份（year label 的後兩位），其餘部分為小寫英文與連字號。
+- **作品集 slug**：沿用既有規範（小寫英數與連字號）。
+- 後台 Location 表單與 API 已內建驗證，請遵循此規則建立資料，以確保路由一致及靜態輸出正常。
 
-- `specs/002-title-publishing-why/quickstart.md`
+### 相關說明文件
+
 - `specs/003-admin-years-collections/quickstart.md`
+- `specs/004-/quickstart.md`
+- `docs/admin-workflow.md`
 
 ## Private Tool Separation
 
@@ -27,6 +35,7 @@
 前台閱讀在停用 JavaScript 時仍可完整瀏覽：
 - 作品集視圖之點點導航退化為 `<noscript>` 連結清單（可逐張開啟）。
 - 影像以原生 `<img>` 呈現並提供替代文字（alt）。
+
 ## 技術棧
 
 ## 專案結構（重點）
@@ -50,6 +59,17 @@
    ```
    npm test
    ```
+
+### 回歸檢查腳本
+
+在發佈前建議執行以下腳本，確保靜態輸出、連結與效能維持在預期範圍：
+
+```
+npm run ci:link-check
+npm run lighthouse
+```
+
+前者會啟動 build 並以 Linkinator 檢查站內連結；後者使用 Lighthouse 針對首頁、年份頁與地點頁跑三輪評分。若 Lighthouse 回報 Largest Contentful Paint 警示，可優先檢視 Hero 影像或首屏內容是否需要額外 lazy loading/壓縮。
 
 （如專案使用特殊部署環境或變數，請參考專案內相關設定檔或部署說明）
 

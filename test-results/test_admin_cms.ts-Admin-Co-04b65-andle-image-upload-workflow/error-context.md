@@ -1,160 +1,76 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
-  - generic [ref=e3]:
-    - heading "Uploads" [level=1] [ref=e4]
-    - generic [ref=e5]:
-      - button "Select Files" [ref=e7]
-      - generic [ref=e8]:
-        - generic [ref=e9]:
-          - generic [ref=e10]: Alt
-          - textbox "Alt" [ref=e11]: Uploaded test image
-        - generic [ref=e12]:
-          - generic [ref=e13]: Caption
-          - textbox "Caption" [ref=e14]: This image was uploaded via admin interface
-      - button "Save Asset" [active] [ref=e16]
-      - generic [ref=e17]: upload success
-    - generic [ref=e18]:
-      - generic [ref=e19]:
-        - generic [ref=e20]:
-          - generic [ref=e21]: Admin test asset 3
-          - generic "This photo is already used in a collection" [ref=e22]: USED
-        - generic [ref=e23]: 1920×1080
-        - group [ref=e24]
+- generic:
+  - generic [active]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - navigation [ref=e6]:
+            - button "previous" [disabled] [ref=e7]:
+              - img "previous" [ref=e8]
+            - generic [ref=e10]:
+              - generic [ref=e11]: 1/
+              - generic [ref=e12]: "1"
+            - button "next" [disabled] [ref=e13]:
+              - img "next" [ref=e14]
+          - img
+        - generic [ref=e16]:
+          - link "Next.js 15.5.3 (stale) Webpack" [ref=e17] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e18] [cursor=pointer]
+            - generic "There is a newer version (15.5.5) available, upgrade recommended!" [ref=e20] [cursor=pointer]: Next.js 15.5.3 (stale)
+            - generic [ref=e21] [cursor=pointer]: Webpack
+          - img
+      - dialog "Build Error" [ref=e23]:
         - generic [ref=e26]:
-          - checkbox "Select" [ref=e27]
-          - generic [ref=e28]: Select
-      - generic [ref=e29]:
-        - generic [ref=e30]:
-          - generic [ref=e31]: Admin test asset 2
-          - generic "This photo is already used in a collection" [ref=e32]: USED
-        - generic [ref=e33]: 1920×1080
-        - group [ref=e34]
-        - generic [ref=e36]:
-          - checkbox "Select" [ref=e37]
-          - generic [ref=e38]: Select
-      - generic [ref=e39]:
-        - generic [ref=e40]:
-          - generic [ref=e41]: Workflow test image 3
-          - generic "This photo is already used in a collection" [ref=e42]: USED
-        - generic [ref=e43]: 1920×1080
-        - group [ref=e44]
-        - generic [ref=e46]:
-          - checkbox "Select" [ref=e47]
-          - generic [ref=e48]: Select
-      - generic [ref=e49]:
-        - generic [ref=e50]:
-          - generic [ref=e51]: Workflow test image 2
-          - generic "This photo is already used in a collection" [ref=e52]: USED
-        - generic [ref=e53]: 1920×1080
-        - group [ref=e54]
-        - generic [ref=e56]:
-          - checkbox "Select" [ref=e57]
-          - generic [ref=e58]: Select
-      - generic [ref=e59]:
-        - generic [ref=e60]:
-          - generic [ref=e61]: Workflow test image 1
-          - generic "This photo is already used in a collection" [ref=e62]: USED
-        - generic [ref=e63]: 1920×1080
-        - group [ref=e64]
-        - generic [ref=e66]:
-          - checkbox "Select" [ref=e67]
-          - generic [ref=e68]: Select
-      - generic [ref=e69]:
-        - generic [ref=e70]:
-          - generic [ref=e71]: Workflow test image 2
-          - generic "This photo is already used in a collection" [ref=e72]: USED
-        - generic [ref=e73]: 1920×1080
-        - group [ref=e74]
-        - generic [ref=e76]:
-          - checkbox "Select" [ref=e77]
-          - generic [ref=e78]: Select
-      - generic [ref=e79]:
-        - generic [ref=e80]:
-          - generic [ref=e81]: Workflow test image 1
-          - generic "This photo is already used in a collection" [ref=e82]: USED
-        - generic [ref=e83]: 1920×1080
-        - group [ref=e84]
-        - generic [ref=e86]:
-          - checkbox "Select" [ref=e87]
-          - generic [ref=e88]: Select
-      - generic [ref=e89]:
-        - generic [ref=e90]:
-          - generic [ref=e91]: Batch uploaded image 2
-          - generic "This photo is already used in a collection" [ref=e92]: USED
-        - generic [ref=e93]: 1920×1080
-        - group [ref=e94]
-        - generic [ref=e96]:
-          - checkbox "Select" [ref=e97]
-          - generic [ref=e98]: Select
-      - generic [ref=e99]:
-        - generic [ref=e100]:
-          - generic [ref=e101]: Batch uploaded image 3
-          - generic "This photo is already used in a collection" [ref=e102]: USED
-        - generic [ref=e103]: 1920×1080
-        - group [ref=e104]
-        - generic [ref=e106]:
-          - checkbox "Select" [ref=e107]
-          - generic [ref=e108]: Select
-      - generic [ref=e109]:
-        - generic [ref=e110]:
-          - generic [ref=e111]: Batch uploaded image 1
-          - generic "This photo is already used in a collection" [ref=e112]: USED
-        - generic [ref=e113]: 1920×1080
-        - group [ref=e114]
-        - generic [ref=e116]:
-          - checkbox "Select" [ref=e117]
-          - generic [ref=e118]: Select
-      - generic [ref=e119]:
-        - generic [ref=e120]:
-          - generic [ref=e121]: Workflow test image 3
-          - generic "This photo is already used in a collection" [ref=e122]: USED
-        - generic [ref=e123]: 1920×1080
-        - group [ref=e124]
-        - generic [ref=e126]:
-          - checkbox "Select" [ref=e127]
-          - generic [ref=e128]: Select
-      - generic [ref=e129]:
-        - generic [ref=e130]:
-          - generic [ref=e131]: Workflow test image 2
-          - generic "This photo is already used in a collection" [ref=e132]: USED
-        - generic [ref=e133]: 1920×1080
-        - group [ref=e134]
-        - generic [ref=e136]:
-          - checkbox "Select" [ref=e137]
-          - generic [ref=e138]: Select
-      - generic [ref=e139]:
-        - generic [ref=e140]:
-          - generic [ref=e141]: Batch uploaded image 3
-          - generic "This photo is already used in a collection" [ref=e142]: USED
-        - generic [ref=e143]: 1920×1080
-        - group [ref=e144]
-        - generic [ref=e146]:
-          - checkbox "Select" [ref=e147]
-          - generic [ref=e148]: Select
-      - generic [ref=e149]:
-        - generic [ref=e150]:
-          - generic [ref=e151]: Batch uploaded image 2
-          - generic "This photo is already used in a collection" [ref=e152]: USED
-        - generic [ref=e153]: 1920×1080
-        - group [ref=e154]
-        - generic [ref=e156]:
-          - checkbox "Select" [ref=e157]
-          - generic [ref=e158]: Select
-      - generic [ref=e159]:
-        - generic [ref=e161]: Beautiful landscape photo
-        - generic [ref=e162]: 1920×1080
-        - generic [ref=e163]: A stunning sunset over the mountains
-        - group [ref=e164]
-        - generic [ref=e166]:
-          - checkbox "Select" [ref=e167]
-          - generic [ref=e168]: Select
-    - generic [ref=e169]:
-      - button "Bulk Delete" [disabled] [ref=e170]
-      - button "Add to Collection" [disabled] [ref=e171]
-      - button "Confirm" [ref=e172]
-  - button "Open Next.js Dev Tools" [ref=e178] [cursor=pointer]:
-    - img [ref=e179] [cursor=pointer]
-  - alert [ref=e182]
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - generic [ref=e30]: Build Error
+              - generic [ref=e31]:
+                - button "Copy Error Info" [ref=e32] [cursor=pointer]:
+                  - img [ref=e33] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=e35]:
+                  - img [ref=e36]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e38] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e39] [cursor=pointer]
+            - paragraph [ref=e48]: x Unterminated regexp literal
+          - generic [ref=e50]:
+            - generic [ref=e52]:
+              - img [ref=e54]
+              - generic [ref=e57]: ./src/app/admin/years/page.tsx
+              - button "Open in editor" [ref=e58] [cursor=pointer]:
+                - img [ref=e60] [cursor=pointer]
+            - generic [ref=e63]:
+              - generic [ref=e64]: "Error:"
+              - generic [ref=e65]: x
+              - generic [ref=e66]: Unterminated regexp literal ,-[
+              - generic [ref=e67]: /Users/utoaaaa/檔案/Web app/Utoa-Photography/src/app/admin/years/page.tsx
+              - generic [ref=e68]: :674:1]
+              - generic [ref=e69]: "671"
+              - generic [ref=e70]: "| </AccessibleDialog>"
+              - generic [ref=e71]: "672"
+              - generic [ref=e72]: "| )}"
+              - generic [ref=e73]: "673"
+              - generic [ref=e74]: "| </div>"
+              - generic [ref=e75]: "674"
+              - generic [ref=e76]: "| </div> :"
+              - generic [ref=e77]: ^^^^^
+              - generic [ref=e79]: "675"
+              - generic [ref=e80]: "| );"
+              - generic [ref=e81]: "676"
+              - generic [ref=e82]: "| } `---- Caused by: Syntax Error"
+        - generic [ref=e83]:
+          - generic [ref=e84]: "1"
+          - generic [ref=e85]: "2"
+    - generic [ref=e90] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e91] [cursor=pointer]:
+        - img [ref=e92] [cursor=pointer]
+      - button "Open issues overlay" [ref=e96] [cursor=pointer]:
+        - generic [ref=e97] [cursor=pointer]:
+          - generic [ref=e98] [cursor=pointer]: "0"
+          - generic [ref=e99] [cursor=pointer]: "1"
+        - generic [ref=e100] [cursor=pointer]: Issue
+  - alert [ref=e101]
 ```
