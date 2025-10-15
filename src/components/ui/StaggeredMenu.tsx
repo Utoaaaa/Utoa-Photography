@@ -3,10 +3,13 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
+export type StaggeredMenuItemVariant = 'home' | 'year' | 'location' | 'location-first';
+
 export interface StaggeredMenuItem {
   label: string;
   ariaLabel: string;
   link: string;
+  variant?: StaggeredMenuItemVariant;
 }
 
 export interface StaggeredMenuSocialItem {
@@ -449,7 +452,10 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                 items.map((it, idx) => (
                   <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
                     <a
-                      className="sm-panel-item relative text-gray-900 font-serif font-light text-[3rem] md:text-[4rem] cursor-pointer leading-none tracking-tight transition-colors duration-300 ease-out inline-block no-underline"
+                      className={
+                        'sm-panel-item relative text-gray-900 font-serif font-light cursor-pointer leading-none tracking-tight transition-colors duration-300 ease-out inline-block no-underline ' +
+                        (it.variant ? `sm-panel-item--${it.variant}` : 'sm-panel-item--default')
+                      }
                       href={it.link}
                       aria-label={it.ariaLabel}
                       data-index={idx + 1}
@@ -526,7 +532,19 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-socials-list .sm-socials-link:focus-visible { opacity: 1; }
 .sm-scope .sm-socials-link:focus-visible { outline: 2px solid #666; outline-offset: 3px; }
 .sm-scope .sm-panel-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
-.sm-scope .sm-panel-item { position: relative; font-weight: 300; cursor: pointer; line-height: 1; letter-spacing: -0.02em; transition: color 0.3s ease; display: inline-block; text-decoration: none; }
+.sm-scope .sm-panel-item { position: relative; font-weight: 300; cursor: pointer; line-height: 1.08; letter-spacing: -0.02em; transition: color 0.3s ease; display: block; text-decoration: none; color: #1f2933; }
+.sm-scope .sm-panel-item--default { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 300; }
+.sm-scope .sm-panel-item--home { font-size: clamp(3rem, 5.8vw, 4.4rem); font-weight: 400; color: #0b1623; letter-spacing: -0.025em; }
+.sm-scope .sm-panel-item--year { font-size: clamp(2.15rem, 4.3vw, 3.1rem); font-weight: 500; color: #111827; opacity: 0.94; margin-top: clamp(1.8rem, 4.6vw, 2.6rem); padding-left: clamp(0.1rem, 0.4vw, 0.4rem); position: relative; }
+.sm-scope .sm-panel-item--year::after { content: ''; position: absolute; left: clamp(0.15rem, 0.5vw, 0.5rem); top: 60%; width: clamp(0.8rem, 1.8vw, 1.4rem); height: 1px; background: rgba(17, 24, 39, 0.35); }
+.sm-scope .sm-panel-item--location,
+.sm-scope .sm-panel-item--location-first { font-size: clamp(1.35rem, 2.6vw, 2rem); font-weight: 300; color: #6b7280; line-height: 1.18; padding-left: clamp(1.6rem, 3.2vw, 2.3rem); position: relative; }
+.sm-scope .sm-panel-item--location-first { margin-top: clamp(0.9rem, 2.2vw, 1.6rem); }
+.sm-scope .sm-panel-item--location::before,
+.sm-scope .sm-panel-item--location-first::before { content: ''; position: absolute; left: clamp(0.55rem, 1.4vw, 1rem); top: 0.35em; width: clamp(0.5rem, 1vw, 0.75rem); height: 0.5px; background: currentColor; opacity: 0.35; }
+.sm-scope .sm-panel-item--location::after,
+.sm-scope .sm-panel-item--location-first::after { content: ''; position: absolute; left: clamp(0.55rem, 1.4vw, 1rem); top: 0; bottom: 0; width: 1px; background: currentColor; opacity: 0.18; }
+.sm-scope .sm-panel-item--location-first::after { top: clamp(-0.9rem, -2.2vw, -1.5rem); }
 .sm-scope .sm-panel-itemLabel { display: inline-block; will-change: transform; transform-origin: 50% 100%; }
 .sm-scope .sm-panel-item:hover { color: var(--sm-accent, #666); }
 .sm-scope .sm-panel-list[data-numbering] { counter-reset: smItem; }

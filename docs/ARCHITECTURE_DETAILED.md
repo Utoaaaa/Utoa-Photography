@@ -46,6 +46,8 @@ sequenceDiagram
   CollectionsAPI-->>AdminUI: 201 Created (asset added)
 ```
 
+> 🗃️ 2025-10 更新：以下 Publishing API 流程已下線，僅保留做為架構歷史紀錄。
+
 2) Asset update inside collection (PATCH) — atomic update + audit
 ```mermaid
 sequenceDiagram

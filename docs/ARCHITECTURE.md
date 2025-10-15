@@ -4,7 +4,7 @@
 
 ## 概要
 - 技術：Next.js (App Router) + TypeScript、Prisma（SQLite config）、Jest 測試、Cloudflare Images 支援跡象。
-- 功能重點：依年份與作品集展示照片、後台管理 (admin)、影像直接上傳 API、publishing workflow（版本與發布歷史）、測試覆蓋（contract/integration/unit）。
+- 功能重點：依年份與作品集展示照片、後台管理 (admin)、影像直接上傳 API、版本與發布歷史（歷史功能，現由年份/作品集流程負責）、測試覆蓋（contract/integration/unit）。
 
 ## 快速啟動
 ```bash
@@ -24,7 +24,7 @@ npm test
   - seed.ts / seed.js：種子資料腳本
 - src/
   - src/app/：Next.js App Router（包含 (site) 與 (admin) route group、layout、globals.css）
-  - src/app/api/：API route handlers（years / collections / images / publishing / revalidate）
+  - src/app/api/：API route handlers（years / collections / images / revalidate）
   - src/components/：UI 與 admin 元件
   - src/components/providers/：跨元件 providers（例如 SmoothScrollProvider）
   - src/components/ui/：共用 UI 元件（Breadcrumb、PhotoViewer、YearGrid 等）
@@ -36,7 +36,7 @@ npm test
   - tests/contract/：API 合約測試
   - tests/integration/：整合 / 流程測試
   - tests/unit/：單元測試
-- tools/：專用工具或測試套件（tools/publishing）
+- tools/：專用工具或測試套件（如 run-contract-tests、year-location generator；原 tools/publishing 已於 2025-10 移除）
 - middleware.ts、wrangler.toml、lighthouserc.json：中介 / 部署 / 測試設定
 
 ## 主要檔案與用途（摘要）
@@ -48,27 +48,27 @@ npm test
 - src/app/(site)/
   - 公開網站頁面：年份頁、作品集頁、首頁等動態路由（例如 /[year]/[collection]）。
 - src/app/(admin)/
-  - 管理後台：上傳、管理 collections & assets、publishing 管理介面。
+  - 管理後台：上傳、管理 collections & assets（publishing 功能已整併入既有流程）。
 - src/app/api/*
-  - REST/Route endpoints：years、collections、images (direct-upload)、publishing（publish/unpublish/versions/checklist）、revalidate。
+  - REST/Route endpoints：years、collections、images (direct-upload)、revalidate。
   - 這些 route 檔負責輸入驗證、DB 操作、與 Cloudflare Images / 儲存互動。
 - src/lib/db.ts
   - Prisma client 單例（避免多次建立），包含簡易的 audit logging（publish/unpublish 寫入 publish_history）與取得 audit trail 的 helper。
 - src/lib/queries/collections.ts、years.ts
   - 封裝 DB 查詢並處理錯誤，部分查詢使用 Next 的 unstable_cache 與 cache tag（提高效能與 revalidate 管理）。
 - tests/
-  - contract tests 用於驗證 API 與規格一致；integration tests 驗證整體流程（publishing 與 image workflow）。
+  - contract tests 用於驗證 API 與規格一致；integration tests 驗證整體流程（影像、年份/作品集工作流程）。
 
 ## 責任範圍快速對應（建議分工）
 - 後端 / 資料層：prisma/、src/lib/db.ts、src/lib/queries/*、src/app/api/**
 - 前端 / UI：src/app/(site)/**、src/components/**、layout / globals.css
 - 後台 / 商業流程：src/app/(admin)/**、src/components/admin/**
-- 測試 / 品質：tests/**、tools/run-contract-tests.js、tools/publishing/**
+- 測試 / 品質：tests/**、tools/run-contract-tests.js
 - 部署 / infra：next.config.ts、wrangler.toml、環境變數（DATABASE_URL、Cloudflare API keys）
 
 ## 維護與風險提示
 - Prisma migrations：保持 migration 與 schema 同步；production DB 變更需謹慎。
-- Publish workflow：PublishHistory snapshot 與 version 管理是關鍵，修改 schema 時注意相容性。
+- Publish history（歷史功能）：`publish_history` snapshots 仍留存資料庫供追溯，但對外 API 已下線；調整 schema 時注意與既有稽核資料的相容性。
 - 測試覆蓋：contract tests 顯示有 API 合約要求，新增 endpoint 或變更回傳需同步更新 contract tests。
 - 環境變數與部署：Cloudflare Images 與可能的 Workers/Pages 部署需正確設置 wrangler.toml 與相關金鑰。
 

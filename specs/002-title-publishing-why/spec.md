@@ -2,7 +2,7 @@
 
 **Feature Branch**: `002-title-publishing-why`  
 **Created**: 2025-09-20  
-**Status**: Draft  
+**Status**: Draft（2025-10 後台發布頁面已下線，文件僅供歷史參考）  
 **Input**: User description: "給站主一個單一入口完成：審查草稿、預覽、設定 SEO/OG、發布/下架、版本備份與快取更新。首頁視覺微調：左上角低調品牌（「utoa」字樣小一點且偏左上）、右側持續使用幾何相機圖樣。作品集詳頁改為「一銀幕一張圖＋對應文字」，滑動或點擊才切換下一張，讓閱讀節奏更專注。範圍：後台 Publishing Page（新）：集中管理草稿 → 預覽 → 發布／下架；可設定 SEO/OG、發布備註、快取失效；含變更紀錄。首頁（修改）：左上角：品牌字樣「utoa」縮小並靠左上定位（不喧賓奪主）。右側：延續「幾何相機圖樣 Geometric / Grid-first」，密度節制。其餘年表區塊維持原規格。作品集詳頁（修改）：內容區採「一銀幕一張圖片＋右側（或下方）該張的文字敘述」。以滑動／鍵盤／點擊「點點條」逐張切換；每張圖均有對應文字欄位。仍保留頂部滿版（左標題／右幾何圖樣）與麵包屑（年份 / 作品集）。Out of Scope：多語、多作者、審稿工作流（assign/review），僅單人發布。排程發佈（可於下輪擴充）。影片長片與 RAW 檔在站內預覽。資訊結構：後台：/admin/publishing（新）首頁：/（修改品牌與右側圖樣區）作品集詳頁：/{year}/{collection}（修改為一銀幕一張圖＋對應文字）。Content Model：collections 新增：publish_note、version；collection_assets 新增：text、slide_index；audit_logs：who, action(publish/unpublish/edit), entity(collection/id), payload_json, created_at。工作流程：A. 後台 Publishing Page（草稿清單、預覽、檢查清單、設定 SEO/OG、發布、快取失效、下架、版本與變更紀錄）；B. 首頁（品牌與圖樣）；C. 作品集詳頁（單銀幕視圖）。User Stories/AC、Non-Functional、Success Metrics 見詳述。"
 
 ## Execution Flow (main)

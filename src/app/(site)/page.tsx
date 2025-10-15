@@ -52,40 +52,46 @@ export default async function Homepage() {
         <section className="px-8 md:px-12 pb-20 bg-background">
           <div className="w-full max-w-7xl mx-auto space-y-24">
             {hasYears ? (
-              years.map((year) => (
-                <section
-                  key={year.id}
-                  id={`year-${year.label}`}
-                  data-testid="year-section"
-                  className="scroll-mt-24 space-y-10"
-                  aria-labelledby={`year-heading-${year.label}`}
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                    <div>
-                      <h2 id={`year-heading-${year.label}`} className="font-serif text-4xl font-light tracking-wide text-gray-900">
-                        {year.label}
-                      </h2>
-                      <p className="mt-2 text-sm text-gray-600">
-                        {year.locations.length > 0
-                          ? `${year.locations.length} 個地點`
-                          : '地點即將揭曉，敬請期待。'}
-                      </p>
-                    </div>
-                  </div>
+              years.map((year) => {
+                const sanitizedLabel = year.label.replace(/\s+/g, '-');
+                const sectionId = `year-${sanitizedLabel}`;
+                const headingId = `year-heading-${sanitizedLabel}`;
 
-                  {year.locations.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="location-grid">
-                      {year.locations.map((location) => (
-                        <LocationCard key={location.id} yearLabel={year.label} location={location} />
-                      ))}
+                return (
+                  <section
+                    key={year.id}
+                    id={sectionId}
+                    data-testid="year-section"
+                    className="scroll-mt-24 space-y-10"
+                    aria-labelledby={headingId}
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                      <div>
+                        <h2 id={headingId} className="font-serif text-4xl font-light tracking-wide text-gray-900">
+                          {year.label}
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                          {year.locations.length > 0
+                            ? `${year.locations.length} 個地點`
+                            : '地點即將揭曉，敬請期待。'}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 p-10 text-center text-gray-500" data-testid="empty-locations">
-                      該年份的地點即將揭曉，敬請期待。
-                    </div>
-                  )}
-                </section>
-              ))
+
+                    {year.locations.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="location-grid">
+                        {year.locations.map((location) => (
+                          <LocationCard key={location.id} yearLabel={year.label} location={location} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 p-10 text-center text-gray-500" data-testid="empty-locations">
+                        該年份的地點即將揭曉，敬請期待。
+                      </div>
+                    )}
+                  </section>
+                );
+              })
             ) : (
               <div className="rounded-xl border border-dashed border-gray-300 bg-white/60 p-12 text-center text-gray-500" data-testid="empty-years">
                 尚無發佈的年份與地點。請稍後再回來探索新的作品。

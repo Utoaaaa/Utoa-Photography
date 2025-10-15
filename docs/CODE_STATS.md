@@ -114,16 +114,16 @@ Feature 003 (Admin): +29,200 行 (約)
 - 程式碼: ~3,000 行
 - 測試: ~2,000 行
 
-### Feature 002: Publishing System
-- API 端點: 6 個
-- 頁面: 1 個 (/admin/publishing)
-- 元件: ~5 個
-- 程式碼: ~3,500 行
-- 測試: ~2,500 行
+### Feature 002: Publishing System（已於 2025-10 移除）
+- API 端點: 已撤除 (原 6 個)
+- 頁面: 已撤除 (`/admin/publishing`)
+- 元件: 已撤除 (PublishingFilters、CollectionsList、CollectionPreview)
+- 程式碼: 保留於歷史紀錄
+- 測試: 已撤除 (整合、合約、單元測試)
 
 ### Feature 003: Admin CMS
 - API 端點: ~15 個
-- 頁面: 4 個 (Years/Collections/Uploads/Publishing)
+- 頁面: 3 個 (Years/Collections/Uploads)
 - 元件: ~15 個
 - 程式碼: ~8,000 行
 - 測試: ~4,000 行
@@ -140,11 +140,11 @@ Feature 003 (Admin): +29,200 行 (約)
 
 ### 測試檔案分布
 ```
-Contract Tests:   15 個檔案, ~3,500 行
-Integration Tests: 12 個檔案, ~2,800 行
-Unit Tests:        9 個檔案, ~800 行
+Contract Tests:   8 個檔案, ~1,900 行
+Integration Tests: 21 個檔案, ~3,600 行
+Unit Tests:        20 個檔案, ~2,800 行
 ────────────────────────────────────
-總計:            22 個檔案, ~7,100 行
+總計:            49 個檔案, ~8,300 行
 ```
 
 ### 測試覆蓋率

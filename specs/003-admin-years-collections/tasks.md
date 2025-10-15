@@ -239,9 +239,9 @@ Task: "T011 Integration test image workflow"
 | unlink | DELETE /api/collections/{id}/assets/{asset_id} | audit.routes.test.ts | asset unlink audit |
 | create (asset) | POST /api/assets | audit.routes.test.ts | audit action create asset/* |
 | delete (asset) | DELETE /api/assets/{id} | audit.routes.test.ts | audit action delete asset/* |
-| publish | POST /api/publishing/collections/{id}/publish | audit.publish.routes.test.ts | transaction increments version + publishHistory create + audit payload version |
-| publish (abstraction) | logAudit publish/unpublish | audit.test.ts | snapshot meta recorded |
-| unpublish (abstraction) | logAudit unpublish | audit.test.ts | history record mocked |
+| publish | （已移除） | — | 2025-10 發布 API/測試下線 |
+| publish (abstraction) | logAudit publish/unpublish | audit.test.ts | snapshot meta recorded（若未來復活需重新評估） |
+| unpublish (abstraction) | logAudit unpublish | audit.test.ts | history record mocked（publish 系列已退場） |
 | sink (generic actions) | utility (setAuditSink) | audit.test.ts | ensures non-publish routed to sink |
 | sink metadata fidelity | utility | audit.test.ts | metadata & payload preservation |
 

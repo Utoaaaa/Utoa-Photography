@@ -22,7 +22,6 @@ const stableTests = [
 // WIP/experimental suites (intentionally failing or pending implementation)
 const wipTests = [
   'test_year_page.ts',
-  'test_publishing_flow.ts',
 ];
 
 export default defineConfig({

@@ -23,12 +23,12 @@
 
 ## Private Tool Separation
 
-依專案憲法的「前台純靜態、後台私有工具」原則，發布與審稿流程的程式碼放置於私有區域：
+依專案憲法的「前台純靜態、後台私有工具」原則，若未來需要私有 Worker/CLI，可放置於 `tools/` 底下。原有 `tools/publishing/` 目錄已於 2025-10 清理，目前僅維持公開站點程式碼：
 
-- 私有工具與測試：`tools/publishing/`（CLI/Worker、契約測試設定）
 - 公開站點（Next.js App Router）：`src/app/(site)`、`src/components/ui` 等
+- 管理介面：`src/app/admin`、`src/components/admin`
 
-私有工具僅於開發者/CI 環境執行，不包含在公開站點的使用者下載資產內，避免洩漏密鑰與降低前端負載。
+如需新增私有工具，請遵循上述規範並避免將敏感程式碼或密鑰打包至前端資產。
 
 ## No-JS Baseline
 

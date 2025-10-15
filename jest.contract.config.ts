@@ -10,7 +10,6 @@ const config: Config = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/.next/',
-    '<rootDir>/tests/contract/test_publishing_.*\\.ts$',
     '<rootDir>/tests/contract/test_revalidate\\.ts$',
   ],
   moduleNameMapper: {

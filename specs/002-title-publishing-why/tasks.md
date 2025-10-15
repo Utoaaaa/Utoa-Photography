@@ -1,5 +1,7 @@
 # Tasks: 個人攝影網站 — 後台發布頁面（Publishing）＋首頁與作品集呈現修改
 
+> 🗃️ 2025-10 更新：Publishing 相關頁面、API、測試與 tools/publishing 已下線，本任務清單僅保留歷史紀錄。
+
 **Input**: Design documents from `/Users/utoaaaa/檔案/Web app/Utoa-Photography/specs/002-title-publishing-why/`
 **Prerequisites**: plan.md (required), research.md, data-model.md, contracts/
 
@@ -15,8 +17,8 @@
 ```
 
 ## Phase 3.1: Setup
-- [x] T001 Create private tool workspace `tools/publishing/` with README explaining scope and separation from public site.
-- [x] T002 Initialize publishing tool (Worker/CLI) scaffold in `tools/publishing/` with TypeScript, ESM, linting, tsconfig.
+- [x] T001 Create private tool workspace `tools/publishing/` with README explaining scope and separation from public site。（2025-10 清理後目錄已移除）
+- [x] T002 Initialize publishing tool (Worker/CLI) scaffold in `tools/publishing/` with TypeScript, ESM, linting, tsconfig。（2025-10 清理後目錄已移除）
 - [x] T003 [P] Add CI gates: Lighthouse CI config, HTML validator, link checker, asset budget checks in `.github/workflows/` and project scripts.
 - [x] T004 Configure env and secrets strategy (no secrets in client): `.env.example`, Wrangler/D1 config in `wrangler.toml` for private endpoints only.
 
@@ -25,9 +27,9 @@
 - [x] T006 [P] Contract test Collection detail preview → `.../collections/{id}` in `tests/contract/test_publishing_collection_detail.ts`.
 - [x] T007 [P] Contract test Update asset fields → `.../assets/{assetId}` in `tests/contract/test_publishing_asset_update.ts`.
 - [x] T008 [P] Contract test Set SEO → `.../{id}/seo` in `tests/contract/test_publishing_seo.ts`.
-- [x] T009 [P] Contract test Publish → `.../{id}/publish` in `tests/contract/test_publishing_publish.ts`.
-- [x] T010 [P] Contract test Unpublish → `.../{id}/unpublish` in `tests/contract/test_publishing_publish.ts`.
-- [x] T011 [P] Contract test Versions list → `.../{id}/versions` in `tests/contract/test_publishing_versions.ts`.
+- [x] T009 [P] Contract test Publish → `.../{id}/publish` in `tests/contract/test_publishing_publish.ts`（2025-10 移除）。
+- [x] T010 [P] Contract test Unpublish → `.../{id}/unpublish` in `tests/contract/test_publishing_publish.ts`（2025-10 移除）。
+- [x] T011 [P] Contract test Versions list → `.../{id}/versions` in `tests/contract/test_publishing_versions.ts`（2025-10 移除）。
 - [x] T012 [P] Integration test: Homepage brand + geometric pattern a11y/visibility in `tests/integration/test_homepage_navigation.test.ts` (extend existing).
 - [x] T013 [P] Integration test: Single-screen viewer interactions (swipe/keys/dots) and ARIA in `tests/integration/test_collection_viewer.ts`.
 - [x] T014 [P] Integration test: Publishing flow (disable publish when SEO/alt missing; success triggers cache invalidation stubs) in `tests/integration/test_admin_cms.ts`。

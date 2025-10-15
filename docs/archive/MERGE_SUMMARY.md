@@ -15,7 +15,7 @@
 **核心功能**:
 - ✅ 發布管理系統 (版本控制、審計記錄)
 - ✅ SEO/OG 設定
-- ✅ 三欄管理介面 (`/admin/publishing`)
+- ✅ 三欄管理介面 (`/admin/publishing`，已於 2025-10 清理下線)
 - ✅ PhotoViewer 單螢幕模式
 - ✅ 精確快取失效
 - ✅ 6 個 API 端點 (list, detail, SEO, publish, unpublish, versions)
@@ -64,7 +64,7 @@
 - `/api/assets/*` - 資產管理
 - `/api/audit/*` - 審計查詢
 - `/api/collections/*` - 作品集 CRUD
-- `/api/publishing/collections/*` - 發布管理
+- `/api/publishing/collections/*` - 發布管理（2025-10 已移除）
 - `/api/years/*` - 年份管理
 - `/api/view/collection` - 前台檢視
 

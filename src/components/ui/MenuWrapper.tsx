@@ -2,8 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import StaggeredMenu from './StaggeredMenu';
+import type { StaggeredMenuItem, StaggeredMenuSocialItem } from './StaggeredMenu';
 
-export default function MenuWrapper() {
+const DEFAULT_SOCIAL_ITEMS: StaggeredMenuSocialItem[] = [
+  { label: 'Instagram', link: 'https://instagram.com' }
+];
+
+interface MenuWrapperProps {
+  menuItems: StaggeredMenuItem[];
+  socialItems?: StaggeredMenuSocialItem[];
+}
+
+export default function MenuWrapper({ menuItems, socialItems = DEFAULT_SOCIAL_ITEMS }: MenuWrapperProps) {
   const [loaderActive, setLoaderActive] = useState(true);
 
   useEffect(() => {
@@ -35,14 +45,6 @@ export default function MenuWrapper() {
       clearTimeout(timeout);
     };
   }, []);
-
-  const menuItems = [
-    { label: 'Home', ariaLabel: 'Go to home page', link: '/' }
-  ];
-
-  const socialItems = [
-    { label: 'Instagram', link: 'https://instagram.com' }
-  ];
 
   return (
     <div className={loaderActive ? 'opacity-0 pointer-events-none' : 'opacity-100'} style={{ transition: 'opacity 0.3s ease' }}>

@@ -140,6 +140,43 @@ const toOrderNumber = (value?: string) => {
   return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
 };
 
+const readImageDimensions = async (file: File): Promise<{ width: number; height: number }> => {
+  if (typeof window === 'undefined' || typeof URL.createObjectURL !== 'function') {
+    return { width: 1920, height: 1080 };
+  }
+
+  return new Promise((resolve, reject) => {
+    let objectUrl: string | undefined;
+    try {
+      objectUrl = URL.createObjectURL(file);
+    } catch (error) {
+      reject(error);
+      return;
+    }
+
+    if (!objectUrl) {
+      reject(new Error('Failed to create object URL'));
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => {
+      const dimensions = { width: image.naturalWidth, height: image.naturalHeight };
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+      resolve(dimensions);
+    };
+    image.onerror = (error) => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+      reject(error);
+    };
+    image.src = objectUrl;
+  });
+};
+
 export default function AdminUploadsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [alt, setAlt] = useState('管理介面測試圖片');
@@ -357,14 +394,14 @@ export default function AdminUploadsPage() {
       return;
     }
 
-    const filesToUpload = files.length > 0 ? files : [null];
+  const filesToUpload: Array<File | null> = files.length > 0 ? files : [null];
     const failedFiles: File[] = [];
     let successCount = 0;
 
     setIsUploading(true);
     try {
       for (let index = 0; index < filesToUpload.length; index += 1) {
-        const currentFile = filesToUpload[index];
+  const currentFile = filesToUpload[index];
         const filename = currentFile?.name || (filesToUpload.length > 1 ? `admin-upload-${index + 1}.jpg` : 'admin-upload.jpg');
         const contentType = currentFile?.type || 'image/jpeg';
 
@@ -398,12 +435,25 @@ export default function AdminUploadsPage() {
           const assetId = imageId;
           const baseAlt = trimmedAlt || currentFile?.name || '上傳圖片';
           const altValue = filesToUpload.length > 1 && currentFile ? `${baseAlt} (${currentFile.name})` : baseAlt;
+
+          let width = 1920;
+          let height = 1080;
+          if (currentFile) {
+            try {
+              const dimensions = await readImageDimensions(currentFile);
+              width = Number.isFinite(dimensions.width) && dimensions.width > 0 ? dimensions.width : width;
+              height = Number.isFinite(dimensions.height) && dimensions.height > 0 ? dimensions.height : height;
+            } catch (dimensionError) {
+              console.warn('[admin/uploads] failed to read image dimensions', dimensionError);
+            }
+          }
+
           const payload: Record<string, unknown> = {
             id: assetId,
             alt: altValue,
             caption,
-            width: 1920,
-            height: 1080,
+            width,
+            height,
           };
           if (uploadLocationId) {
             payload.location_folder_id = uploadLocationId;
@@ -771,7 +821,7 @@ export default function AdminUploadsPage() {
               {isUploading ? '上傳中…' : '開始上傳'}
             </button>
             <span className="text-xs text-gray-500">
-              上傳時會自動儲存為 1920×1080 預設尺寸，可於下方列表編輯細節。
+              上傳時會保留原始尺寸，可於下方列表編輯細節。
             </span>
           </div>
         </section>
