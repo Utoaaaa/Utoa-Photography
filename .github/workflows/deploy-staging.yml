@@ -1,0 +1,45 @@
+name: Deploy Staging (Cloudflare Workers)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      # Cloudflare
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # R2 S3-compatible access
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # Build-time DB (fallback to local sqlite path if not provided)
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'file:./dev.db' }}
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (OpenNext for Cloudflare)
+        run: npx @opennextjs/cloudflare@latest build
+
+      # Optional: apply D1 migrations for staging
+      # - name: Apply D1 migrations (staging)
+      #   run: npx wrangler@4 d1 migrations apply utoa-photography-db --env staging
+
+      - name: Deploy to staging (workers.dev)
+        run: npx @opennextjs/cloudflare@latest deploy -e staging
+
