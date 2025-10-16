@@ -224,16 +224,14 @@ const GlassSurface: React.FC<GlassSurfaceProps> = ({
   };
 
   const getContainerStyles = (): React.CSSProperties => {
-    const baseStyles: React.CSSProperties = {
+    const baseStyles: React.CSSProperties & { [key: string]: string | number } = {
       ...style,
       width: typeof width === 'number' ? `${width}px` : width,
       height: typeof height === 'number' ? `${height}px` : height,
       borderRadius: `${borderRadius}px`,
-      // @ts-expect-error CSS variable for internal styles
-      '--glass-frost': `${backgroundOpacity}`,
-      // @ts-expect-error CSS variable for internal styles
-      '--glass-saturation': `${saturation}`
-    } as React.CSSProperties;
+      ['--glass-frost']: `${backgroundOpacity}`,
+      ['--glass-saturation']: `${saturation}`,
+    };
 
     const urlFilterSupported = supportsBackdropUrlFilter();
     const functionFilterSupported = supportsBackdropFunctionFilter();

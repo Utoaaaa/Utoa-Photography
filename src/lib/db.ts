@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { writeAudit } from '@/lib/utils';
+import { writeAudit } from './utils';
 
 // Runtime-aware Prisma client that uses D1 in Cloudflare Workers and node client locally
 let nodeClient: PrismaClient | undefined;

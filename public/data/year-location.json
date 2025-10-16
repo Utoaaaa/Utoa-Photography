@@ -1,6 +1,13 @@
 {
-  "generatedAt": "2025-10-14T15:27:32.716Z",
+  "generatedAt": "2025-10-16T19:08:20.021Z",
   "years": [
+    {
+      "id": "ec4045ba-b717-4486-998c-3a516370dfba",
+      "label": "2025",
+      "orderIndex": "000001",
+      "status": "published",
+      "locations": []
+    },
     {
       "id": "550e8400-e29b-41d4-a716-446655440001",
       "label": "2024",
@@ -11,7 +18,7 @@
           "id": "550e8400-e29b-41d4-a716-446655440101",
           "yearId": "550e8400-e29b-41d4-a716-446655440001",
           "slug": "northern-peaks-24",
-          "name": "Northern Peaks",
+          "name": "新竹",
           "summary": "High-altitude adventures across alpine ridges.",
           "coverAssetId": "cloudflare-image-id-1",
           "orderIndex": "1.0",
@@ -50,6 +57,28 @@
               "updatedAt": "2025-10-10T12:24:20.560Z"
             }
           ]
+        },
+        {
+          "id": "3adede94-27b5-420e-a395-7802b7ca33be",
+          "yearId": "550e8400-e29b-41d4-a716-446655440001",
+          "slug": "keelung-24",
+          "name": "基隆",
+          "summary": null,
+          "coverAssetId": null,
+          "orderIndex": "3.0",
+          "collectionCount": 0,
+          "collections": []
+        },
+        {
+          "id": "4d5b7e7c-40e2-4e3b-8866-5dde760606cb",
+          "yearId": "550e8400-e29b-41d4-a716-446655440001",
+          "slug": "taipei-24",
+          "name": "taipei",
+          "summary": null,
+          "coverAssetId": null,
+          "orderIndex": "4.0",
+          "collectionCount": 0,
+          "collections": []
         }
       ]
     },
@@ -65,7 +94,7 @@
           "slug": "harbor-glow-23",
           "name": "Harbor Glow",
           "summary": "Golden-hour reflections along the harbor front.",
-          "coverAssetId": "cloudflare-image-id-2",
+          "coverAssetId": "fixture-test-image-test-square",
           "orderIndex": "1.0",
           "collectionCount": 1,
           "collections": [
@@ -87,7 +116,7 @@
           "slug": "forest-whispers-23",
           "name": "Forest Whispers",
           "summary": "Moody woodland portraits with ambient fog.",
-          "coverAssetId": "cloudflare-image-id-3",
+          "coverAssetId": "fixture-test-image-test-editorial",
           "orderIndex": "2.0",
           "collectionCount": 1,
           "collections": [
@@ -96,10 +125,10 @@
               "slug": "345",
               "title": "345",
               "summary": null,
-              "coverAssetId": null,
+              "coverAssetId": "fixture-test-image-test-landscape",
               "orderIndex": "1.0",
-              "publishedAt": "2025-10-14T13:49:14.224Z",
-              "updatedAt": "2025-10-14T13:49:14.225Z"
+              "publishedAt": "2025-10-15T15:18:35.026Z",
+              "updatedAt": "2025-10-14T00:00:00.000Z"
             }
           ]
         }

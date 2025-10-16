@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 
-import { prisma } from '@/lib/db';
+import { prisma } from './db';
 
 export interface LocationCollectionSummary {
   id: string;

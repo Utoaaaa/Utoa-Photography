@@ -4,6 +4,30 @@ const { writeFile, mkdir } = require('node:fs/promises');
 const path = require('node:path');
 const { PrismaClient } = require('@prisma/client');
 
+// Load environment variables from .env/.env.local for build-time script
+try {
+  const fs = require('node:fs');
+  const root = process.cwd();
+  const envFiles = ['.env.local', '.env'];
+  for (const f of envFiles) {
+    const p = path.join(root, f);
+    if (!fs.existsSync(p)) continue;
+    const lines = fs.readFileSync(p, 'utf8').split(/\r?\n/);
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const idx = t.indexOf('=');
+      if (idx === -1) continue;
+      const key = t.slice(0, idx).trim();
+      let val = t.slice(idx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith('\'') && val.endsWith('\''))) {
+        val = val.slice(1, -1);
+      }
+      if (!(key in process.env)) process.env[key] = val;
+    }
+  }
+} catch (_) {}
+
 const prisma = new PrismaClient();
 
 function mapCollection(collection) {

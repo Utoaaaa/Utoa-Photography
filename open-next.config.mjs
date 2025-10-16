@@ -1,4 +1,6 @@
 export default {
+  // Target Cloudflare Workers output
+  platform: "cloudflare",
   command: "npm run build",
   openNextVersion: "3.1.3",
   buildCommand: "npm run build",

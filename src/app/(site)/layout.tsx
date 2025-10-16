@@ -62,8 +62,8 @@ export default async function SiteLayout({
 
   return (
     <>
-      <MenuWrapper menuItems={menuItems} />
       {children}
+      <MenuWrapper menuItems={menuItems} />
     </>
   );
 }
