@@ -22,7 +22,7 @@ const baseConfig: NextConfig = {
   
   // Image optimization
   images: {
-    domains: ['imagedelivery.net'],
+    domains: [],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -34,6 +34,27 @@ const baseConfig: NextConfig = {
   
   // Headers for performance and security
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const baseCspParts = [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      // Styles: allow inline for Next/Tailwind runtime classes
+      "style-src 'self' 'unsafe-inline'",
+      // Images from Cloudflare Images and self; allow data/blob for placeholders
+      "img-src 'self' data: blob:",
+      // Fonts and media
+      "font-src 'self' data:",
+      "media-src 'self'",
+      // Scripts: allow inline bootstrap for Next; disallow eval in prod
+      isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
+      // Workers (Next/OpenNext on CF)
+      "worker-src 'self' blob:",
+      // API/XHR + HMR in dev (ws)
+      isDev ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
+    ];
+    const contentSecurityPolicy = baseCspParts.join('; ');
     return [
       {
         source: '/(.*)',
@@ -49,6 +70,18 @@ const baseConfig: NextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: contentSecurityPolicy,
           },
         ],
       },

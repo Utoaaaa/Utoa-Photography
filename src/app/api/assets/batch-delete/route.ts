@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
+import { requireAdminAuth } from '@/lib/auth';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 
 type FailedItem = { id: string; reason: 'not_found' | 'referenced' | 'error'; details?: any };
 
 export async function POST(request: NextRequest) {
   try {
+    requireAdminAuth(request);
     const body = await request.json().catch(() => ({}));
     const asset_ids: unknown = body?.asset_ids;
     if (!Array.isArray(asset_ids) || asset_ids.length === 0 || !asset_ids.every((x) => typeof x === 'string')) {

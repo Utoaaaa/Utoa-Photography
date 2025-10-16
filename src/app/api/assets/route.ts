@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
+import { requireAdminAuth } from '@/lib/auth';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { LOCATION_UUID_REGEX } from '@/lib/prisma/location-service';
@@ -44,6 +45,8 @@ async function resolveLocationFolder(locationId: unknown) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Require Cloudflare Access (admin only)
+    requireAdminAuth(request);
     // TODO: Add authentication check
     // const auth = request.headers.get('authorization');
     // if (!auth || !auth.startsWith('Bearer ')) {
@@ -208,6 +211,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Require Cloudflare Access (admin only)
+    requireAdminAuth(request);
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
     const offset = parseInt(searchParams.get('offset') || '0', 10);

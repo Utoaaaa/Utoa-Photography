@@ -225,7 +225,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
 
           {/* 刻紋 */}
@@ -237,7 +236,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="6"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
 
           {/* 鏡頭內環 */}
@@ -249,7 +247,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
 
           {/* 鏡頭中環 - 從左側開始 */}
@@ -261,7 +258,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="6"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
 
           {/* 鏡頭外環 */}
@@ -273,7 +269,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="6"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
 
           {/* 主體內線 - 拆分成多個路徑以實現獨立動畫 */}
@@ -285,7 +280,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
           
           {/* 內線群組 2: 中央連接線 */}
@@ -296,7 +290,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
           
           {/* 內線群組 3: 右側結構 */}
@@ -307,7 +300,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
           
           {/* 內線群組 4: 左側結構 */}
@@ -318,7 +310,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
           
           {/* 內線群組 5: 主體垂直線與細節 */}
@@ -329,7 +320,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
 
           {/* 主體外框 */}
@@ -341,7 +331,6 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
             strokeWidth="8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ vectorEffect: 'non-scaling-stroke' }}
           />
         </g>
       </svg>

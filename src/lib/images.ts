@@ -1,4 +1,4 @@
-// Cloudflare Images variants configuration
+// Image variants configuration (R2-backed)
 export const IMAGE_VARIANTS = {
   // Thumbnail variants
   thumb: 'thumb', // 300x300
@@ -17,25 +17,11 @@ export const IMAGE_VARIANTS = {
 export type ImageVariant = keyof typeof IMAGE_VARIANTS;
 
 const FALLBACK_PLACEHOLDER = '/placeholder.svg';
-let warnedNoHash = false;
 
-export function getImageUrl(
-  imageId: string, 
-  variant: ImageVariant = 'medium',
-  accountHash?: string
-): string {
-  const hash = accountHash || process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
-  
-  if (!hash) {
-    // Warn only on the server in development and only once
-    if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production' && !warnedNoHash) {
-      console.warn('Cloudflare account hash not configured; using placeholder image.');
-      warnedNoHash = true;
-    }
-    return FALLBACK_PLACEHOLDER;
-  }
-  
-  return `https://imagedelivery.net/${hash}/${imageId}/${IMAGE_VARIANTS[variant]}`;
+export function getImageUrl(imageId: string, variant: ImageVariant = 'medium'): string {
+  if (!imageId) return FALLBACK_PLACEHOLDER;
+  // Served via Worker route backed by R2 bucket
+  return `/images/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}`;
 }
 
 // Next.js <Image> custom loader for Cloudflare Images named variants
@@ -75,17 +61,12 @@ export function getResponsiveSizes(variant: ImageVariant): string {
   }
 }
 
-export function generateSrcSet(imageId: string, accountHash?: string): string {
-  const hash = accountHash || process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
-  
-  if (!hash) {
-    return '';
-  }
-  
+export function generateSrcSet(imageId: string): string {
+  if (!imageId) return '';
   return [
-    `${getImageUrl(imageId, 'small', hash)} 600w`,
-    `${getImageUrl(imageId, 'medium', hash)} 1200w`,
-    `${getImageUrl(imageId, 'large', hash)} 1920w`,
+    `${getImageUrl(imageId, 'small')} 600w`,
+    `${getImageUrl(imageId, 'medium')} 1200w`,
+    `${getImageUrl(imageId, 'large')} 1920w`,
   ].join(', ');
 }
 
@@ -153,8 +134,6 @@ export function getOptimalImageSize(
 // Performance utilities
 export function prefetchImage(imageId: string, variant: ImageVariant = 'medium'): void {
   if (typeof window !== 'undefined') {
-    const hash = process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
-    if (!hash) return; // avoid preloading in dev/tests when not configured
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
@@ -164,11 +143,10 @@ export function prefetchImage(imageId: string, variant: ImageVariant = 'medium')
 }
 
 export function preloadCriticalImages(imageIds: string[], variant: ImageVariant = 'medium'): void {
-  const hash = process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
-  if (!hash) return; // skip when Cloudflare Images not configured
   imageIds.slice(0, 3).forEach(id => prefetchImage(id, variant));
 }
 
 export function isCloudflareConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH);
+  // For R2-backed images, always true on server side
+  return true;
 }

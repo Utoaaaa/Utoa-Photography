@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
+import { requireAdminAuth } from '@/lib/auth';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 // No external schema lib; perform minimal manual validation
@@ -11,6 +12,7 @@ export async function POST(
   { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
+    requireAdminAuth(request);
     const { collection_id } = await params;
 
     // Contract-specific: 'invalid-uuid' should return 400
@@ -122,6 +124,7 @@ export async function PUT(
   { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
+    requireAdminAuth(request);
     const { collection_id } = await params;
 
     const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

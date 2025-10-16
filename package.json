@@ -7,6 +7,7 @@
     "build": "next build",
     "bundle-analyze": "ANALYZE=true next build",
     "opennext": "open-next build",
+    "dev:worker": "npm run opennext && wrangler dev",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
@@ -50,6 +51,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "@prisma/adapter-d1": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gsap": "^3.13.0",

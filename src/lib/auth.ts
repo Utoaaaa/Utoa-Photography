@@ -81,10 +81,9 @@ const ADMIN_EMAILS = typeof process !== 'undefined' && process.env && typeof pro
 
 export function isAuthorizedAdmin(email: string): boolean {
   if (ADMIN_EMAILS.length === 0) {
-    // If no admin emails are configured, allow access for development
-    return process.env.NODE_ENV === 'development' || process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    // If no admin emails are configured, allow access for development/testing only
+    return process.env.NODE_ENV === 'development' || (process.env.NODE_ENV !== 'production' && process.env.BYPASS_ACCESS_FOR_TESTS === 'true');
   }
-  
   return ADMIN_EMAILS.includes(email);
 }
 

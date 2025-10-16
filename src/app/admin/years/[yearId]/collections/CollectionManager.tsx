@@ -6,6 +6,7 @@ import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { useToast } from '@/components/admin/Toast';
 
 import type { AdminLocation } from '../locations/Form';
+import CoverAssetPicker from '../components/CoverAssetPicker';
 import type { AdminCollectionSummary } from './AssignLocation';
 import PhotoManager from './PhotoManager';
 
@@ -32,6 +33,7 @@ type CollectionFormPayload = {
   status: 'draft' | 'published';
   updated_at?: string;
   location_id?: string;
+  cover_asset_id?: string | null;
 };
 
 type CollectionRecord = {
@@ -45,6 +47,15 @@ type CollectionRecord = {
   order_index: string | null;
   updated_at: string | null;
   cover_asset_id: string | null;
+};
+
+type CollectionFormState = {
+  slug: string;
+  title: string;
+  summary?: string;
+  status: 'draft' | 'published';
+  updated_at?: string;
+  cover_asset_id?: string | null;
 };
 
 const isCollectionArray = (value: unknown): value is CollectionRecord[] =>
@@ -160,9 +171,7 @@ export default function CollectionManager({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<AdminCollectionDetail | null>(null);
-  const [form, setForm] = useState<{ slug: string; title: string; summary?: string; status: 'draft' | 'published'; updated_at?: string }>(
-    { slug: '', title: '', status: 'draft' },
-  );
+  const [form, setForm] = useState<CollectionFormState>({ slug: '', title: '', status: 'draft', cover_asset_id: null });
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [photoManagerCollection, setPhotoManagerCollection] = useState<AdminCollectionDetail | null>(null);
@@ -215,7 +224,7 @@ export default function CollectionManager({
   }, [loadCollections, refreshKey]);
 
   const resetForm = () => {
-    setForm({ slug: '', title: '', summary: '', status: 'draft', updated_at: '' });
+    setForm({ slug: '', title: '', summary: '', status: 'draft', updated_at: '', cover_asset_id: null });
     setSlugTouched(false);
   };
 
@@ -238,6 +247,7 @@ export default function CollectionManager({
       summary: collection.summary ?? '',
       status: collection.status,
       updated_at: collection.updatedAt ? new Date(collection.updatedAt).toISOString().split('T')[0] : '',
+      cover_asset_id: collection.coverAssetId ?? null,
     });
     setSlugTouched(true);
     setShowForm(true);
@@ -270,6 +280,7 @@ export default function CollectionManager({
       const payload: CollectionFormPayload = { ...form };
       if (!payload.summary) delete payload.summary;
       if (!payload.updated_at) delete payload.updated_at;
+  if (payload.cover_asset_id === undefined) payload.cover_asset_id = null;
 
       let createdRecord: CollectionRecord | null = null;
 
@@ -546,6 +557,23 @@ export default function CollectionManager({
                 onChange={(event) => setForm((prev) => ({ ...prev, summary: event.target.value }))}
               />
             </div>
+            <div className="md:col-span-2">
+              {editing ? (
+                <CoverAssetPicker
+                  label="封面圖片（選填）"
+                  description="僅顯示此作品集包含的照片，點擊即可設定封面。"
+                  emptyHint="此作品集目前尚未擁有照片，請先於「Manage Photos」加入。"
+                  source={{ type: 'collection', collectionId: editing.id }}
+                  selectedAssetId={form.cover_asset_id ?? null}
+                  onSelect={(assetId) => setForm((prev) => ({ ...prev, cover_asset_id: assetId }))}
+                  className="mt-1"
+                />
+              ) : (
+                <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">
+                  儲存作品集並加入照片後，即可在此選擇封面圖片。
+                </div>
+              )}
+            </div>
             <div>
               <label className="mb-1 block text-sm" htmlFor="collection-status-select">Status</label>
               <select
@@ -581,7 +609,15 @@ export default function CollectionManager({
             >
               Save
             </button>
-            <button type="button" className="rounded border px-3 py-2" onClick={() => { setShowForm(false); setEditing(null); }}>
+            <button
+              type="button"
+              className="rounded border px-3 py-2"
+              onClick={() => {
+                setShowForm(false);
+                setEditing(null);
+                resetForm();
+              }}
+            >
               Cancel
             </button>
           </div>

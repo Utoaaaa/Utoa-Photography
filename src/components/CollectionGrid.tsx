@@ -1,7 +1,12 @@
+"use client";
+
+import clsx from 'clsx';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
+import { getImageUrl, getResponsiveSizes } from '@/lib/images';
 
 interface CollectionGridProps {
   yearLabel: string;
@@ -16,59 +21,6 @@ function buildCollectionHref(yearLabel: string, locationSlug: string, collection
   return `/${yearPath}/${locationPath}/${collectionPath}`;
 }
 
-function resolveDisplayDate(collection: LocationCollectionSummary) {
-  let lastTimestamp: string | null = null;
-
-  if (collection.updatedAt) {
-    lastTimestamp = collection.updatedAt;
-  } else if (collection.publishedAt) {
-    lastTimestamp = collection.publishedAt;
-  }
-
-  if (!lastTimestamp) {
-    return { iso: null, label: null };
-  }
-
-  const parsed = new Date(lastTimestamp);
-  if (Number.isNaN(parsed.getTime())) {
-    return { iso: null, label: null };
-  }
-
-  const formatter = new Intl.DateTimeFormat('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-
-  return { iso: parsed.toISOString(), label: formatter.format(parsed) };
-}
-
-function renderCover(collection: LocationCollectionSummary) {
-  if (collection.coverAssetId) {
-    const accountHash = process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH;
-    if (accountHash) {
-      const src = `https://imagedelivery.net/${accountHash}/${collection.coverAssetId}/cover`;
-      return (
-        <Image
-          src={src}
-          alt={collection.title}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        />
-      );
-    }
-  }
-
-  return (
-    <div className="flex h-full w-full items-center justify-center bg-gray-100">
-      <div className="flex h-12 w-16 items-center justify-center rounded-sm border-2 border-gray-300">
-        <div className="h-8 w-8 rounded-full border border-gray-300 bg-white" />
-      </div>
-    </div>
-  );
-}
-
 export function CollectionGrid({ yearLabel, locationSlug, collections }: CollectionGridProps) {
   if (collections.length === 0) {
     return null;
@@ -76,51 +28,141 @@ export function CollectionGrid({ yearLabel, locationSlug, collections }: Collect
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3" data-testid="collection-grid">
-      {collections.map((collection) => {
-        const href = buildCollectionHref(yearLabel, locationSlug, collection.slug);
-        const { iso, label } = resolveDisplayDate(collection);
-
-        return (
-          <article
-            key={collection.id}
-            className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg focus-within:-translate-y-1 focus-within:shadow-lg"
-            data-testid="collection-card"
-          >
-            <div className="relative aspect-[4/3] overflow-hidden">{renderCover(collection)}</div>
-
-            <div className="flex grow flex-col gap-6 p-6">
-              <div className="space-y-3">
-                <h2 className="font-serif text-2xl font-semibold tracking-tight text-gray-900 group-hover:text-gray-700">
-                  {collection.title}
-                </h2>
-                <p className="text-sm leading-relaxed text-gray-600">
-                  {collection.summary ?? '敬請期待更多來自這個地點的作品故事。'}
-                </p>
-              </div>
-
-              <div className="mt-auto flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                {label ? (
-                  <time className="text-xs text-gray-400" dateTime={iso ?? undefined}>
-                    更新於 {label}
-                  </time>
-                ) : (
-                  <span className="text-xs text-gray-400">尚無更新紀錄</span>
-                )}
-
-                <Link
-                  href={href}
-                  className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 transition hover:border-gray-900 hover:bg-gray-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
-                >
-                  查看作品
-                  <span aria-hidden="true" className="text-base">
-                    →
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </article>
-        );
-      })}
+      {collections.map((collection) => (
+        <CollectionCard
+          key={collection.id}
+          yearLabel={yearLabel}
+          locationSlug={locationSlug}
+          collection={collection}
+        />
+      ))}
     </div>
+  );
+}
+
+interface CollectionCardProps {
+  yearLabel: string;
+  locationSlug: string;
+  collection: LocationCollectionSummary;
+}
+
+function formatCollectionDate(collection: LocationCollectionSummary): string | null {
+  const timestamp = collection.updatedAt ?? collection.publishedAt;
+  if (!timestamp) return null;
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}/${month}/${day}`;
+}
+
+function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardProps) {
+  const href = buildCollectionHref(yearLabel, locationSlug, collection.slug);
+  const [revealed, setRevealed] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setRevealed(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const coverImage = useMemo(() => {
+    if (!collection.coverAssetId) return null;
+    return getImageUrl(collection.coverAssetId, 'cover');
+  }, [collection.coverAssetId]);
+
+  const formattedDate = useMemo(() => formatCollectionDate(collection), [collection]);
+
+  const summary = collection.summary ?? '敬請期待更多來自這個地點的作品故事。';
+
+  return (
+    <Link
+      href={href}
+      aria-label={`${collection.title}：查看作品`}
+      className="group block focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-900/30 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+      data-testid="collection-card"
+    >
+      <article
+        ref={cardRef}
+        className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white/85 shadow-sm transition-transform duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl focus-visible:-translate-y-2 focus-visible:shadow-2xl"
+      >
+        <div className="relative m-5 overflow-hidden rounded-[2rem]">
+          <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem]">
+            {coverImage ? (
+              <Image
+                src={coverImage}
+                alt={`${collection.title} 封面視覺`}
+                fill
+                priority={false}
+                className="object-cover"
+                sizes={getResponsiveSizes('cover')}
+              />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-[#01AFF6]/60 via-[#F20085]/45 to-[#FFD036]/65" />
+            )}
+
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.45),_rgba(0,0,0,0.1)_60%,_rgba(0,0,0,0.6))] mix-blend-multiply" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-transparent to-black/45" />
+
+            <div className="absolute inset-0 flex flex-col justify-between px-8 py-10 text-white">
+              <span
+                className={clsx(
+                  'inline-flex items-center gap-2 text-[0.58rem] font-semibold uppercase tracking-[0.32em] sm:text-[0.65rem]',
+                  'text-white/80 transition-all duration-700 ease-out',
+                  revealed ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
+                )}
+              >
+                {yearLabel}
+              </span>
+
+              <h3
+                className={clsx(
+                  'font-serif text-[2.4rem] font-semibold uppercase leading-[0.94] tracking-tight drop-shadow-md sm:text-[2.9rem] md:text-[3.1rem]',
+                  'transition-all duration-700 ease-out',
+                  revealed ? 'translate-y-0 opacity-100 delay-100' : 'translate-y-8 opacity-0'
+                )}
+              >
+                {collection.title}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={clsx(
+            'mt-auto flex flex-col gap-6 px-7 pb-8 text-left transition-all duration-700 ease-out',
+            revealed ? 'translate-y-0 opacity-100 delay-150' : 'translate-y-6 opacity-0'
+          )}
+        >
+          <div className="flex flex-col gap-5 border-t border-gray-200 pt-5 sm:flex-row sm:items-end sm:justify-between">
+            <p
+              className="text-sm leading-relaxed text-gray-600 sm:max-w-[65%] sm:text-[0.95rem]"
+              style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif' }}
+            >
+              {summary}
+            </p>
+            <div className="whitespace-nowrap text-right text-[0.72rem] font-medium uppercase tracking-[0.32em] text-gray-900/80 sm:text-[0.78rem]">
+              {formattedDate ?? '尚未公布'}
+            </div>
+          </div>
+        </div>
+      </article>
+    </Link>
   );
 }

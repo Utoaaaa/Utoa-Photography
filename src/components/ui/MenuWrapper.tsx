@@ -5,7 +5,7 @@ import StaggeredMenu from './StaggeredMenu';
 import type { StaggeredMenuItem, StaggeredMenuSocialItem } from './StaggeredMenu';
 
 const DEFAULT_SOCIAL_ITEMS: StaggeredMenuSocialItem[] = [
-  { label: 'Instagram', link: 'https://instagram.com' }
+  { label: 'Instagram', link: 'https://instagram.com/__utoa' }
 ];
 
 interface MenuWrapperProps {

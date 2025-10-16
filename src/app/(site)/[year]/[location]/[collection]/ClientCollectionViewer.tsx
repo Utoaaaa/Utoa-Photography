@@ -160,43 +160,66 @@ export default function ClientCollectionViewer({ yearLabel, locationSlug, collec
 
     return (
       <>
-        <header className="border-b border-gray-100">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="py-6">
+  <header className="relative z-10 bg-background px-6 pt-[calc(env(safe-area-inset-top)+6rem)] pb-6 sm:px-8 md:px-12 md:pt-24 md:pb-8 lg:px-16 lg:pt-24 lg:pb-10">
+          <div className="mx-auto max-w-6xl space-y-4">
+            <div className="flex items-center gap-3 text-sm font-medium text-gray-500">
               <Breadcrumb items={breadcrumbItems} />
-              <div className="mt-6">
-                <h1 className="text-3xl font-extralight tracking-wide text-gray-900 md:text-4xl lg:text-5xl">{collection.title}</h1>
-                {collection.summary && <p className="mt-4 max-w-3xl text-lg text-gray-600">{collection.summary}</p>}
-                <div className="mt-4 flex items-center space-x-6 text-sm text-gray-500">
-                  <span>
-                    {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
-                  </span>
-                </div>
-              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Collection</p>
+              <h1 className="font-serif text-4xl font-semibold tracking-tight text-gray-900 md:text-5xl">
+                {collection.title}
+              </h1>
+            </div>
+            {collection.summary ? (
+              <p className="max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">
+                {collection.summary}
+              </p>
+            ) : null}
+            <div className="text-sm text-gray-500">
+              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
             </div>
           </div>
         </header>
 
-        <main>
+  <main className="bg-background -mt-8 sm:-mt-10 md:-mt-14 lg:-mt-16">
           {photos.length > 0 ? (
             <PhotoViewer photos={photos} collectionTitle={collection.title} singleScreen={false} />
           ) : (
-            <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8" data-testid="empty-photos">
+            <div className="mx-auto max-w-6xl px-8 py-24 md:px-12 lg:px-16" data-testid="empty-photos">
               <div className="text-center">
-                <h2 className="mb-2 text-xl font-light text-gray-900">No photos yet</h2>
+                <h2 className="mb-2 text-xl font-medium text-gray-900">No photos yet</h2>
                 <p className="text-gray-500">Photos will appear after upload.</p>
               </div>
             </div>
           )}
         </main>
+        {/* Back to Top button at page bottom */}
+        <div className="bg-background w-full flex items-center justify-center py-10">
+          <button
+            type="button"
+            data-testid="back-to-top"
+            onClick={() => {
+              try {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } catch {
+                window.scrollTo(0, 0);
+              }
+            }}
+            className="inline-flex items-center rounded-full border border-gray-300 bg-white/80 px-4 py-2 text-sm font-medium text-gray-700 shadow-sm backdrop-blur transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400"
+            aria-label="Back to Top"
+          >
+            Back to Top
+          </button>
+        </div>
       </>
     );
   })();
 
   return (
     <div data-testid="photo-viewer-container">
-      <header className="border-b border-gray-100">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <header>
+        <div className="mx-auto max-w-7xl px-4 py-0 sm:px-6 lg:px-8">
           {/* Wrapper renders; inner content injected below */}
         </div>
       </header>

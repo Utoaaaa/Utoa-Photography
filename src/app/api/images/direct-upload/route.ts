@@ -6,8 +6,8 @@ const CLOUDFLARE_IMAGES_API_TOKEN = process.env.CLOUDFLARE_IMAGES_API_TOKEN;
 
 export async function POST(request: NextRequest) {
   try {
-    // Authentication check (allow bypass for tests)
-    const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+    // Authentication check (allow bypass for tests only in development)
+    const bypass = process.env.NODE_ENV === 'development' && process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
     const auth = request.headers.get('authorization');
     if (!bypass) {
       if (!auth || !auth.startsWith('Bearer ')) {

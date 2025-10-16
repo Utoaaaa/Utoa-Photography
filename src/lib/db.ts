@@ -1,13 +1,50 @@
 import { PrismaClient } from '@prisma/client';
 import { writeAudit } from '@/lib/utils';
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+// Runtime-aware Prisma client that uses D1 in Cloudflare Workers and node client locally
+let nodeClient: PrismaClient | undefined;
+const d1ClientCache: WeakMap<any, PrismaClient> = new WeakMap();
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+function getClient(): PrismaClient {
+  // Try to use Cloudflare D1 when running on Workers
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getRequestContext } = require('next/server');
+    const ctx = typeof getRequestContext === 'function' ? getRequestContext() : undefined;
+    const env = ctx?.cloudflare?.env as { DB?: any } | undefined;
+    const d1 = env?.DB;
+    if (d1) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { PrismaD1 } = require('@prisma/adapter-d1');
+      let client = d1ClientCache.get(d1);
+      if (!client) {
+        const adapter = new PrismaD1(d1);
+        client = new PrismaClient({ adapter });
+        d1ClientCache.set(d1, client);
+      }
+      return client;
+    }
+  } catch {
+    // fall back to node client
+  }
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+  if (!nodeClient) {
+    nodeClient = new PrismaClient();
+    if (process.env.NODE_ENV !== 'production') {
+      // @ts-ignore attach for hot-reload reuse
+      (globalThis as any).__PRISMA_NODE__ = nodeClient;
+    }
+  }
+  return nodeClient;
+}
+
+// Export a proxy so existing imports `prisma.model...` keep working
+export const prisma = new Proxy({} as unknown as PrismaClient, {
+  get(_target, prop, _receiver) {
+    const client = getClient() as any;
+    return client[prop];
+  },
+}) as unknown as PrismaClient;
 
 // Audit logging function (T019)
 export type AuditAction =

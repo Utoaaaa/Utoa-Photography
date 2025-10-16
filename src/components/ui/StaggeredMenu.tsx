@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import GlassSurface from '@/components/ui/GlassSurface';
 import { gsap } from 'gsap';
 
 export type StaggeredMenuItemVariant = 'home' | 'year' | 'location' | 'location-first';
@@ -73,6 +74,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
   const busyRef = useRef(false);
 
   const itemEntranceTweenRef = useRef<gsap.core.Tween | null>(null);
+  const innerWrapRef = useRef<HTMLSpanElement | null>(null);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -363,6 +365,63 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     animateText(target);
   }, [playOpen, playClose, animateIcon, animateColor, animateText, onMenuOpen, onMenuClose]);
 
+  React.useEffect(() => {
+    if (!open || typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const body = document.body;
+    const docEl = document.documentElement;
+
+    const prevState = {
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      docOverflow: docEl.style.overflow
+    };
+
+    const scrollY = window.scrollY;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    docEl.style.overflow = 'hidden';
+
+    return () => {
+      body.style.position = prevState.bodyPosition;
+      body.style.top = prevState.bodyTop;
+      body.style.width = prevState.bodyWidth;
+      body.style.overflow = prevState.bodyOverflow;
+      docEl.style.overflow = prevState.docOverflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
+
+  React.useEffect(() => {
+    // Let the panel use native scrolling for best performance.
+    // We intentionally avoid programmatic smooth scrolling on each wheel event,
+    // which caused stutter due to repeated animations.
+    if (!open) return undefined;
+
+    const panel = panelRef.current;
+    if (!panel) return undefined;
+
+    // Stop propagation so wheel/touch doesn't bubble to the page while menu is open,
+    // but keep the default scrolling behavior on the panel itself.
+    const stopPropagation = (event: Event) => {
+      event.stopPropagation();
+    };
+
+    panel.addEventListener('wheel', stopPropagation, { passive: true });
+    panel.addEventListener('touchmove', stopPropagation, { passive: true });
+
+    return () => {
+      panel.removeEventListener('wheel', stopPropagation as EventListener);
+      panel.removeEventListener('touchmove', stopPropagation as EventListener);
+    };
+  }, [open]);
+
   return (
     <div className="sm-scope w-full h-full">
       <div
@@ -397,41 +456,53 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         {/* Menu Toggle Button - Top Right */}
         <button
           ref={toggleBtnRef}
-          className="sm-toggle fixed top-8 right-8 md:top-12 md:right-12 inline-flex items-center gap-[0.5rem] bg-transparent border-0 cursor-pointer font-light text-base md:text-lg leading-none overflow-visible pointer-events-auto z-50 transition-colors"
+          className="sm-toggle fixed right-8 md:right-12 bg-transparent border-0 cursor-pointer font-light text-base md:text-lg leading-none overflow-visible pointer-events-auto z-50 transition-colors"
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
           aria-controls="staggered-menu-panel"
           onClick={toggleMenu}
           type="button"
+          style={{ top: 'calc(env(safe-area-inset-top) + 2.5rem)' }}
         >
-          <span
-            ref={textWrapRef}
-            className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap w-[var(--sm-toggle-width,auto)] min-w-[var(--sm-toggle-width,auto)]"
-            aria-hidden="true"
+          <GlassSurface
+            width="max-content"
+            height="max-content"
+            borderRadius={20}
+            backgroundOpacity={0.05}
+            saturation={1.4}
+            className="inline-flex items-center gap-[0.5rem] rounded-2xl pointer-events-none"
           >
-            <span ref={textInnerRef} className="sm-toggle-textInner flex flex-col leading-none">
-              {textLines.map((l, i) => (
-                <span className="sm-toggle-line block h-[1em] leading-none" key={i}>
-                  {l}
+            <span ref={innerWrapRef} className={'inline-flex items-center gap-2 px-3 py-2 md:px-4 md:py-3'}>
+              <span
+                ref={textWrapRef}
+                className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap w-[var(--sm-toggle-width,auto)] min-w-[var(--sm-toggle-width,auto)]"
+                aria-hidden="true"
+              >
+                <span ref={textInnerRef} className="sm-toggle-textInner flex flex-col leading-none">
+                  {textLines.map((l, i) => (
+                    <span className="sm-toggle-line block h-[1em] leading-none" key={i}>
+                      {l}
+                    </span>
+                  ))}
                 </span>
-              ))}
-            </span>
-          </span>
+              </span>
 
-          <span
-            ref={iconRef}
-            className="sm-icon relative w-[14px] h-[14px] shrink-0 inline-flex items-center justify-center [will-change:transform]"
-            aria-hidden="true"
-          >
-            <span
-              ref={plusHRef}
-              className="sm-icon-line absolute left-1/2 top-1/2 w-full h-[1.5px] bg-current rounded-[2px] -translate-x-1/2 -translate-y-1/2 [will-change:transform]"
-            />
-            <span
-              ref={plusVRef}
-              className="sm-icon-line sm-icon-line-v absolute left-1/2 top-1/2 w-full h-[1.5px] bg-current rounded-[2px] -translate-x-1/2 -translate-y-1/2 [will-change:transform]"
-            />
-          </span>
+              <span
+                ref={iconRef}
+                className="sm-icon relative w-[14px] h-[14px] shrink-0 inline-flex items-center justify-center [will-change:transform]"
+                aria-hidden="true"
+              >
+                <span
+                  ref={plusHRef}
+                  className="sm-icon-line absolute left-1/2 top-1/2 w-full h-[1.5px] bg-current rounded-[2px] -translate-x-1/2 -translate-y-1/2 [will-change:transform]"
+                />
+                <span
+                  ref={plusVRef}
+                  className="sm-icon-line sm-icon-line-v absolute left-1/2 top-1/2 w-full h-[1.5px] bg-current rounded-[2px] -translate-x-1/2 -translate-y-1/2 [will-change:transform]"
+                />
+              </span>
+            </span>
+          </GlassSurface>
         </button>
 
         {/* Menu Panel */}
@@ -516,7 +587,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-toggle-line { display: block; height: 1em; line-height: 1; }
 .sm-scope .sm-icon { position: relative; width: 14px; height: 14px; flex: 0 0 14px; display: inline-flex; align-items: center; justify-content: center; will-change: transform; }
 .sm-scope .sm-icon-line { position: absolute; left: 50%; top: 50%; width: 100%; height: 1.5px; background: currentColor; border-radius: 2px; transform: translate(-50%, -50%); will-change: transform; }
-.sm-scope .staggered-menu-panel { position: fixed; top: 0; right: 0; width: clamp(280px, 25vw, 380px); height: 100%; background: rgba(255, 253, 228, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; flex-direction: column; padding: 8em 2.5em 3em 2.5em; overflow-y: auto; z-index: 10; pointer-events: auto; }
+.sm-scope .staggered-menu-panel { position: fixed; top: 0; right: 0; width: clamp(280px, 25vw, 380px); height: 100%; background: rgba(255, 253, 228, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; flex-direction: column; padding: 8em 2.5em 3em 2.5em; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; z-index: 10; pointer-events: auto; }
 .sm-scope [data-position='left'] .staggered-menu-panel { right: auto; left: 0; }
 .sm-scope .sm-prelayers { position: fixed; top: 0; right: 0; bottom: 0; width: clamp(280px, 25vw, 380px); pointer-events: none; z-index: 5; }
 .sm-scope [data-position='left'] .sm-prelayers { right: auto; left: 0; }
@@ -535,8 +606,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-panel-item { position: relative; font-weight: 300; cursor: pointer; line-height: 1.08; letter-spacing: -0.02em; transition: color 0.3s ease; display: block; text-decoration: none; color: #1f2933; }
 .sm-scope .sm-panel-item--default { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 300; }
 .sm-scope .sm-panel-item--home { font-size: clamp(3rem, 5.8vw, 4.4rem); font-weight: 400; color: #0b1623; letter-spacing: -0.025em; }
-.sm-scope .sm-panel-item--year { font-size: clamp(2.15rem, 4.3vw, 3.1rem); font-weight: 500; color: #111827; opacity: 0.94; margin-top: clamp(1.8rem, 4.6vw, 2.6rem); padding-left: clamp(0.1rem, 0.4vw, 0.4rem); position: relative; }
-.sm-scope .sm-panel-item--year::after { content: ''; position: absolute; left: clamp(0.15rem, 0.5vw, 0.5rem); top: 60%; width: clamp(0.8rem, 1.8vw, 1.4rem); height: 1px; background: rgba(17, 24, 39, 0.35); }
+.sm-scope .sm-panel-item--year { font-size: clamp(2.15rem, 4.3vw, 3.1rem); font-weight: 500; color: #111827; opacity: 0.94; margin-top: clamp(1.8rem, 4.6vw, 2.6rem); }
 .sm-scope .sm-panel-item--location,
 .sm-scope .sm-panel-item--location-first { font-size: clamp(1.35rem, 2.6vw, 2rem); font-weight: 300; color: #6b7280; line-height: 1.18; padding-left: clamp(1.6rem, 3.2vw, 2.3rem); position: relative; }
 .sm-scope .sm-panel-item--location-first { margin-top: clamp(0.9rem, 2.2vw, 1.6rem); }

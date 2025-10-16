@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
+import { requireAdminAuth } from '@/lib/auth';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,7 @@ export async function DELETE(
   { params }: { params: Promise<{ collection_id: string; asset_id: string }> }
 ) {
   try {
+    requireAdminAuth(request);
     const { collection_id, asset_id } = await params;
 
     // Validate collection_id UUID format

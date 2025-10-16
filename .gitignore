@@ -70,6 +70,7 @@ playwright/.cache/
 out/
 build/
 dist/
+.swc/
 
 # Production
 *.log
@@ -102,6 +103,9 @@ prisma/dev.db-wal
 # Wrangler
 .wrangler/
 .dev.vars
+
+# Local dev tools/caches
+.playwright-mcp/
 
 # TypeScript
 *.tsbuildinfo

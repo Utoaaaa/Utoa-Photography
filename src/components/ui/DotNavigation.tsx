@@ -7,6 +7,7 @@ interface DotNavigationProps {
   collectionTitle: string;
   // T027: Support for single-screen mode styling
   singleScreen?: boolean;
+  visible?: boolean;
 }
 
 export function DotNavigation({ 
@@ -14,7 +15,8 @@ export function DotNavigation({
   activeIndex, 
   onDotClick, 
   collectionTitle,
-  singleScreen = false 
+  singleScreen = false,
+  visible = true,
 }: DotNavigationProps) {
   // T027: Handle large number of photos with scrollable container and grouping
   const maxVisibleDots = 40;
@@ -59,13 +61,16 @@ export function DotNavigation({
     onDotClick(nextIndex);
   }
 
+  const visibilityClasses = visible
+    ? 'pointer-events-auto opacity-100 translate-y-0'
+    : 'pointer-events-none opacity-0 translate-y-4';
+
   return (
     <nav 
-      className={`fixed right-6 top-1/2 transform -translate-y-1/2 z-50 ${
-        singleScreen ? 'text-white' : ''
-      }`}
+      className={`fixed right-6 top-1/2 z-50 -translate-y-1/2 transition-all duration-300 ease-out ${visibilityClasses}`}
       aria-label={`${collectionTitle} photo navigation`}
       data-testid="dot-navigation"
+      aria-hidden={!visible}
     >
       <div
         role="radiogroup"
@@ -89,30 +94,18 @@ export function DotNavigation({
               <button
                 onClick={() => onDotClick(dotIndex)}
                 onKeyDown={(e) => handleKeyDown(e, dotIndex)}
-                className={`relative transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                singleScreen 
-                  ? 'focus:ring-white focus:ring-offset-black' 
-                  : 'focus:ring-gray-400 focus:ring-offset-white'
-              } ${
+                className={`relative transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 focus:ring-offset-white ${
                 shouldGroup 
                   ? 'w-6 h-6 text-xs font-medium rounded border-2' 
                   : 'w-3 h-3 rounded-full border-2'
               } ${
                 isActive
-                  ? singleScreen
-                    ? shouldGroup 
-                      ? 'bg-white text-black border-white scale-110'
-                      : 'bg-white border-white scale-125'
-                    : shouldGroup
+                  ? (shouldGroup
                       ? 'bg-gray-900 text-white border-gray-900 scale-110'
-                      : 'bg-gray-900 border-gray-900 scale-125'
-                  : singleScreen
-                    ? shouldGroup
-                      ? 'bg-transparent text-white border-white hover:bg-white hover:text-black'
-                      : 'bg-transparent border-white hover:bg-white'
-                    : shouldGroup
+                      : 'bg-gray-900 border-gray-900 scale-125')
+                  : (shouldGroup
                       ? 'bg-white text-gray-900 border-gray-400 hover:border-gray-600 hover:bg-gray-100'
-                      : 'bg-white border-gray-400 hover:border-gray-600 hover:bg-gray-100'
+                      : 'bg-white border-gray-400 hover:border-gray-600 hover:bg-gray-100')
               }`}
                 aria-label={shouldGroup 
                   ? `Go to photos ${displayNumber} to ${endNumber} of ${totalPhotos}`
@@ -134,7 +127,7 @@ export function DotNavigation({
         })}
       </div>
       <noscript>
-        <div className={`mt-4 text-xs ${singleScreen ? 'text-white' : 'text-gray-600'}`}>
+        <div className={`mt-4 text-xs text-gray-600`}>
           快速導覽：
           <ul>
             {visibleDots.map((dotIndex) => (
@@ -148,9 +141,7 @@ export function DotNavigation({
       
       {/* Progress indicator with enhanced ARIA support */}
       <div 
-        className={`mt-4 text-xs text-center min-w-max ${
-          singleScreen ? 'text-white' : 'text-gray-500'
-        }`}
+        className={`mt-4 text-xs text-center min-w-max text-gray-500`}
         role="status"
         aria-live="polite"
         aria-label={`Currently viewing photo ${activeIndex + 1} of ${totalPhotos}`}

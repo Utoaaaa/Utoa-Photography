@@ -197,6 +197,7 @@ export default function AdminUploadsPage() {
   const [locationFolders, setLocationFolders] = useState<LocationFolderOption[]>([]);
   const [uploadLocationId, setUploadLocationId] = useState<string>('');
   const [assetFilterLocationId, setAssetFilterLocationId] = useState<'all' | 'unassigned' | string>('all');
+  const [variantStatus, setVariantStatus] = useState<Record<string, Partial<Record<'thumb'|'small'|'medium'|'large'|'cover'|'og'|'blur', boolean>>>>({});
 
   const locationFolderMap = useMemo(() => {
     const map = new Map<string, LocationFolderOption>();
@@ -271,6 +272,23 @@ export default function AdminUploadsPage() {
       }
       const list = await safeJson<Asset[]>(res, [], isAssetArray);
       setAssets(Array.isArray(list) ? list : []);
+      // Load variant statuses for visible assets (limit concurrency)
+      const ids = (Array.isArray(list) ? list : []).map(a => a.id);
+      const concurrency = 6;
+      const chunks: string[][] = [];
+      for (let i = 0; i < ids.length; i += concurrency) chunks.push(ids.slice(i, i+concurrency));
+      const statusUpdates: Record<string, any> = {};
+      for (const chunk of chunks) {
+        await Promise.all(chunk.map(async (id) => {
+          try {
+            const r = await fetch(`/api/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
+            if (!r.ok) return;
+            const j = await r.json();
+            statusUpdates[id] = j?.variants || {};
+          } catch {}
+        }));
+      }
+      setVariantStatus(prev => ({ ...prev, ...statusUpdates }));
     } catch {
       setAssets([]);
     }
@@ -406,32 +424,88 @@ export default function AdminUploadsPage() {
         const contentType = currentFile?.type || 'image/jpeg';
 
         try {
-          const direct = await fetch('/api/images/direct-upload', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify({ filename, content_type: contentType })
-          });
-          if (!direct.ok) {
-            throw new Error('Direct upload failed');
-          }
-          const directJson = await safeJson<DirectUploadResult>(direct, {}, isDirectUploadResult);
-
-          if (currentFile && directJson.upload_url) {
+          // Upload to R2 via same-origin API
+          let imageId = `test-uploaded-image-id-${Date.now()}-${index}`;
+          if (currentFile) {
+            // 1) Upload original
             const fd = new FormData();
-            if (directJson.form_data && typeof directJson.form_data === 'object') {
-              Object.entries(directJson.form_data).forEach(([key, value]) => fd.append(key, value));
-            }
             fd.append('file', currentFile, currentFile.name);
+            const up = await fetch('/api/uploads/r2', { method: 'POST', body: fd });
+            if (!up.ok) throw new Error('Upload failed');
+            const upJson = await safeJson<{ image_id?: string }>(up, {});
+            if (upJson.image_id) imageId = upJson.image_id;
+
+            // 2) Generate and upload variants client-side (small/medium/large + thumb/cover/og/blur)
             try {
-              await fetch(directJson.upload_url, { method: 'POST', body: fd });
-            } catch {
-              // In mock/dev, the request may be intercepted; ignore errors here
+              const imgBitmap = await createImageBitmap(currentFile);
+              const tasks: Array<Promise<void>> = [];
+              const pushUpload = async (blob: Blob, variant: string) => {
+                const vfd = new FormData();
+                const fname = `${variant}.webp`;
+                vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
+                const res = await fetch(`/api/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
+                if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
+              };
+
+              const scaleContain = async (targetW: number) => {
+                const ratio = imgBitmap.width / imgBitmap.height;
+                const w = Math.min(targetW, imgBitmap.width);
+                const h = Math.round(w / ratio);
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return null;
+                ctx.drawImage(imgBitmap, 0, 0, w, h);
+                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
+                return blob;
+              };
+
+              const coverCrop = async (targetW: number, targetH: number) => {
+                const srcW = imgBitmap.width; const srcH = imgBitmap.height;
+                const srcRatio = srcW / srcH; const dstRatio = targetW / targetH;
+                let sw = srcW; let sh = srcH; let sx = 0; let sy = 0;
+                if (srcRatio > dstRatio) {
+                  // crop width
+                  sw = Math.round(srcH * dstRatio);
+                  sx = Math.floor((srcW - sw) / 2);
+                } else {
+                  // crop height
+                  sh = Math.round(srcW / dstRatio);
+                  sy = Math.floor((srcH - sh) / 2);
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = targetW; canvas.height = targetH;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return null;
+                ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, targetW, targetH);
+                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
+                return blob;
+              };
+
+              const blurThumb = async () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 40; canvas.height = 40;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return null;
+                // simple downscale for blur placeholder
+                ctx.drawImage(imgBitmap, 0, 0, 40, 40);
+                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.3));
+                return blob;
+              };
+
+              const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
+              const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
+              const l = await scaleContain(1920); if (l) tasks.push(pushUpload(l, 'large'));
+              const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
+              const c = await coverCrop(800, 600); if (c) tasks.push(pushUpload(c, 'cover'));
+              const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
+              const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
+
+              await Promise.allSettled(tasks);
+            } catch (e) {
+              console.warn('[admin/uploads] variant generation failed', e);
             }
           }
-
-          const imageId = directJson.image_id || directJson.result?.id || `test-uploaded-image-id-${Date.now()}-${index}`;
           const assetId = imageId;
           const baseAlt = trimmedAlt || currentFile?.name || '上傳圖片';
           const altValue = filesToUpload.length > 1 && currentFile ? `${baseAlt} (${currentFile.name})` : baseAlt;
@@ -492,6 +566,109 @@ export default function AdminUploadsPage() {
       if (fileInputRef.current) fileInputRef.current.value = '';
     } else {
       setFeedback({ type: 'error', text: '上傳失敗，請稍後再試。' });
+    }
+  }
+
+  async function generateAndUploadVariants(imageId: string, file: Blob) {
+    try {
+      const imgBitmap = await createImageBitmap(file);
+      const tasks: Array<Promise<void>> = [];
+      const pushUpload = async (blob: Blob, variant: string) => {
+        const vfd = new FormData();
+        const fname = `${variant}.webp`;
+        vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
+        const res = await fetch(`/api/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
+        if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
+      };
+
+      const scaleContain = async (targetW: number) => {
+        const ratio = imgBitmap.width / imgBitmap.height;
+        const w = Math.min(targetW, imgBitmap.width);
+        const h = Math.round(w / ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.drawImage(imgBitmap, 0, 0, w, h);
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
+        return blob;
+      };
+
+      const coverCrop = async (targetW: number, targetH: number) => {
+        const srcW = imgBitmap.width; const srcH = imgBitmap.height;
+        const srcRatio = srcW / srcH; const dstRatio = targetW / targetH;
+        let sw = srcW; let sh = srcH; let sx = 0; let sy = 0;
+        if (srcRatio > dstRatio) { sw = Math.round(srcH * dstRatio); sx = Math.floor((srcW - sw) / 2); }
+        else { sh = Math.round(srcW / dstRatio); sy = Math.floor((srcH - sh) / 2); }
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW; canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, targetW, targetH);
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
+        return blob;
+      };
+
+      const blurThumb = async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 40; canvas.height = 40;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.drawImage(imgBitmap, 0, 0, 40, 40);
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.3));
+        return blob;
+      };
+
+      const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
+      const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
+      const l = await scaleContain(1920); if (l) tasks.push(pushUpload(l, 'large'));
+      const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
+      const c = await coverCrop(800, 600); if (c) tasks.push(pushUpload(c, 'cover'));
+      const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
+      const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
+
+      await Promise.allSettled(tasks);
+    } catch (e) {
+      console.warn('[admin/uploads] generateAndUploadVariants failed', e);
+    }
+  }
+
+  async function regenerateSelectedVariants() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) {
+      setFeedback({ type: 'info', text: '請先選擇素材。' });
+      return;
+    }
+    setFeedback({ type: 'info', text: '開始重產變體…' });
+    try {
+      for (const id of ids) {
+        try {
+          let res = await fetch(`/images/${encodeURIComponent(id)}/original`, { cache: 'no-store' });
+          if (!res.ok) {
+            res = await fetch(`/images/${encodeURIComponent(id)}/large`, { cache: 'no-store' });
+          }
+          if (!res.ok) throw new Error('fetch original/large failed');
+          const blob = await res.blob();
+          await generateAndUploadVariants(id, blob);
+        } catch (e) {
+          console.warn('[admin/uploads] regenerate failed for', id, e);
+        }
+      }
+      // Refresh variant status for affected ids
+      try {
+        const updates: Record<string, any> = {};
+        await Promise.all(Array.from(selectedIds).map(async (id) => {
+          const r = await fetch(`/api/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
+          if (r.ok) {
+            const j = await r.json();
+            updates[id] = j?.variants || {};
+          }
+        }));
+        setVariantStatus(prev => ({ ...prev, ...updates }));
+      } catch {}
+      setFeedback({ type: 'success', text: '重產變體完成。' });
+    } catch {
+      setFeedback({ type: 'error', text: '重產變體失敗，請稍後再試。' });
     }
   }
 
@@ -860,6 +1037,7 @@ export default function AdminUploadsPage() {
                 : '未指派地點';
               const previewSrc = getImageUrl(asset.id, 'thumb');
               const previewAlt = asset.alt || '素材預覽圖';
+              const vs = variantStatus[asset.id] || {};
 
               return (
                 <article
@@ -878,6 +1056,23 @@ export default function AdminUploadsPage() {
                       loading="lazy"
                       className="h-full w-full object-cover"
                     />
+                  </div>
+                  <div className="flex flex-wrap gap-1 text-[10px]">
+                    {(
+                      [
+                        ['S','small'],
+                        ['M','medium'],
+                        ['L','large'],
+                        ['T','thumb'],
+                        ['C','cover'],
+                        ['OG','og'],
+                        ['B','blur'],
+                      ] as const
+                    ).map(([label, key]) => (
+                      <span key={key} className={`px-1.5 py-[1px] rounded border ${vs[key] ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                        {label}
+                      </span>
+                    ))}
                   </div>
 
                   <div className="flex items-start justify-between gap-2">
@@ -1011,6 +1206,16 @@ export default function AdminUploadsPage() {
                 title={hasSelection ? '將素材加入作品集' : '請先選擇素材'}
               >
                 加入作品集
+              </button>
+              <button
+                data-testid="bulk-regenerate-variants-btn"
+                className="inline-flex items-center rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => void regenerateSelectedVariants()}
+                aria-disabled={!hasSelection}
+                disabled={!hasSelection}
+                title={hasSelection ? '重產所選素材的變體' : '請先選擇素材'}
+              >
+                重產變體
               </button>
               <button
                 data-testid="confirm-bulk-delete-toolbar-btn"

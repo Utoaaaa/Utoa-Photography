@@ -7,20 +7,38 @@ import { gsap } from 'gsap';
 
 export default function LoaderClient() {
   const pathname = usePathname();
-  const [show, setShow] = useState(true);
-  const [skipLoader, setSkipLoader] = useState(false);
+  const isAdminRoute = !!pathname && pathname.startsWith('/admin');
+  const shouldSkipInitially = !!pathname && pathname !== '/' && !isAdminRoute;
+
+  const [skipLoader, setSkipLoader] = useState(() => isAdminRoute || shouldSkipInitially);
+  const [show, setShow] = useState(() => !(isAdminRoute || shouldSkipInitially));
 
   useEffect(() => {
-    // Admin 頁面不顯示 loader
-    if (pathname?.startsWith('/admin')) {
-      setSkipLoader(true);
-      setShow(false);
-      
-      // 確保內容可見
+    const revealMainContent = () => {
       const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
       if (mainContent) {
         gsap.set(mainContent, { opacity: 1, scale: 1 });
       }
+    };
+
+    // Admin 頁面不顯示 loader
+    if (isAdminRoute) {
+      if (!skipLoader) setSkipLoader(true);
+      if (show) setShow(false);
+      revealMainContent();
+      return;
+    }
+
+    // 非首頁路徑不顯示 loader
+    if (pathname && pathname !== '/') {
+      if (!skipLoader) setSkipLoader(true);
+      if (show) setShow(false);
+      revealMainContent();
+      return;
+    }
+
+    if (skipLoader) {
+      revealMainContent();
       return;
     }
 
@@ -28,14 +46,9 @@ export default function LoaderClient() {
     const check404 = () => {
       const notFoundElement = document.querySelector('[data-not-found="true"]');
       if (notFoundElement) {
-        setSkipLoader(true);
-        setShow(false);
-        
-        // 確保內容可見
-        const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
-        if (mainContent) {
-          gsap.set(mainContent, { opacity: 1, scale: 1 });
-        }
+        if (!skipLoader) setSkipLoader(true);
+        if (show) setShow(false);
+        revealMainContent();
         return true;
       }
       return false;
@@ -68,7 +81,7 @@ export default function LoaderClient() {
     }
 
     return () => observer.disconnect();
-  }, [skipLoader, pathname, show]);
+  }, [isAdminRoute, pathname, show, skipLoader]);
 
   const handleLoaderDone = () => {
     // 主內容入場動畫（從中間淡入）

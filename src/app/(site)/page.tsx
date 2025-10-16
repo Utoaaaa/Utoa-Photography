@@ -1,6 +1,7 @@
 import { CameraWireAnimation } from '@/components/ui/CameraWireAnimation';
 import { FadeInText } from '@/components/ui/FadeInText';
 import { LocationCard } from '@/components/LocationCard';
+import GlassSurface from '@/components/ui/GlassSurface';
 import { loadYearLocationData } from '@/lib/year-location';
 
 export const dynamic = 'force-dynamic';
@@ -19,33 +20,54 @@ export default async function Homepage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header with brand name in serif font */}
-      <header className="fixed top-0 left-0 z-10 px-8 py-10 md:px-12 md:py-12" role="banner">
+      <header
+        data-brand-header
+        className="fixed top-0 left-0 z-10 px-8 md:px-12 pb-10 md:pb-12"
+        role="banner"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2.5rem)' }}
+      >
         <div className="text-gray-900">
-          <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-light leading-none tracking-wide">
-            Utoa
-          </div>
-          <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-light leading-none tracking-wide mt-1">
-            Photography
-          </div>
+          <GlassSurface
+            width="max-content"
+            height="max-content"
+            borderRadius={24}
+            backgroundOpacity={0.05}
+            saturation={1.4}
+            className="inline-block pointer-events-none"
+          >
+            <div className="px-3 py-2 md:px-4 md:py-3">
+              <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-light leading-none tracking-wide">
+                Utoa
+              </div>
+              <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-light leading-none tracking-wide mt-1">
+                Photography
+              </div>
+            </div>
+          </GlassSurface>
         </div>
       </header>
+      <style>{`@media (min-width: 768px){ header[data-brand-header]{ padding-top: calc(env(safe-area-inset-top) + 3rem); } }`}</style>
 
   <main role="main" className="relative z-[2]" data-main-content>
         {/* Hidden h1 for a11y and tests */}
         <h1 className="sr-only">Home</h1>
 
-        <section className="min-h-screen px-8 md:px-12 pt-28 pb-16 lg:pb-24 flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-16">
-          <div className="w-full lg:w-1/2 flex items-center justify-center">
-            <FadeInText>
-              <h2 className="font-serif text-4xl xl:text-5xl font-bold text-gray-900 leading-tight tracking-wide text-left">
-                Moments in
-                <br />
-                Photography
-              </h2>
-            </FadeInText>
-          </div>
-          <div className="w-full lg:w-1/2 flex items-center justify-center">
-            <CameraWireAnimation className="text-gray-800 opacity-80 max-w-[500px] w-full h-auto" />
+        <section className="flex min-h-screen flex-col px-8 md:px-12 pt-10 sm:pt-14 md:pt-32 pb-16 md:pb-0">
+          <div className="flex flex-1 flex-col md:flex-row md:items-center gap-10 lg:gap-16">
+            <div className="order-1 md:order-2 flex flex-1 flex-col justify-end md:justify-center items-center min-h-[calc(50vh-2rem)] md:min-h-0">
+              <CameraWireAnimation className="text-gray-800 opacity-80 w-[82vw] max-w-[22rem] sm:max-w-[26rem] md:max-w-[32rem] lg:max-w-[38rem] xl:max-w-[44rem]" />
+            </div>
+            <div className="order-2 md:order-1 flex flex-1 flex-col items-center md:items-center justify-center h-[calc(50vh-2rem)] md:h-auto">
+              <FadeInText>
+                <div className="w-full max-w-[28rem] text-left mx-auto">
+                  <h2 className="font-serif text-4xl xl:text-5xl font-bold text-gray-900 leading-tight tracking-wide">
+                    Moments
+                    <br />
+                    In Focus
+                  </h2>
+                </div>
+              </FadeInText>
+            </div>
           </div>
         </section>
 

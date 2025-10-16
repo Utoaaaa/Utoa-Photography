@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
+import { requireAdminAuth } from '@/lib/auth';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { LOCATION_UUID_REGEX } from '@/lib/prisma/location-service';
@@ -47,6 +48,7 @@ export async function GET(
   { params }: { params: Promise<{ asset_id: string }> }
 ) {
   try {
+    requireAdminAuth(request);
     const { asset_id } = await params;
     const asset = await prisma.asset.findUnique({
       where: { id: asset_id },
@@ -81,6 +83,7 @@ export async function DELETE(
   { params }: { params: Promise<{ asset_id: string }> }
 ) {
   try {
+    requireAdminAuth(request);
     const { asset_id } = await params;
 
     const existing = await prisma.asset.findUnique({ where: { id: asset_id } });
@@ -128,6 +131,7 @@ export async function PUT(
   { params }: { params: Promise<{ asset_id: string }> }
 ) {
   try {
+  requireAdminAuth(request);
   const { asset_id } = await params;
   const body = await parseRequestJsonSafe(request, {} as any);
 

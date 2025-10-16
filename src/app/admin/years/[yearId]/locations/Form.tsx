@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import CoverAssetPicker from '../components/CoverAssetPicker';
+
 export interface AdminLocation {
   id: string;
   yearId: string;
@@ -69,7 +71,7 @@ export default function LocationForm({ mode, yearId, yearLabel, location, onSave
   const [name, setName] = useState(location?.name ?? '');
   const [slug, setSlug] = useState(location?.slug ?? '');
   const [summary, setSummary] = useState(location?.summary ?? '');
-  const [coverAssetId, setCoverAssetId] = useState(location?.coverAssetId ?? '');
+  const [coverAssetId, setCoverAssetId] = useState<string | null>(location?.coverAssetId ?? null);
   const [formError, setFormError] = useState<FormError | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,8 +79,8 @@ export default function LocationForm({ mode, yearId, yearLabel, location, onSave
   useEffect(() => {
     setName(location?.name ?? '');
     setSlug(location?.slug ?? '');
-    setSummary(location?.summary ?? '');
-    setCoverAssetId(location?.coverAssetId ?? '');
+  setSummary(location?.summary ?? '');
+  setCoverAssetId(location?.coverAssetId ?? null);
     setFormError(null);
     setStatusMessage('');
   }, [location, mode]);
@@ -100,11 +102,14 @@ export default function LocationForm({ mode, yearId, yearLabel, location, onSave
       setFormError({ field: 'slug', message: 'Slug 需為小寫英數與短橫線，並以年份後兩碼結尾，例如 kyoto-24。' });
       return null;
     }
+    const normalizedCoverAssetId =
+      typeof coverAssetId === 'string' && coverAssetId.trim().length > 0 ? coverAssetId.trim() : null;
+
     return {
       name: trimmedName,
       slug: trimmedSlug,
       summary: summary.trim() ? summary.trim() : null,
-      coverAssetId: coverAssetId.trim() ? coverAssetId.trim() : null,
+      coverAssetId: normalizedCoverAssetId,
     };
   }
 
@@ -211,17 +216,20 @@ export default function LocationForm({ mode, yearId, yearLabel, location, onSave
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="location-cover-input">
-          封面資產 ID（選填）
-        </label>
-        <input
-          id="location-cover-input"
-          data-testid="location-cover-input"
-          value={coverAssetId}
-          onChange={(event) => setCoverAssetId(event.target.value)}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-          placeholder="例如：cloudflare-image-id"
-        />
+        {mode === 'edit' && location?.id ? (
+          <CoverAssetPicker
+            label="封面圖片（選填）"
+            description="顯示此地點底下的照片，點擊即可設定封面。"
+            emptyHint="此地點目前尚未有可用的照片。"
+            source={{ type: 'location', locationId: location.id }}
+            selectedAssetId={coverAssetId}
+            onSelect={setCoverAssetId}
+          />
+        ) : (
+          <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">
+            儲存地點並於「Uploads」指派照片後，即可在此選擇封面圖片。
+          </div>
+        )}
       </div>
 
       {formError && (

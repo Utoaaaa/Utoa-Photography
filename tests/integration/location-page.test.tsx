@@ -110,16 +110,17 @@ describe('Integration: Location detail flow', () => {
     const cards = await screen.findAllByTestId('location-card');
     expect(cards).toHaveLength(1);
 
-  const viewLink = within(cards[0]).getByRole('link', { name: /查看作品/i });
-  expect(viewLink).toHaveAttribute('href', '/2024/city-lights-24');
+  const viewLink = cards[0];
+    expect(viewLink).toHaveAttribute('href', '/2024/city-lights-24');
+    expect(viewLink).toHaveAccessibleName(/查看作品/i);
 
     const LocationPage = await loadLocationPage();
     render(
       await LocationPage({
-        params: {
+        params: Promise.resolve({
           year: '2024',
           location: 'city-lights-24',
-        },
+        }),
       }),
     );
 
@@ -159,10 +160,10 @@ describe('Integration: Location detail flow', () => {
     const LocationPage = await loadLocationPage();
     render(
       await LocationPage({
-        params: {
+        params: Promise.resolve({
           year: '2024',
           location: 'northern-peaks-24',
-        },
+        }),
       }),
     );
 
