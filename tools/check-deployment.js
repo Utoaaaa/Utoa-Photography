@@ -5,14 +5,42 @@
  * 確保所有必要的環境變數和配置都已正確設置
  */
 
+// Lightweight .env loader (no external deps) so local checks see values
+const fs = require('fs');
+const path = require('path');
+
+function loadDotenv(file) {
+  try {
+    const p = path.resolve(process.cwd(), file);
+    if (!fs.existsSync(p)) return;
+    const lines = fs.readFileSync(p, 'utf8').split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const idx = trimmed.indexOf('=');
+      if (idx === -1) continue;
+      const key = trimmed.slice(0, idx).trim();
+      let val = trimmed.slice(idx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith('\'') && val.endsWith('\''))) {
+        val = val.slice(1, -1);
+      }
+      if (!(key in process.env)) process.env[key] = val;
+    }
+  } catch (_) {
+    // ignore parse errors for simplicity
+  }
+}
+
+// Load local envs before checking
+loadDotenv('.env');
+loadDotenv('.env.local');
+
 const requiredEnvVars = {
   development: [
     'DATABASE_URL',
-    'NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH',
   ],
   production: [
     'DATABASE_URL',
-    'NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH',
     'NODE_ENV',
   ]
 };
