@@ -27,7 +27,7 @@ routes = [
 ]
 
 [env.staging]
-name = "utoa-photography-staging"
+name = "utoa-photography"
 workers_dev = true
 
 [[env.staging.d1_databases]]
