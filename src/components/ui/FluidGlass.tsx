@@ -110,7 +110,8 @@ const ModeWrapper = memo(function ModeWrapper({
 }: ModeWrapperProps) {
   const ref = useRef<THREE.Mesh>(null!);
   const { nodes } = useGLTF(glb);
-  const buffer = useFBO({ samples: 0, stencilBuffer: false, depth: false });
+  // Keep FBO options minimal to satisfy current drei v10 typings
+  const buffer = useFBO({ samples: 0 });
   const { viewport: vp } = useThree();
   const [scene] = useState<THREE.Scene>(() => new THREE.Scene());
   const geoWidthRef = useRef<number>(1);
@@ -342,4 +343,3 @@ function Typography() {
     </Text>
   );
 }
-
