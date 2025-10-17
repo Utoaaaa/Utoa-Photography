@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
   // Check authentication for admin routes
   if (isAdminRoute(pathname)) {
     // Never expose admin over workers.dev staging host
-    if (host.endsWith('.workers.dev')) {
+    if (host.includes('workers.dev')) {
       return new NextResponse('Forbidden (staging admin disabled)', { status: 403 });
     }
     // In development, allow access without auth (optional bypass)
