@@ -29,6 +29,13 @@ routes = [
   { pattern = "www.utoa.studio/*", zone_name = "utoa.studio" }
 ]
 
+# Persisted environment variables for production
+[env.production.vars]
+NODE_ENV = "production"
+BYPASS_ACCESS_FOR_TESTS = "false"
+# Comma-separated admin email whitelist (not a secret; OK to version)
+ADMIN_EMAILS = "nick940624@gmail.com"
+
 # R2 bucket for user uploads (distinct from static assets)
 [[r2_buckets]]
 binding = "UPLOADS"
