@@ -4,6 +4,11 @@ account_id = "5df67fbdc8e3dd0cc085b6f25dd15915"
 compatibility_date = "2024-11-18"
 compatibility_flags = ["nodejs_compat"]
 
+# Serve Next static assets via Workers Static Assets (not R2)
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
 ## Build command is handled manually via `npm run opennext` before deploy
 ## to avoid re-running inside wrangler. Leave unset here.
 
@@ -15,9 +20,7 @@ binding = "DB"
 database_name = "utoa-photography-db"
 database_id = "1a65ccdb-72c0-4d12-aa72-65e4f639f06c"
 
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "utoa-photography-assets"
+## Do not bind ASSETS to R2; ASSETS is reserved for Workers Static Assets
 
 [env.production]
 name = "utoa-photography-prod"
@@ -25,6 +28,12 @@ routes = [
   { pattern = "utoa.studio/*", zone_name = "utoa.studio" },
   { pattern = "www.utoa.studio/*", zone_name = "utoa.studio" }
 ]
+
+# R2 bucket for user uploads (distinct from static assets)
+[[r2_buckets]]
+binding = "UPLOADS"
+# Reuse existing bucket name; you can rename if desired
+bucket_name = "utoa-photography-assets"
 
 [env.staging]
 name = "utoa-photography-staging"
@@ -34,7 +43,3 @@ workers_dev = true
 binding = "DB"
 database_name = "utoa-photography-db"
 database_id = "1a65ccdb-72c0-4d12-aa72-65e4f639f06c"
-
-[[env.staging.r2_buckets]]
-binding = "ASSETS"
-bucket_name = "utoa-photography-assets"

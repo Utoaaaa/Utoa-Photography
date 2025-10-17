@@ -18,7 +18,7 @@ export async function GET(
     // @ts-ignore
     const { getRequestContext } = await import('next/server');
     const ctx = getRequestContext?.();
-    const bucket: R2Bucket | undefined = ctx?.cloudflare?.env?.ASSETS as any;
+    const bucket: R2Bucket | undefined = ctx?.cloudflare?.env?.UPLOADS as any;
     if (!bucket) {
       return new Response('Storage not configured', { status: 500 });
     }
@@ -62,4 +62,3 @@ type R2Bucket = {
     httpMetadata?: { contentType?: string; contentLanguage?: string; contentDisposition?: string; cacheControl?: string };
   } | null>;
 };
-

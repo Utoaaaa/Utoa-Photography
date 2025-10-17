@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     // @ts-ignore
     const { getRequestContext } = await import('next/server');
     const ctx = getRequestContext?.();
-    const bucket: R2Bucket | undefined = ctx?.cloudflare?.env?.ASSETS as any;
+    const bucket: R2Bucket | undefined = ctx?.cloudflare?.env?.UPLOADS as any;
     if (!bucket) {
       return NextResponse.json({ error: 'storage unavailable' }, { status: 500 });
     }
