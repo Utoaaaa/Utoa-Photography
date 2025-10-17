@@ -21,8 +21,8 @@ export default function RootLayout({
         style={{ overscrollBehaviorX: 'auto' }}
       >
         <SmoothScrollProvider>
-          {/* 暫停平滑滾動以排除佈局/捲動問題 */}
-          {/* <SmoothScroll /> */}
+          {/* 啟用平滑滾動（Lenis） */}
+          <SmoothScroll />
 
           {/* 全螢幕前導 Loader - 只在首次載入顯示 */}
           <LoaderClient />

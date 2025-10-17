@@ -159,8 +159,8 @@
   }
 }
 
-/* Smooth scroll behavior for normal users */
-@media (prefers-reduced-motion: no-preference) {
+/* Smooth scroll behavior only on desktop-like pointers */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
   html {
     scroll-behavior: smooth;
   }

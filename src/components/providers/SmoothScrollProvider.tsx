@@ -40,34 +40,33 @@ export function SmoothScrollProvider({ children }: SmoothScrollProviderProps) {
     }
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Treat mobile/tablet as reduced for scroll smoothing purposes
+    const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+    const tabletWidthQuery = window.matchMedia('(max-width: 1024px)');
 
-    const applyPreference = (query: MediaQueryList | MediaQueryListEvent) => {
-      if ('matches' in query) {
-        setPrefersReducedMotion(query.matches);
-      } else {
-        setPrefersReducedMotion(mediaQuery.matches);
-      }
+    const applyPreference = () => {
+      const reduce = mediaQuery.matches;
+      const isCoarse = coarsePointerQuery.matches;
+      const isTabletOrSmaller = tabletWidthQuery.matches;
+      // If any condition suggests avoiding smooth effects, opt out
+      setPrefersReducedMotion(reduce || isCoarse || isTabletOrSmaller);
     };
 
-    applyPreference(mediaQuery);
+    applyPreference();
 
-    const handler = (event: MediaQueryListEvent) => applyPreference(event);
+    const handler = () => applyPreference();
 
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handler);
-      return () => mediaQuery.removeEventListener('change', handler);
-    }
+    const add = (q: MediaQueryList) => {
+      if (typeof q.addEventListener === 'function') q.addEventListener('change', handler);
+      else if (typeof q.addListener === 'function') q.addListener(handler);
+    };
+    const remove = (q: MediaQueryList) => {
+      if (typeof q.removeEventListener === 'function') q.removeEventListener('change', handler);
+      else if (typeof q.removeListener === 'function') q.removeListener(handler);
+    };
 
-    if (typeof mediaQuery.addListener === 'function') {
-      mediaQuery.addListener(handler);
-      return () => {
-        if (typeof mediaQuery.removeListener === 'function') {
-          mediaQuery.removeListener(handler);
-        }
-      };
-    }
-
-    return undefined;
+    add(mediaQuery); add(coarsePointerQuery); add(tabletWidthQuery);
+    return () => { remove(mediaQuery); remove(coarsePointerQuery); remove(tabletWidthQuery); };
   }, []);
 
   const safeSetLenis = useCallback((instance: unknown | null) => {

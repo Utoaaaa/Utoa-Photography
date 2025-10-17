@@ -24,7 +24,10 @@ export function SmoothScroll() {
     let reduceMotion = prefersReducedMotion;
 
     if (!reduceMotion && typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-      reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const m = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+      const isTabletOrSmaller = window.matchMedia('(max-width: 1024px)').matches;
+      reduceMotion = m.matches || isCoarse || isTabletOrSmaller;
     }
 
     if (reduceMotion) {
