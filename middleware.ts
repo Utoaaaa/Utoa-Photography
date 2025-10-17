@@ -5,10 +5,10 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isDev = process.env.NODE_ENV === 'development';
   const bypass = isDev && process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
+  const host = request.headers.get('host') || '';
 
   // Enforce apex domain in production (redirect www -> apex)
   if (!isDev) {
-    const host = request.headers.get('host') || '';
     if (host.startsWith('www.utoa.studio')) {
       const url = new URL(request.url);
       url.hostname = 'utoa.studio';
@@ -28,6 +28,10 @@ export function middleware(request: NextRequest) {
   
   // Check authentication for admin routes
   if (isAdminRoute(pathname)) {
+    // Never expose admin over workers.dev staging host
+    if (host.endsWith('.workers.dev')) {
+      return new NextResponse('Forbidden (staging admin disabled)', { status: 403 });
+    }
     // In development, allow access without auth (optional bypass)
     if (isDev || bypass) {
       return NextResponse.next();
