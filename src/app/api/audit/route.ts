@@ -4,7 +4,7 @@ import { requireAdminAuth } from '@/lib/auth';
 import { queryAudit } from '@/lib/queries/audit';
 import { prisma } from '@/lib/db';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const entityEnum = z.enum(['collection', 'year', 'asset', 'all']).optional();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 import { prisma } from '@/lib/db';
 import { isAuthenticated } from '@/lib/auth';
 
