@@ -36,10 +36,14 @@ BYPASS_ACCESS_FOR_TESTS = "false"
 # Comma-separated admin email whitelist (not a secret; OK to version)
 ADMIN_EMAILS = "nick940624@gmail.com"
 
-# R2 bucket for user uploads (distinct from static assets)
-[[r2_buckets]]
+# Explicit bindings for production
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "utoa-photography-db"
+database_id = "1a65ccdb-72c0-4d12-aa72-65e4f639f06c"
+
+[[env.production.r2_buckets]]
 binding = "UPLOADS"
-# Reuse existing bucket name; you can rename if desired
 bucket_name = "utoa-photography-assets"
 
 [env.staging]
