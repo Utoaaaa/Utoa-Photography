@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-import {
-  GET as PublicGET,
-  PUT as PublicPUT,
-  DELETE as PublicDELETE,
-} from '@/app/api/years/[year_id]/route';
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +8,8 @@ export async function GET(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicGET(request, context as any);
+  const mod = await import('@/app/api/years/[year_id]/route');
+  return mod.GET(request, context as any);
 }
 
 export async function PUT(
@@ -23,7 +19,8 @@ export async function PUT(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicPUT(request, context as any);
+  const mod = await import('@/app/api/years/[year_id]/route');
+  return mod.PUT(request, context as any);
 }
 
 export async function DELETE(
@@ -33,6 +30,6 @@ export async function DELETE(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicDELETE(request, context as any);
+  const mod = await import('@/app/api/years/[year_id]/route');
+  return mod.DELETE(request, context as any);
 }
-

@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-import {
-  GET as PublicGET,
-  POST as PublicPOST,
-} from '@/app/api/years/[year_id]/collections/route';
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +8,8 @@ export async function GET(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicGET(request, context as any);
+  const mod = await import('@/app/api/years/[year_id]/collections/route');
+  return mod.GET(request, context as any);
 }
 
 export async function POST(
@@ -22,6 +19,6 @@ export async function POST(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicPOST(request, context as any);
+  const mod = await import('@/app/api/years/[year_id]/collections/route');
+  return mod.POST(request, context as any);
 }
-

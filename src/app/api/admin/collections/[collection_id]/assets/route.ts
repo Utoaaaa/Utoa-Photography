@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-import {
-  POST as PublicPOST,
-  PUT as PublicPUT,
-} from '@/app/api/collections/[collection_id]/assets/route';
 
 export async function POST(
   request: NextRequest,
@@ -12,7 +8,8 @@ export async function POST(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicPOST(request, context as any);
+  const mod = await import('@/app/api/collections/[collection_id]/assets/route');
+  return mod.POST(request, context as any);
 }
 
 export async function PUT(
@@ -22,6 +19,6 @@ export async function PUT(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicPUT(request, context as any);
+  const mod = await import('@/app/api/collections/[collection_id]/assets/route');
+  return mod.PUT(request, context as any);
 }
-

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-import { DELETE as PublicDELETE } from '@/app/api/collections/[collection_id]/assets/[asset_id]/route';
 
 export async function DELETE(
   request: NextRequest,
@@ -9,6 +8,6 @@ export async function DELETE(
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
-  return PublicDELETE(request, context as any);
+  const mod = await import('@/app/api/collections/[collection_id]/assets/[asset_id]/route');
+  return mod.DELETE(request, context as any);
 }
-
