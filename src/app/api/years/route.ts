@@ -6,7 +6,7 @@ import { getYears } from '@/lib/queries/years';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 type YearStatus = 'draft' | 'published';
 

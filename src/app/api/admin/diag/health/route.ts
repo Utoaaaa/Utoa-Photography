@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+export const runtime = 'edge';
 import { prisma } from '@/lib/db';
 import { isAuthenticated } from '@/lib/auth';
 
@@ -57,4 +59,3 @@ export async function GET(request: NextRequest) {
     error,
   });
 }
-
