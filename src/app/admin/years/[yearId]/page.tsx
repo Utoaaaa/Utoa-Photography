@@ -130,7 +130,7 @@ function AdminYearWorkspacePage() {
 
     (async () => {
       try {
-        const res = await fetchWithRetry('/api/years?status=all&order=asc', { cache: 'no-store' });
+        const res = await fetchWithRetry('/api/admin/years?status=all&order=asc', { cache: 'no-store' });
         if (!active) return;
         if (!res.ok) {
           setYears([]);
@@ -209,7 +209,7 @@ function AdminYearWorkspacePage() {
     (async () => {
       try {
         const encodedId = encodeURIComponent(yearIdentifier);
-        const res = await fetchWithRetry(`/api/years/${encodedId}`, { cache: 'no-store' }, 1);
+        const res = await fetchWithRetry(`/api/admin/years/${encodedId}`, { cache: 'no-store' }, 1);
         if (!active) return;
         if (res.status === 404) {
           setDetailState('error');

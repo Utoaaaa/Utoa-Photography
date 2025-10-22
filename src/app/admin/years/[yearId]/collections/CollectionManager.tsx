@@ -203,7 +203,7 @@ export default function CollectionManager({
     }
     setLoading(true);
     try {
-      const res = await fetchWithRetry(`/api/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' }, 1);
+      const res = await fetchWithRetry(`/api/admin/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' }, 1);
       const data = await safeJson<CollectionRecord[]>(res, [], isCollectionArray);
       if (!res.ok) {
         throw new Error('Failed to load collections');
@@ -285,7 +285,7 @@ export default function CollectionManager({
       let createdRecord: CollectionRecord | null = null;
 
       if (editing) {
-        const res = await fetch(`/api/collections/${editing.id}`, {
+        const res = await fetch(`/api/admin/collections/${editing.id}`, {
           method: 'PUT',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(payload),
@@ -294,7 +294,7 @@ export default function CollectionManager({
       } else {
         const existing = collections.find((c) => c.slug === form.slug);
         if (existing) {
-          const res = await fetch(`/api/collections/${existing.id}`, {
+          const res = await fetch(`/api/admin/collections/${existing.id}`, {
             method: 'PUT',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(payload),
@@ -304,7 +304,7 @@ export default function CollectionManager({
           if (activeLocationId) {
             payload.location_id = activeLocationId;
           }
-          const res = await fetch(`/api/years/${encodeURIComponent(yearId)}/collections`, {
+          const res = await fetch(`/api/admin/years/${encodeURIComponent(yearId)}/collections`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(payload),
@@ -341,7 +341,7 @@ export default function CollectionManager({
     setMessage(null);
     const target = collections.find((item) => item.id === id) ?? null;
     try {
-      const res = await fetch(`/api/collections/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/collections/${id}`, { method: 'DELETE' });
       if (res.status !== 204) {
         const info = await safeJson<{ message?: string; error?: string }>(res, {});
         throw new Error(info.message || info.error || '刪除失敗');
@@ -391,7 +391,7 @@ export default function CollectionManager({
     try {
       const results = await Promise.all(
         updates.map((u) =>
-          fetch(`/api/collections/${u.id}`, {
+          fetch(`/api/admin/collections/${u.id}`, {
             method: 'PUT',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ order_index: u.order_index }),

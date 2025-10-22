@@ -171,7 +171,7 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchWithRetry(`/api/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' }, 1);
+      const res = await fetchWithRetry(`/api/admin/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' }, 1);
       if (!res.ok) {
         const fallback = await safeJson<{ message?: string; error?: string }>(res, {});
         throw new Error(fallback?.message || fallback?.error || '無法載入作品集資料。');

@@ -46,6 +46,18 @@ Object.defineProperty(window, 'IntersectionObserver', {
 	value: MockIntersectionObserver,
 });
 
+// Polyfill ResizeObserver for jsdom
+class MockResizeObserver {
+  constructor() {}
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: MockResizeObserver,
+});
+
 // Mock next/image to a plain img for tests
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const React = require('react');

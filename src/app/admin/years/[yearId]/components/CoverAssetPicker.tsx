@@ -141,9 +141,9 @@ export default function CoverAssetPicker({
 function buildUrl(source: CoverAssetPickerSource): string {
   if (source.type === 'location') {
     const params = new URLSearchParams({ limit: '200', offset: '0', location_folder_id: source.locationId });
-    return `/api/assets?${params.toString()}`;
+    return `/api/admin/assets?${params.toString()}`;
   }
-  return `/api/collections/${encodeURIComponent(source.collectionId)}?include_assets=true`;
+  return `/api/admin/collections/${encodeURIComponent(source.collectionId)}?include_assets=true`;
 }
 
 async function parseResponse(

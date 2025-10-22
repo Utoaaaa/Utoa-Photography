@@ -80,7 +80,7 @@ const parseApiError = async (response: Response): Promise<string | null> => {
 
 async function fetchHasCollections(yearId: string): Promise<boolean> {
   try {
-    const res = await fetch(`/api/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' });
+    const res = await fetch(`/api/admin/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' });
     if (!res.ok) return false;
     const data = await res.json();
     return Array.isArray(data) && data.length > 0;
@@ -107,7 +107,7 @@ export default function YearsPage() {
   const loadYears = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/years?status=all&order=asc', { cache: 'no-store' });
+      const response = await fetch('/api/admin/years?status=all&order=asc', { cache: 'no-store' });
       if (!response.ok) {
         throw new Error('failed to fetch years');
       }
@@ -187,14 +187,14 @@ export default function YearsPage() {
       const payload = { label: trimmedLabel, status };
       let response: Response;
       if (editingId) {
-        response = await fetch(`/api/years/${encodeURIComponent(editingId)}`, {
+        response = await fetch(`/api/admin/years/${encodeURIComponent(editingId)}`, {
           method: 'PUT',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify(payload),
         });
       } else {
         const nextOrderIndex = padOrderIndex(years.length + 1);
-        response = await fetch('/api/years', {
+        response = await fetch('/api/admin/years', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ ...payload, order_index: nextOrderIndex }),
@@ -226,7 +226,7 @@ export default function YearsPage() {
     async (yearId: string, force = false) => {
       try {
         const response = await fetch(
-          `/api/years/${encodeURIComponent(yearId)}${force ? '?force=true' : ''}`,
+          `/api/admin/years/${encodeURIComponent(yearId)}${force ? '?force=true' : ''}`,
           { method: 'DELETE' }
         );
 
@@ -285,7 +285,7 @@ export default function YearsPage() {
 
         const responses = await Promise.all(
           updates.map((item) =>
-            fetch(`/api/years/${encodeURIComponent(item.id)}`, {
+            fetch(`/api/admin/years/${encodeURIComponent(item.id)}`, {
               method: 'PUT',
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ order_index: item.order_index }),

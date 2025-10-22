@@ -146,7 +146,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
         if (collectionLocationId) {
           assetParams.set('location_folder_id', collectionLocationId);
         }
-        const assetUrl = assetParams.toString() ? `/api/assets?${assetParams.toString()}` : '/api/assets';
+        const assetUrl = assetParams.toString() ? `/api/admin/assets?${assetParams.toString()}` : '/api/admin/assets';
         const { ok: assetsOk, data: assetsData } = await fetchJsonWithRetry<Asset[]>(
           assetUrl,
           { cache: 'no-store' },
@@ -157,7 +157,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
         setAssets(Array.isArray(assetsData) ? assetsData : []);
 
         const { ok: collectionOk, data: colData } = await fetchJsonWithRetry<CollectionWithAssets>(
-          `/api/collections/${collectionId}?include_assets=true`,
+          `/api/admin/collections/${collectionId}?include_assets=true`,
           { cache: 'no-store' },
           { id: collectionId, assets: [] },
           isCollectionWithAssets,
@@ -182,7 +182,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
     if (!collectionId) return;
     try {
       const { ok, data: col } = await fetchJsonWithRetry<CollectionWithAssets>(
-        `/api/collections/${collectionId}?include_assets=true`,
+        `/api/admin/collections/${collectionId}?include_assets=true`,
         { cache: 'no-store' },
         { id: collectionId, assets: [] },
         isCollectionWithAssets,
@@ -217,7 +217,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
     const asset_ids = Array.from(selected);
     if (asset_ids.length === 0) return;
     try {
-      const res = await fetch(`/api/collections/${collectionId}/assets`, {
+      const res = await fetch(`/api/admin/collections/${collectionId}/assets`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ asset_ids }),
@@ -238,7 +238,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
   const removeFromCollection = async (assetId: string) => {
     setMessage(null);
     try {
-      const res = await fetch(`/api/collections/${collectionId}/assets/${assetId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/collections/${collectionId}/assets/${assetId}`, { method: 'DELETE' });
       if (res.status !== 204) {
         const body = await safeJson<ApiError>(res, {}, isApiError);
         throw new Error(body.message || body.error || 'Failed to remove asset');
@@ -253,7 +253,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
 
   const persistReorder = async (list: Array<{ id: string }>) => {
     const reorder = list.map((asset, index) => ({ asset_id: asset.id, order_index: (index + 1).toString() }));
-    const res = await fetch(`/api/collections/${collectionId}/assets`, {
+    const res = await fetch(`/api/admin/collections/${collectionId}/assets`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ reorder }),

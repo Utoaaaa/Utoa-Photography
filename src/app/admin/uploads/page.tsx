@@ -264,7 +264,7 @@ export default function AdminUploadsPage() {
         params.set('location_folder_id', assetFilterLocationId);
       }
       const query = params.toString();
-      const url = query ? `/api/assets?${query}` : '/api/assets';
+      const url = query ? `/api/admin/assets?${query}` : '/api/admin/assets';
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) {
         setAssets([]);
@@ -281,7 +281,7 @@ export default function AdminUploadsPage() {
       for (const chunk of chunks) {
         await Promise.all(chunk.map(async (id) => {
           try {
-            const r = await fetch(`/api/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
+            const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
             if (!r.ok) return;
             const j = await r.json();
             statusUpdates[id] = j?.variants || {};
@@ -296,7 +296,7 @@ export default function AdminUploadsPage() {
 
   async function loadYearsAndCollectionsForAssign(yearId?: string) {
     try {
-      const yRes = await fetch('/api/years?status=all&order=asc', { cache: 'no-store' });
+      const yRes = await fetch('/api/admin/years?status=all&order=asc', { cache: 'no-store' });
       if (!yRes.ok) return;
       const ys = await safeJson<YearOption[]>(yRes, [], isYearArray);
       const normalizedYears = ys
@@ -310,7 +310,7 @@ export default function AdminUploadsPage() {
       const yId = yearId || normalizedYears?.[0]?.id || '';
       setAssignYearId(yId);
       if (yId) {
-        const cRes = await fetch(`/api/years/${yId}/collections?status=all`, { cache: 'no-store' });
+        const cRes = await fetch(`/api/admin/years/${yId}/collections?status=all`, { cache: 'no-store' });
         if (cRes.ok) {
           const cs = await safeJson<CollectionOption[]>(cRes, [], isCollectionArray);
           setCollections(cs);
@@ -325,7 +325,7 @@ export default function AdminUploadsPage() {
 
   const loadLocationFolders = useCallback(async () => {
     try {
-      const yearsRes = await fetch('/api/years?status=all&order=asc', { cache: 'no-store' });
+      const yearsRes = await fetch('/api/admin/years?status=all&order=asc', { cache: 'no-store' });
       if (!yearsRes.ok) {
         setLocationFolders([]);
         setUploadLocationId('');
@@ -430,7 +430,7 @@ export default function AdminUploadsPage() {
             // 1) Upload original
             const fd = new FormData();
             fd.append('file', currentFile, currentFile.name);
-            const up = await fetch('/api/uploads/r2', { method: 'POST', body: fd });
+            const up = await fetch('/api/admin/uploads/r2', { method: 'POST', body: fd });
             if (!up.ok) throw new Error('Upload failed');
             const upJson = await safeJson<{ image_id?: string }>(up, {});
             if (upJson.image_id) imageId = upJson.image_id;
@@ -443,7 +443,7 @@ export default function AdminUploadsPage() {
                 const vfd = new FormData();
                 const fname = `${variant}.webp`;
                 vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
-                const res = await fetch(`/api/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
+                const res = await fetch(`/api/admin/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
                 if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
               };
 
@@ -532,7 +532,7 @@ export default function AdminUploadsPage() {
           if (uploadLocationId) {
             payload.location_folder_id = uploadLocationId;
           }
-          const create = await fetch('/api/assets', {
+          const create = await fetch('/api/admin/assets', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(payload)
@@ -577,7 +577,7 @@ export default function AdminUploadsPage() {
         const vfd = new FormData();
         const fname = `${variant}.webp`;
         vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
-        const res = await fetch(`/api/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
+        const res = await fetch(`/api/admin/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
         if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
       };
 
@@ -658,7 +658,7 @@ export default function AdminUploadsPage() {
       try {
         const updates: Record<string, any> = {};
         await Promise.all(Array.from(selectedIds).map(async (id) => {
-          const r = await fetch(`/api/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
+          const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
           if (r.ok) {
             const j = await r.json();
             updates[id] = j?.variants || {};
@@ -696,7 +696,7 @@ export default function AdminUploadsPage() {
     setFeedback(null);
     try {
       const ids = Array.from(selectedIds);
-      const res = await fetch('/api/assets/batch-delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ asset_ids: ids }) });
+      const res = await fetch('/api/admin/assets/batch-delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ asset_ids: ids }) });
       if (!res.ok) {
         setFeedback({ type: 'error', text: '批次刪除失敗，請稍後再試。' });
       } else {
@@ -769,7 +769,7 @@ export default function AdminUploadsPage() {
           asset_ids: Array.from(selectedIds)
         });
       }
-      const res = await fetch(`/api/collections/${assignCollectionId}/assets`, {
+      const res = await fetch(`/api/admin/collections/${assignCollectionId}/assets`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ asset_ids: Array.from(selectedIds) })
@@ -789,7 +789,7 @@ export default function AdminUploadsPage() {
 
   async function saveInlineAsset(a: Asset) {
     try {
-      const res = await fetch(`/api/assets/${encodeURIComponent(a.id)}`, {
+      const res = await fetch(`/api/admin/assets/${encodeURIComponent(a.id)}`, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({

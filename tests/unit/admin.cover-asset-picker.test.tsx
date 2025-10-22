@@ -37,7 +37,7 @@ describe('CoverAssetPicker', () => {
 
     await waitFor(() => expect(handleSelect).toHaveBeenCalledWith('asset-1'));
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/assets?limit=200&offset=0&location_folder_id=loc-1',
+      '/api/admin/assets?limit=200&offset=0&location_folder_id=loc-1',
       expect.objectContaining({ cache: 'no-store' }),
     );
   });
@@ -64,7 +64,7 @@ describe('CoverAssetPicker', () => {
 
     await waitFor(() => expect(handleSelect).toHaveBeenCalledWith(null));
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/collections/col-2?include_assets=true',
+      '/api/admin/collections/col-2?include_assets=true',
       expect.objectContaining({ cache: 'no-store' }),
     );
   });

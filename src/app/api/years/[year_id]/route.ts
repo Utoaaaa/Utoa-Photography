@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, logAudit } from '@/lib/db';
+import { isAuthenticated } from '@/lib/auth';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 
@@ -58,14 +59,18 @@ export async function PUT(
 
     // Auth (bypass for tests and development) - align with POST /api/years
     const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true' || process.env.NODE_ENV === 'development';
-    const auth = request.headers.get('authorization');
     if (!bypass) {
-      if (!auth || !auth.startsWith('Bearer ')) {
-        return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-      }
-      const token = auth.split(' ')[1] || '';
-      if (token === 'invalid_token') {
-        return NextResponse.json({ error: 'unauthorized', message: 'invalid token' }, { status: 401 });
+      // Allow either a Bearer token (legacy) or Cloudflare Access admin auth
+      const auth = request.headers.get('authorization');
+      if (auth && auth.startsWith('Bearer ')) {
+        const token = auth.split(' ')[1] || '';
+        if (token === 'invalid_token') {
+          return NextResponse.json({ error: 'unauthorized', message: 'invalid token' }, { status: 401 });
+        }
+      } else {
+        if (!isAuthenticated(request)) {
+          return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
+        }
       }
     }
 

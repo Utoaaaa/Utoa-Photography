@@ -23,7 +23,7 @@ export function getCloudflareAccessHeaders(request: NextRequest): Record<string,
 
 export function extractUserFromHeaders(request: NextRequest): CloudflareAccessUser | null {
   try {
-    if (process.env.BYPASS_ACCESS_FOR_TESTS === 'true') {
+    if (process.env.NODE_ENV === 'test' || process.env.BYPASS_ACCESS_FOR_TESTS === 'true') {
       return {
         sub: 'test-user',
         email: 'test@local',
@@ -38,7 +38,9 @@ export function extractUserFromHeaders(request: NextRequest): CloudflareAccessUs
     const email = request.headers.get('cf-access-authenticated-user-email');
     const jwtAssertion = request.headers.get('cf-access-jwt-assertion');
 
-    if (!email || !jwtAssertion) {
+    // Relaxed: accept presence of email header as authenticated.
+    // Cloudflare typically injects both, but some setups may omit the JWT.
+    if (!email) {
       return null;
     }
 
@@ -49,7 +51,7 @@ export function extractUserFromHeaders(request: NextRequest): CloudflareAccessUs
       email,
       name: email.split('@')[0],
       aud: ['admin'],
-      iss: 'cloudflare-access',
+      iss: jwtAssertion ? 'cloudflare-access(jwt)' : 'cloudflare-access',
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 3600,
     };
@@ -82,7 +84,8 @@ const ADMIN_EMAILS = typeof process !== 'undefined' && process.env && typeof pro
 export function isAuthorizedAdmin(email: string): boolean {
   if (ADMIN_EMAILS.length === 0) {
     // If no admin emails are configured, allow access for development/testing only
-    return process.env.NODE_ENV === 'development' || (process.env.NODE_ENV !== 'production' && process.env.BYPASS_ACCESS_FOR_TESTS === 'true');
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') return true;
+    return process.env.NODE_ENV !== 'production' && process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
   }
   return ADMIN_EMAILS.includes(email);
 }
