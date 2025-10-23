@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+import type { AuditAction } from '@/lib/db';
 
-import { prisma, logAudit, type AuditAction } from '@/lib/db';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { parseRequestJsonSafe, writeAudit } from '@/lib/utils';
 import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
@@ -17,11 +17,24 @@ const ADMIN_ACTOR = 'system';
 
 type YearLike = { id: string } & Record<string, unknown>;
 
+type PrismaClient = import('@prisma/client').PrismaClient;
+type LogAuditFn = typeof import('@/lib/db').logAudit;
+
+let nodeDbPromise: Promise<{ prisma: PrismaClient; logAudit: LogAuditFn }> | null = null;
+
+async function getNodeDb() {
+  if (!nodeDbPromise) {
+    nodeDbPromise = import('@/lib/db').then(({ prisma, logAudit }) => ({ prisma, logAudit }));
+  }
+  return nodeDbPromise;
+}
+
 async function ensureYear(yearIdentifier: string, useD1: boolean): Promise<YearLike | null> {
   if (useD1) {
     const year = await d1FindYearByIdentifier(yearIdentifier);
     return (year as YearLike) ?? null;
   }
+  const { prisma } = await getNodeDb();
   return prisma.year.findUnique({ where: { id: yearIdentifier } }) as Promise<YearLike | null>;
 }
 
@@ -57,6 +70,8 @@ async function recordAudit(
     }
     return;
   }
+
+  const { logAudit } = await getNodeDb();
 
   await logAudit({
     who: ADMIN_ACTOR,
@@ -99,6 +114,7 @@ export async function GET(
     const where: { year_id: string; status?: 'draft' | 'published' } = { year_id: year.id };
     if (status !== 'all') where.status = status;
 
+    const { prisma } = await getNodeDb();
     const collections = await prisma.collection.findMany({
       where,
       orderBy: { order_index: 'asc' },
@@ -197,6 +213,7 @@ export async function POST(
           }
           locationId = location.id;
         } else {
+          const { prisma } = await getNodeDb();
           const location = await prisma.location.findUnique({
             where: { id: rawLocationId },
             select: { id: true, year_id: true },
@@ -253,6 +270,7 @@ export async function POST(
       }
     }
 
+    const { prisma } = await getNodeDb();
     const data: Prisma.CollectionUncheckedCreateInput = {
       year_id: year.id,
       slug,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { getCloudflareEnv, getD1Database } from '@/lib/cloudflare';
+import { shouldUseD1Direct } from '@/lib/d1-queries';
 
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -51,16 +52,24 @@ export async function GET(request: NextRequest) {
       diagnostics.d1Test = { success: false, error: 'D1 not available' };
     }
 
-    // Test Prisma connection
-    try {
-      const { prisma } = await import('@/lib/db');
-      const count = await prisma.year.count();
-      diagnostics.prismaYearCount = count;
+    // Test Prisma connection (skip on Workers)
+    if (!shouldUseD1Direct()) {
+      try {
+        const { prisma } = await import('@/lib/db');
+        const count = await prisma.year.count();
+        diagnostics.prismaYearCount = count;
 
-      const sampleYears = await prisma.year.findMany({ take: 5 });
-      diagnostics.prismaSampleYears = sampleYears;
-    } catch (e: any) {
-      diagnostics.prismaTest = { success: false, error: e.message, stack: e.stack };
+        const sampleYears = await prisma.year.findMany({ take: 5 });
+        diagnostics.prismaSampleYears = sampleYears;
+      } catch (e: any) {
+        diagnostics.prismaTest = { success: false, error: e.message, stack: e.stack };
+      }
+    } else {
+      diagnostics.prismaTest = {
+        success: false,
+        skipped: true,
+        error: 'Prisma not supported on Cloudflare Workers runtime',
+      };
     }
 
   } catch (e: any) {
