@@ -144,13 +144,11 @@ export async function d1FindYearByIdentifier(identifier: string): Promise<D1Year
   const db = requireDb();
   const decoded = decodeURIComponent(identifier);
 
-  if (UUID_REGEX.test(decoded)) {
-    const byId = await db.prepare(
-      'SELECT * FROM years WHERE id = ?1 LIMIT 1',
-    ).bind(decoded).first();
-    if (byId) {
-      return byId as D1Year;
-    }
+  const byId = await db.prepare(
+    'SELECT * FROM years WHERE id = ?1 LIMIT 1',
+  ).bind(decoded).first();
+  if (byId) {
+    return byId as D1Year;
   }
 
   const byLabel = await db.prepare(
