@@ -10,6 +10,14 @@ import {
   normaliseSlug,
   parseOrderIndex,
 } from '@/lib/validators/location';
+import {
+  CreateLocationDraft,
+  UpdateLocationDraft,
+  LocationServiceError,
+  isLocationServiceError,
+  UUID_REGEX,
+  LOCATION_UUID_REGEX,
+} from '@/lib/location-service-shared';
 
 export type PrismaClientLike = Pick<
   typeof prisma,
@@ -19,46 +27,6 @@ export type PrismaClientLike = Pick<
 export type LocationWithCounts = Prisma.LocationGetPayload<{
   include: { _count: { select: { collections: true } } };
 }>;
-
-export type CreateLocationDraft = {
-  name?: unknown;
-  slug?: unknown;
-  summary?: unknown;
-  coverAssetId?: unknown;
-  orderIndex?: unknown;
-};
-
-export type UpdateLocationDraft = CreateLocationDraft & {
-  name?: unknown;
-  slug?: unknown;
-  summary?: unknown;
-  coverAssetId?: unknown;
-  orderIndex?: unknown;
-};
-
-export type LocationServiceErrorCode =
-  | 'VALIDATION'
-  | 'NOT_FOUND'
-  | 'CONFLICT'
-  | 'HAS_COLLECTIONS';
-
-export class LocationServiceError extends Error {
-  code: LocationServiceErrorCode;
-  field?: string;
-
-  constructor(code: LocationServiceErrorCode, message: string, field?: string) {
-    super(message);
-    this.name = 'LocationServiceError';
-    this.code = code;
-    this.field = field;
-  }
-}
-
-export function isLocationServiceError(error: unknown): error is LocationServiceError {
-  return error instanceof LocationServiceError;
-}
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function findYearByIdentifier(identifier: string, db: PrismaClientLike = prisma): Promise<Year | null> {
   if (!identifier) return null;
@@ -271,4 +239,10 @@ export async function deleteLocation(
   return db.location.delete({ where: { id: locationId } });
 }
 
-export { UUID_REGEX as LOCATION_UUID_REGEX, LOCATION_SLUG_REGEX };
+export {
+  LOCATION_UUID_REGEX,
+  LocationServiceError,
+  isLocationServiceError,
+} from '@/lib/location-service-shared';
+export type { CreateLocationDraft, UpdateLocationDraft } from '@/lib/location-service-shared';
+export { LOCATION_SLUG_REGEX };

@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { logAudit } from '@/lib/db';
-import { parseRequestJsonSafe } from '@/lib/utils';
+import { logAudit, type AuditAction } from '@/lib/db';
+import { parseRequestJsonSafe, writeAudit } from '@/lib/utils';
 import { CACHE_TAGS, invalidateCache } from '@/lib/cache';
+import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
+import {
+  d1CreateLocation,
+  d1DeleteLocation,
+  d1FindYearByIdentifier,
+  d1ListLocationsForYear,
+  d1UpdateLocation,
+  type D1LocationWithCounts,
+  type D1Year,
+} from '@/lib/d1/location-service';
 import {
   createLocation,
   deleteLocation,
   findYearByIdentifier,
-  isLocationServiceError,
   listLocationsForYear,
-  LocationServiceError,
-  LOCATION_UUID_REGEX,
   updateLocation,
-  type CreateLocationDraft,
   type LocationWithCounts,
 } from '@/lib/prisma/location-service';
+import {
+  isLocationServiceError,
+  LocationServiceError,
+  LOCATION_UUID_REGEX,
+  type CreateLocationDraft,
+} from '@/lib/location-service-shared';
 
 const ADMIN_ACTOR = 'system';
 
@@ -27,6 +39,12 @@ type RouteContextLike = {
 };
 
 type LocationPayload = CreateLocationDraft & { id?: unknown };
+
+type YearLike = (D1Year | { id: string }) & Record<string, unknown>;
+
+type LocationRecord = (LocationWithCounts | D1LocationWithCounts) & {
+  _count?: { collections?: number };
+};
 
 type AdminLocationDto = {
   id: string;
@@ -54,7 +72,7 @@ function toIsoString(value: Date | string): string {
   return parsed.toISOString();
 }
 
-function mapLocation(record: LocationWithCounts): AdminLocationDto {
+function mapLocation(record: LocationRecord): AdminLocationDto {
   return {
     id: record.id,
     yearId: record.year_id,
@@ -65,7 +83,7 @@ function mapLocation(record: LocationWithCounts): AdminLocationDto {
     orderIndex: record.order_index,
     createdAt: toIsoString(record.created_at),
     updatedAt: toIsoString(record.updated_at),
-    collectionCount: record._count?.collections ?? 0,
+    collectionCount: Number(record._count?.collections ?? 0),
   };
 }
 
@@ -79,6 +97,49 @@ async function invalidateYearCaches(yearId: string) {
   } catch (error) {
     console.error('[locations] cache invalidation failed:', error);
   }
+}
+
+async function recordAudit(
+  useD1: boolean,
+  params: { action: AuditAction; locationId: string; payload?: Record<string, unknown>; metadata?: Record<string, unknown> },
+) {
+  const { action, locationId, payload, metadata } = params;
+  if (useD1) {
+    try {
+      await d1CreateAuditLog({
+        actor: ADMIN_ACTOR,
+        actor_type: 'system',
+        entity_type: 'location',
+        entity_id: locationId,
+        action,
+        meta: JSON.stringify({ payload, metadata }),
+      });
+    } catch (error) {
+      console.error('[locations] failed to persist audit log via D1', error);
+    }
+
+    try {
+      await writeAudit({
+        timestamp: new Date().toISOString(),
+        who: ADMIN_ACTOR,
+        action,
+        entity: `location/${locationId}`,
+        payload,
+        metadata,
+      });
+    } catch (error) {
+      console.error('[locations] failed to write audit sink', error);
+    }
+    return;
+  }
+
+  await logAudit({
+    who: ADMIN_ACTOR,
+    action,
+    entity: `location/${locationId}`,
+    payload,
+    metadata,
+  });
 }
 
 function respondToServiceError(error: LocationServiceError) {
@@ -111,7 +172,7 @@ function respondToServiceError(error: LocationServiceError) {
   );
 }
 
-async function resolveYear(context: RouteContextLike) {
+async function resolveYear(context: RouteContextLike, useD1: boolean) {
   const resolvedParams = await Promise.resolve(context.params);
   const raw = resolvedParams?.yearId;
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -120,8 +181,10 @@ async function resolveYear(context: RouteContextLike) {
     return { yearParam, year: null } as const;
   }
 
-  const year = await findYearByIdentifier(yearParam);
-  return { yearParam, year } as const;
+  const year = useD1
+    ? await d1FindYearByIdentifier(yearParam)
+    : await findYearByIdentifier(yearParam);
+  return { yearParam, year: (year as YearLike | null) } as const;
 }
 
 function notFoundYear() {
@@ -137,12 +200,15 @@ function validationError(message: string, field?: string) {
 
 async function getImpl(_request: NextRequest, context: RouteContextLike) {
   try {
-    const { year } = await resolveYear(context);
+    const useD1 = shouldUseD1Direct();
+    const { year } = await resolveYear(context, useD1);
     if (!year) {
       return notFoundYear();
     }
 
-    const locations = await listLocationsForYear(year.id);
+    const locations = useD1
+      ? await d1ListLocationsForYear(year.id)
+      : await listLocationsForYear(year.id);
     return NextResponse.json(locations.map(mapLocation));
   } catch (error) {
     console.error('[GET locations] unexpected error', error);
@@ -152,18 +218,20 @@ async function getImpl(_request: NextRequest, context: RouteContextLike) {
 
 async function postImpl(request: NextRequest, context: RouteContextLike) {
   try {
-    const { year } = await resolveYear(context);
+    const useD1 = shouldUseD1Direct();
+    const { year } = await resolveYear(context, useD1);
     if (!year) {
       return notFoundYear();
     }
 
     const body = await parseRequestJsonSafe<LocationPayload>(request, {});
-    const created = await createLocation(year.id, body);
+    const created = useD1
+      ? await d1CreateLocation(year.id, body)
+      : await createLocation(year.id, body);
 
-    await logAudit({
-      who: ADMIN_ACTOR,
+    await recordAudit(useD1, {
       action: 'create',
-      entity: `location/${created.id}`,
+      locationId: created.id,
       payload: { yearId: year.id, locationId: created.id },
     });
 
@@ -180,7 +248,8 @@ async function postImpl(request: NextRequest, context: RouteContextLike) {
 
 async function putImpl(request: NextRequest, context: RouteContextLike) {
   try {
-    const { year } = await resolveYear(context);
+    const useD1 = shouldUseD1Direct();
+    const { year } = await resolveYear(context, useD1);
     if (!year) {
       return notFoundYear();
     }
@@ -194,12 +263,13 @@ async function putImpl(request: NextRequest, context: RouteContextLike) {
       );
     }
 
-    const { location, changes } = await updateLocation(year.id, idValue, body);
+    const { location, changes } = useD1
+      ? await d1UpdateLocation(year.id, idValue, body)
+      : await updateLocation(year.id, idValue, body);
 
-    await logAudit({
-      who: ADMIN_ACTOR,
+    await recordAudit(useD1, {
       action: 'edit',
-      entity: `location/${idValue}`,
+      locationId: idValue,
       payload: changes,
     });
 
@@ -216,7 +286,8 @@ async function putImpl(request: NextRequest, context: RouteContextLike) {
 
 async function deleteImpl(request: NextRequest, context: RouteContextLike) {
   try {
-    const { year } = await resolveYear(context);
+    const useD1 = shouldUseD1Direct();
+    const { year } = await resolveYear(context, useD1);
     if (!year) {
       return notFoundYear();
     }
@@ -230,9 +301,13 @@ async function deleteImpl(request: NextRequest, context: RouteContextLike) {
       );
     }
 
-    await deleteLocation(year.id, idValue);
+    if (useD1) {
+      await d1DeleteLocation(year.id, idValue);
+    } else {
+      await deleteLocation(year.id, idValue);
+    }
 
-    await logAudit({ who: ADMIN_ACTOR, action: 'delete', entity: `location/${idValue}` });
+    await recordAudit(useD1, { action: 'delete', locationId: idValue });
     await invalidateYearCaches(year.id);
 
     return new NextResponse(null, { status: 204 });
