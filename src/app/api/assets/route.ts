@@ -4,16 +4,19 @@ import { requireAdminAuth } from '@/lib/auth';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { LOCATION_UUID_REGEX } from '@/lib/prisma/location-service';
-import { 
-  shouldUseD1Direct, 
-  d1GetAssets, 
-  d1CreateAsset, 
+import {
+  shouldUseD1Direct,
+  d1GetAssets,
+  d1CreateAsset,
   d1AssetExists,
-  d1CreateAuditLog 
+  d1CreateAuditLog,
 } from '@/lib/d1-queries';
+import { d1FindLocationById } from '@/lib/d1/location-service';
 import { getD1Database } from '@/lib/cloudflare';
 
 async function resolveLocationFolder(locationId: unknown) {
+  const useD1 = shouldUseD1Direct();
+
   if (locationId === undefined) {
     return { locationFolderId: undefined as string | null | undefined, error: null as NextResponse | null };
   }
@@ -38,7 +41,10 @@ async function resolveLocationFolder(locationId: unknown) {
       ),
     };
   }
-  const location = await prisma.location.findUnique({ where: { id: locationId } });
+
+  const location = useD1
+    ? await d1FindLocationById(locationId)
+    : await prisma.location.findUnique({ where: { id: locationId }, select: { id: true } });
   if (!location) {
     return {
       locationFolderId: null,

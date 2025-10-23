@@ -179,6 +179,22 @@ export async function d1ListLocationsForYear(yearId: string): Promise<D1Location
   return (result.results ?? []).map((row: unknown) => mapLocationRow(row as Record<string, unknown>));
 }
 
+export async function d1FindLocationById(
+  locationId: string,
+): Promise<{ id: string; year_id: string } | null> {
+  const db = requireDb();
+  const row = await db.prepare(
+    'SELECT id, year_id FROM locations WHERE id = ?1 LIMIT 1',
+  ).bind(locationId).first();
+  if (!row) {
+    return null;
+  }
+  return {
+    id: String(row.id),
+    year_id: String(row.year_id),
+  };
+}
+
 export async function d1CreateLocation(
   yearId: string,
   draft: CreateLocationDraft,
