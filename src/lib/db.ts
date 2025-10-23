@@ -6,7 +6,7 @@ let nodeClient: PrismaClient | undefined;
 const d1ClientCache: WeakMap<any, PrismaClient> = new WeakMap();
 
 function getClient(): PrismaClient {
-  // Try to use Cloudflare D1 when running on Workers
+  // Try to use Cloudflare D1 when running on Workers (edge runtime)
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getRequestContext } = require('next/server');
@@ -25,7 +25,7 @@ function getClient(): PrismaClient {
       return client;
     }
   } catch {
-    // fall back to node client
+    // ignore and fall back to node client
   }
 
   if (!nodeClient) {

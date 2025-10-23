@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+export const runtime = 'edge';
 
 const CONTENT_TYPES: Record<string, string> = {
   webp: 'image/webp',
@@ -14,8 +15,7 @@ export async function GET(
 ) {
   const { id, variant } = await params;
   try {
-    // Access R2 bucket from Cloudflare bindings
-    // @ts-ignore
+    // Access R2 bucket from Workers env via request context
     const { getRequestContext } = await import('next/server');
     const ctx = getRequestContext?.();
     const bucket: R2Bucket | undefined = ctx?.cloudflare?.env?.UPLOADS as any;

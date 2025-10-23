@@ -54,3 +54,7 @@ workers_dev = true
 binding = "DB"
 database_name = "utoa-photography-db"
 database_id = "1a65ccdb-72c0-4d12-aa72-65e4f639f06c"
+
+[[env.staging.r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "utoa-photography-assets"
