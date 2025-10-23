@@ -11,8 +11,9 @@ export default {
       name: "queue-consumer",
     },
   },
+  // Disable problematic image optimization
   imageOptimization: {
-    loader: "cloudflare",
+    arch: 'x64',
   },
   experimental: {
     disableIncrementalCache: false,

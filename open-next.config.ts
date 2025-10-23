@@ -28,8 +28,9 @@ export default {
       queue: 'dummy',
     },
   },
+  // Disable image optimization - we use Cloudflare Images and R2 directly
   imageOptimization: {
-    loader: 'cloudflare',
+    arch: 'x64',
   },
   experimental: {
     disableIncrementalCache: false,
