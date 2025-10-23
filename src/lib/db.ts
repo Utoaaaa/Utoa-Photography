@@ -1,18 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import { writeAudit } from './utils';
+import { getD1Database } from './cloudflare';
 
 // Runtime-aware Prisma client that uses D1 in Cloudflare Workers and node client locally
 let nodeClient: PrismaClient | undefined;
 const d1ClientCache: WeakMap<any, PrismaClient> = new WeakMap();
 
 function getClient(): PrismaClient {
-  // Try Next.js request context bindings (Workers)
+  // Try Cloudflare D1 binding first (production/staging)
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getRequestContext } = require('next/server');
-    const ctx = typeof getRequestContext === 'function' ? getRequestContext() : undefined;
-    const env = ctx?.cloudflare?.env as { DB?: any } | undefined;
-    const d1 = env?.DB;
+    const d1 = getD1Database();
     if (d1) {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { PrismaD1 } = require('@prisma/adapter-d1');
@@ -24,8 +21,11 @@ function getClient(): PrismaClient {
       }
       return client;
     }
-  } catch {
-    // ignore and fall back to node client
+  } catch (e) {
+    // Silently fall back to node client in dev
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[db] D1 not available, using node Prisma client');
+    }
   }
 
   if (!nodeClient) {
