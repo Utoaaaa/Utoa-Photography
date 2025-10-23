@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-
-export const runtime = 'edge';
+import { getD1Database } from '@/lib/cloudflare';
 
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -17,10 +16,15 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json().catch(() => ({}));
-    const label: string | undefined = body.label;
-    const order_index: string | undefined = body.order_index;
-    const status: string | undefined = body.status || 'draft';
+    type AdminYearPayload = { label?: string; order_index?: string; status?: 'draft' | 'published' };
+    const isPayload = (v: unknown): v is AdminYearPayload => typeof v === 'object' && v !== null;
+    const raw: unknown = await request.json().catch(() => ({}));
+    if (!isPayload(raw)) {
+      return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+    }
+    const label: string | undefined = raw.label;
+    const order_index: string | undefined = raw.order_index;
+    const status: string = (raw.status as any) || 'draft';
 
     if (!label || typeof label !== 'string' || label.length > 200) {
       return NextResponse.json({ error: 'invalid label' }, { status: 400 });
@@ -33,9 +37,7 @@ export async function POST(request: NextRequest) {
     const id = (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2, 10)) as string;
     const now = new Date().toISOString();
 
-    const { getRequestContext } = await import('next/server');
-    const ctx = getRequestContext?.();
-    const db: any = ctx?.cloudflare?.env?.DB;
+    const db: any = getD1Database();
     if (!db) {
       return NextResponse.json({ error: 'D1 binding missing' }, { status: 500 });
     }

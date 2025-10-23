@@ -14,5 +14,13 @@
     "explorer.fileNesting.expand": false,
     "explorer.fileNesting.patterns": {
         "package.json": "package-lock.json, pnpm-lock.yaml, yarn.lock, .npmrc, components.json, eslint.config.mjs, jest.config.ts, jest.contract.config.ts, jest.setup.contract.ts, jest.setup.js, jest.setup.pre-env.js, lighthouserc.json, middleware.ts, next-env.d.ts, next.config.ts, open-next.config.mjs, playwright.config.ts, postcss.config.mjs, tsconfig.json, tsconfig.tsbuildinfo, wrangler.toml"
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.hg/store/**": true,
+        "**/.git/**": true,
+        "**/node_modules/**": true,
+        "**/.vscode/**": true
     }
 }

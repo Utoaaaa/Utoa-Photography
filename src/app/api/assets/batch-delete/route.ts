@@ -8,7 +8,7 @@ type FailedItem = { id: string; reason: 'not_found' | 'referenced' | 'error'; de
 export async function POST(request: NextRequest) {
   try {
     requireAdminAuth(request);
-    const body = await request.json().catch(() => ({}));
+    const body = await request.json().catch(() => ({})) as any;
     const asset_ids: unknown = body?.asset_ids;
     if (!Array.isArray(asset_ids) || asset_ids.length === 0 || !asset_ids.every((x) => typeof x === 'string')) {
       return NextResponse.json({ error: 'validation failed', message: 'asset_ids must be a non-empty string array' }, { status: 400 });

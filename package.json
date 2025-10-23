@@ -51,6 +51,7 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.11.0",
     "@prisma/adapter-d1": "^6.0.0",
     "@prisma/client": "^6.16.2",
     "@react-three/drei": "^10.7.6",
@@ -71,6 +72,7 @@
     "wrangler": "^4.38.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251008.0",
     "@aws-sdk/client-s3": "^3.666.0",
     "@axe-core/playwright": "^4.10.2",
     "@eslint/eslintrc": "^3",

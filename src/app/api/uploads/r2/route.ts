@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth';
-import { env } from 'cloudflare:env';
-export const runtime = 'edge';
+import { getR2Bucket } from '@/lib/cloudflare';
 
 function randomId() {
   return Math.random().toString(36).slice(2, 8);
@@ -36,8 +35,7 @@ export async function POST(request: NextRequest) {
       : ALLOWED_EXTS.includes(guessedExt) ? guessedExt : 'jpg';
     const ext = mimeExt || 'jpg';
 
-    // Access R2 via Workers importable env
-    const bucket: R2Bucket | undefined = (env as any)?.UPLOADS as any;
+    const bucket: R2Bucket | undefined = getR2Bucket();
     if (!bucket) {
       return NextResponse.json({ error: 'storage unavailable' }, { status: 500 });
     }

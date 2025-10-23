@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-export const runtime = 'edge';
+import { getR2Bucket } from '@/lib/cloudflare';
 
 const CONTENT_TYPES: Record<string, string> = {
   webp: 'image/webp',
@@ -15,11 +15,24 @@ export async function GET(
 ) {
   const { id, variant } = await params;
   try {
-    // Access R2 bucket from Workers env via request context
-    const { getRequestContext } = await import('next/server');
-    const ctx = getRequestContext?.();
-    const bucket: R2Bucket | undefined = ctx?.cloudflare?.env?.UPLOADS as any;
+    const isDev = process.env.NODE_ENV !== 'production';
+    const bucket: R2Bucket | undefined = getR2Bucket();
+    
     if (!bucket) {
+      if (isDev) {
+        console.warn('[images] R2 bucket not configured in dev mode');
+        return new Response(
+          JSON.stringify({ 
+            error: 'dev_mode', 
+            message: 'R2 bucket not available. Use "npm run dev:worker" for full functionality.',
+            requested: { id, variant }
+          }),
+          { 
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
       return new Response('Storage not configured', { status: 500 });
     }
 

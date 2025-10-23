@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
-
-export const runtime = 'edge';
+import { getCloudflareEnv } from '@/lib/cloudflare';
 
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
     return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
   }
 
-  let hasRequestContext = false;
   let hasD1Binding = false;
   let hasR2Binding = false;
   let d1QueryOk = false;
@@ -16,10 +14,7 @@ export async function GET(request: NextRequest) {
   let error: string | null = null;
 
   try {
-    const { getRequestContext } = await import('next/server');
-    const ctx = typeof getRequestContext === 'function' ? getRequestContext() : undefined;
-    hasRequestContext = Boolean(ctx);
-    const env = ctx?.cloudflare?.env as { DB?: any; UPLOADS?: any } | undefined;
+    const env = getCloudflareEnv();
     hasD1Binding = Boolean(env?.DB);
     hasR2Binding = Boolean(env?.UPLOADS);
 
@@ -54,7 +49,6 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     ok: d1QueryOk || r2ProbeOk,
-    hasRequestContext,
     d1: { hasBinding: hasD1Binding, queryOk: d1QueryOk },
     r2: { hasBinding: hasR2Binding, probeOk: r2ProbeOk },
     error,

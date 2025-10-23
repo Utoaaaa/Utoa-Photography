@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-export const runtime = 'edge';
+import { getR2Bucket } from '@/lib/cloudflare';
 
 const VARIANTS = ['thumb','small','medium','large','cover','og','blur'] as const;
 const EXTS = ['webp','avif','jpg','jpeg','png'] as const;
@@ -16,9 +16,7 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const { getRequestContext } = await import('next/server');
-    const ctx = getRequestContext?.();
-    const bucket: R2Bucket | undefined = ctx?.cloudflare?.env?.UPLOADS as any;
+    const bucket: R2Bucket | undefined = getR2Bucket();
     if (!bucket) {
       return NextResponse.json({ error: 'storage unavailable' }, { status: 500 });
     }

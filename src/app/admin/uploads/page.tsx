@@ -278,13 +278,24 @@ export default function AdminUploadsPage() {
       const chunks: string[][] = [];
       for (let i = 0; i < ids.length; i += concurrency) chunks.push(ids.slice(i, i+concurrency));
       const statusUpdates: Record<string, any> = {};
+      // Helper to validate variant probe
+      const isVariantsResponse = (value: unknown): value is { variants?: Record<string, boolean> } => {
+        if (!value || typeof value !== 'object') return false;
+        const v = (value as any).variants;
+        return typeof v === 'undefined' || (v && typeof v === 'object');
+      };
+
       for (const chunk of chunks) {
         await Promise.all(chunk.map(async (id) => {
           try {
             const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
             if (!r.ok) return;
-            const j = await r.json();
-            statusUpdates[id] = j?.variants || {};
+            const j = await safeJson<{ variants?: Record<string, boolean> }>(
+              r,
+              {} as { variants?: Record<string, boolean> },
+              isVariantsResponse,
+            );
+            statusUpdates[id] = j.variants ?? {};
           } catch {}
         }));
       }
@@ -660,8 +671,17 @@ export default function AdminUploadsPage() {
         await Promise.all(Array.from(selectedIds).map(async (id) => {
           const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
           if (r.ok) {
-            const j = await r.json();
-            updates[id] = j?.variants || {};
+            const isVariantsResponse = (value: unknown): value is { variants?: Record<string, boolean> } => {
+              if (!value || typeof value !== 'object') return false;
+              const v = (value as any).variants;
+              return typeof v === 'undefined' || (v && typeof v === 'object');
+            };
+            const j = await safeJson<{ variants?: Record<string, boolean> }>(
+              r,
+              {} as { variants?: Record<string, boolean> },
+              isVariantsResponse,
+            );
+            updates[id] = j.variants ?? {};
           }
         }));
         setVariantStatus(prev => ({ ...prev, ...updates }));

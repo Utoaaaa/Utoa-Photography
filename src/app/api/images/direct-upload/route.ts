@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const uploadData = await uploadResponse.json();
+    const uploadData = await uploadResponse.json() as any;
 
     if (!uploadData.success) {
       console.error('Cloudflare Images API returned error:', uploadData);

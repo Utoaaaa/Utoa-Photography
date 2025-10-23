@@ -61,7 +61,7 @@ const translateApiMessage = (message: string): string => {
 
 const parseApiError = async (response: Response): Promise<string | null> => {
   try {
-    const payload = await response.clone().json();
+    const payload = (await response.clone().json().catch(() => ({}))) as { message?: string };
     if (payload && typeof payload.message === 'string') {
       return translateApiMessage(payload.message);
     }
