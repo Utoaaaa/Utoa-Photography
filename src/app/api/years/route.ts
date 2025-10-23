@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/auth';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { getYears } from '@/lib/queries/years';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
+import { shouldUseD1Direct, d1GetYears, d1CreateYear, d1CreateAuditLog } from '@/lib/d1-queries';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -32,7 +33,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const years = await getYears({ status: (status as any) ?? 'all', order: order as 'asc' | 'desc' });
+    // Use D1 direct queries in production, Prisma in development
+    let years;
+    if (shouldUseD1Direct()) {
+      years = await d1GetYears({ status: (status as any) ?? 'all', order: order as 'asc' | 'desc' });
+    } else {
+      years = await getYears({ status: (status as any) ?? 'all', order: order as 'asc' | 'desc' });
+    }
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('[GET /api/years]', { status: status ?? 'all', order, count: Array.isArray(years) ? years.length : 0, labels: (years as any[])?.slice(0, 5)?.map((y: any) => y.label) });
@@ -108,18 +115,42 @@ export async function POST(request: NextRequest) {
     // Auto-generate order_index if not provided
     const finalOrderIndex = order_index || `${new Date().getFullYear()}.0`;
 
-    // Create new year
-    const year = await prisma.year.create({
-      data: {
+    // Create new year - use D1 direct in production, Prisma in development
+    let year;
+    if (shouldUseD1Direct()) {
+      year = await d1CreateYear({
         label,
         order_index: finalOrderIndex,
         status: status as YearStatus,
-      },
-    });
+      });
+      // Audit log
+      try {
+        await d1CreateAuditLog({
+          actor: 'system',
+          actor_type: 'system',
+          entity_type: 'year',
+          entity_id: year.id,
+          action: 'create',
+          meta: JSON.stringify({ label: year.label }),
+        });
+      } catch (e) {
+        console.error('Audit log failed:', e);
+      }
+    } else {
+      year = await prisma.year.create({
+        data: {
+          label,
+          order_index: finalOrderIndex,
+          status: status as YearStatus,
+        },
+      });
+      await logAudit({ who: 'system', action: 'create', entity: `year/${year.id}`, payload: { label: year.label } });
+    }
+    
     try {
       await invalidateCache([CACHE_TAGS.YEARS]);
     } catch {}
-    await logAudit({ who: 'system', action: 'create', entity: `year/${year.id}`, payload: { label: year.label } });
+    
     return NextResponse.json(year, { status: 201 });
   } catch (error) {
     console.error('Error creating year:', error);

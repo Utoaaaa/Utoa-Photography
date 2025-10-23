@@ -4,6 +4,14 @@ import { requireAdminAuth } from '@/lib/auth';
 import { parseRequestJsonSafe } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { LOCATION_UUID_REGEX } from '@/lib/prisma/location-service';
+import { 
+  shouldUseD1Direct, 
+  d1GetAssets, 
+  d1CreateAsset, 
+  d1AssetExists,
+  d1CreateAuditLog 
+} from '@/lib/d1-queries';
+import { getD1Database } from '@/lib/cloudflare';
 
 async function resolveLocationFolder(locationId: unknown) {
   if (locationId === undefined) {
@@ -115,13 +123,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if asset already exists
-    const existingAsset = await prisma.asset.findUnique({
-      where: { id },
-    });
+    let existingAsset;
+    if (shouldUseD1Direct()) {
+      existingAsset = await d1AssetExists(id);
+    } else {
+      existingAsset = await prisma.asset.findUnique({ where: { id } });
+    }
 
     if (existingAsset) {
       return NextResponse.json(
-        { error: 'Conflict', message: 'Asset with this ID already exists; please verify direct upload status before retrying', id: existingAsset.id },
+        { error: 'Conflict', message: 'Asset with this ID already exists; please verify direct upload status before retrying', id },
         { status: 409 }
       );
     }
@@ -152,22 +163,48 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create new asset
-    const createData: Record<string, any> = {
-      id,
-      alt,
-      caption,
-      width: parseInt(width.toString()),
-      height: parseInt(height.toString()),
-      metadata_json: serializedMetadata,
-    };
-    if (locationFolderId !== undefined) {
-      createData.location_folder_id = locationFolderId;
+    // Create new asset - use D1 direct in production
+    let asset;
+    if (shouldUseD1Direct()) {
+      asset = await d1CreateAsset({
+        id,
+        alt,
+        caption,
+        width: parseInt(width.toString()),
+        height: parseInt(height.toString()),
+        metadata_json: serializedMetadata,
+        location_folder_id: locationFolderId,
+      });
+      // Audit log
+      try {
+        await d1CreateAuditLog({
+          actor: 'system',
+          actor_type: 'system',
+          entity_type: 'asset',
+          entity_id: asset.id,
+          action: 'create',
+          meta: JSON.stringify({ id: asset.id }),
+        });
+      } catch (e) {
+        console.error('Audit log failed:', e);
+      }
+    } else {
+      const createData: Record<string, any> = {
+        id,
+        alt,
+        caption,
+        width: parseInt(width.toString()),
+        height: parseInt(height.toString()),
+        metadata_json: serializedMetadata,
+      };
+      if (locationFolderId !== undefined) {
+        createData.location_folder_id = locationFolderId;
+      }
+      asset = await prisma.asset.create({
+        data: createData as any,
+      });
+      await logAudit({ who: 'system', action: 'create', entity: `asset/${asset.id}`, payload: { id: asset.id } });
     }
-
-    const asset = await prisma.asset.create({
-      data: createData as any,
-    });
 
     // Return metadata_json parsed back to object if possible
     const response: Record<string, any> = { ...asset };
@@ -180,7 +217,6 @@ export async function POST(request: NextRequest) {
     try {
       await invalidateCache([CACHE_TAGS.ASSETS]);
     } catch {}
-    await logAudit({ who: 'system', action: 'create', entity: `asset/${asset.id}`, payload: { id: asset.id } });
 
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
@@ -220,43 +256,98 @@ export async function GET(request: NextRequest) {
     const locationFilter = searchParams.get('location_id') ?? searchParams.get('location_folder_id');
     const unassigned = searchParams.get('unassigned') === 'true';
 
-    const where: Record<string, any> = {};
-    if (locationFilter) {
-      where.location_folder_id = locationFilter;
-    } else if (unassigned) {
-      where.location_folder_id = null;
+    let assets;
+    
+    if (shouldUseD1Direct()) {
+      // Use D1 direct queries in production
+      const baseAssets = await d1GetAssets({
+        limit: Number.isNaN(limit) ? 50 : limit,
+        offset: Number.isNaN(offset) ? 0 : offset,
+        location_folder_id: locationFilter || undefined,
+        unassigned,
+      });
+      
+      // For D1, we need to manually join location folder and year data
+      const db = getD1Database();
+      const result = [];
+      
+      for (const asset of baseAssets) {
+        const obj: Record<string, any> = { ...asset };
+        
+        // Parse metadata_json
+        if (obj.metadata_json && typeof obj.metadata_json === 'string') {
+          try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
+        }
+        
+        obj.location_folder_id = asset.location_folder_id ?? null;
+        obj.used = false; // Default, would need to query collection_assets
+        
+        // Get location folder info if exists
+        if (asset.location_folder_id && db) {
+          const folder = await db.prepare(
+            'SELECT id, name, year_id FROM locations WHERE id = ?'
+          ).bind(asset.location_folder_id).first() as any;
+          
+          if (folder) {
+            obj.location_folder_name = folder.name;
+            obj.location_folder_year_id = folder.year_id;
+            
+            if (folder.year_id) {
+              const year = await db.prepare(
+                'SELECT label FROM years WHERE id = ?'
+              ).bind(folder.year_id).first() as any;
+              
+              if (year) {
+                obj.location_folder_year_label = year.label;
+              }
+            }
+          }
+        }
+        
+        result.push(obj);
+      }
+      
+      assets = result;
+    } else {
+      // Use Prisma in development
+      const where: Record<string, any> = {};
+      if (locationFilter) {
+        where.location_folder_id = locationFilter;
+      } else if (unassigned) {
+        where.location_folder_id = null;
+      }
+
+      const prismaAssets = await prisma.asset.findMany({
+        orderBy: { created_at: 'desc' },
+        take: Number.isNaN(limit) ? 50 : limit,
+        skip: Number.isNaN(offset) ? 0 : offset,
+        where,
+        include: {
+          _count: { select: { collection_assets: true } },
+          locationFolder: { include: { year: true } },
+        } as any,
+      });
+
+      // Parse metadata_json to objects when possible
+      assets = prismaAssets.map((a: any) => {
+        const { _count, locationFolder, ...rest } = a;
+        const obj: Record<string, any> = { ...rest, used: (_count?.collection_assets ?? 0) > 0 };
+        if (obj.metadata_json && typeof obj.metadata_json === 'string') {
+          try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
+        }
+        obj.location_folder_id = rest.location_folder_id ?? null;
+        if (locationFolder) {
+          obj.location_folder_name = locationFolder.name;
+          obj.location_folder_year_id = locationFolder.year_id;
+          if (locationFolder.year?.label) {
+            obj.location_folder_year_label = locationFolder.year.label;
+          }
+        }
+        return obj;
+      });
     }
 
-    const assets = await prisma.asset.findMany({
-      orderBy: { created_at: 'desc' },
-      take: Number.isNaN(limit) ? 50 : limit,
-      skip: Number.isNaN(offset) ? 0 : offset,
-      where,
-      include: {
-        _count: { select: { collection_assets: true } },
-        locationFolder: { include: { year: true } },
-      } as any,
-    });
-
-    // Parse metadata_json to objects when possible
-    const result = assets.map((a: any) => {
-      const { _count, locationFolder, ...rest } = a;
-      const obj: Record<string, any> = { ...rest, used: (_count?.collection_assets ?? 0) > 0 };
-      if (obj.metadata_json && typeof obj.metadata_json === 'string') {
-        try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
-      }
-      obj.location_folder_id = rest.location_folder_id ?? null;
-      if (locationFolder) {
-        obj.location_folder_name = locationFolder.name;
-        obj.location_folder_year_id = locationFolder.year_id;
-        if (locationFolder.year?.label) {
-          obj.location_folder_year_label = locationFolder.year.label;
-        }
-      }
-      return obj;
-    });
-
-    return NextResponse.json(result);
+    return NextResponse.json(assets);
   } catch (error) {
     console.error('Error listing assets:', error);
     return NextResponse.json(
