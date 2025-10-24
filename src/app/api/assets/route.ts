@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     // Validate dimensions with reasonable bounds (used by E2E tests)
     const minW = 200; const minH = 200; // minimum dimensions
-    const maxW = 8000; const maxH = 8000; // maximum dimensions
+    const maxW = 12000; const maxH = 12000; // maximum dimensions (allow larger originals)
     if (width <= 0 || height <= 0) {
       return NextResponse.json(
         { error: 'invalid dimensions', message: 'width and height must be positive numbers' },

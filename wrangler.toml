@@ -4,6 +4,12 @@ account_id = "5df67fbdc8e3dd0cc085b6f25dd15915"
 compatibility_date = "2024-11-18"
 compatibility_flags = ["nodejs_compat"]
 
+[observability]
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+
 # Serve Next static assets via Workers Static Assets (not R2)
 [assets]
 directory = ".open-next/assets"
