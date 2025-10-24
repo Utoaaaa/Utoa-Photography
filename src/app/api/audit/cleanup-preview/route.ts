@@ -1,6 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { shouldUseD1Direct } from '@/lib/d1-queries';
+import { getD1Database } from '@/lib/cloudflare';
+
+type PrismaClient = import('@prisma/client').PrismaClient;
+
+let prismaPromise: Promise<PrismaClient> | null = null;
+
+async function getPrisma() {
+  if (!prismaPromise) {
+    prismaPromise = import('@/lib/db').then(({ prisma }) => prisma);
+  }
+  return prismaPromise;
+}
+
+function requireD1() {
+  const db = getD1Database();
+  if (!db) {
+    throw new Error('D1 database not available');
+  }
+  return db;
+}
 
 /**
  * GET /api/audit/cleanup-preview
@@ -60,49 +80,100 @@ export async function GET(request: NextRequest) {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retention_days);
 
-    // Find oldest log
-    const oldestLog = await prisma.auditLog.findFirst({
-      orderBy: { timestamp: 'asc' },
-      select: { timestamp: true }
-    });
+    const useD1 = shouldUseD1Direct();
+    const cutoffIso = cutoffDate.toISOString();
 
-    // Count logs older than cutoff
-    const count = await prisma.auditLog.count({
-      where: {
-        timestamp: {
-          lt: cutoffDate
-        }
-      }
-    });
+    let oldestLogDate: string | null = null;
+    let count = 0;
+    let preview: Array<{ id: string; entity_type: string; entity_id: string; action: string; timestamp: string; actor: string | null }> = [];
 
-    // Get preview sample (max 10)
-    const preview = await prisma.auditLog.findMany({
-      where: {
-        timestamp: {
-          lt: cutoffDate
-        }
-      },
-      orderBy: { timestamp: 'asc' },
-      take: 10,
-      select: {
-        id: true,
-        entity_type: true,
-        entity_id: true,
-        action: true,
-        timestamp: true,
-        actor: true
+    if (useD1) {
+      const db = requireD1();
+
+      const oldestRow = await db.prepare(
+        'SELECT timestamp FROM audit_logs ORDER BY timestamp ASC LIMIT 1',
+      ).first() as { timestamp?: string } | null;
+      if (oldestRow?.timestamp) {
+        oldestLogDate = new Date(oldestRow.timestamp).toISOString();
       }
-    });
+
+      const countRow = await db.prepare(
+        'SELECT COUNT(*) AS count FROM audit_logs WHERE timestamp < ?1',
+      ).bind(cutoffIso).first() as { count?: number } | null;
+      count = Number(countRow?.count ?? 0);
+
+      const previewResult = await db.prepare(
+        `
+          SELECT id, entity_type, entity_id, action, timestamp, actor
+          FROM audit_logs
+          WHERE timestamp < ?1
+          ORDER BY timestamp ASC
+          LIMIT 10
+        `,
+      ).bind(cutoffIso).all();
+
+      preview = (previewResult.results ?? []).map((row: Record<string, unknown>) => ({
+        id: String(row.id),
+        entity_type: String(row.entity_type ?? ''),
+        entity_id: String(row.entity_id ?? ''),
+        action: String(row.action ?? ''),
+        timestamp: new Date(String(row.timestamp)).toISOString(),
+        actor: row.actor ? String(row.actor) : null,
+      }));
+    } else {
+      const prisma = await getPrisma();
+
+      const oldestLog = await prisma.auditLog.findFirst({
+        orderBy: { timestamp: 'asc' },
+        select: { timestamp: true }
+      });
+
+      if (oldestLog?.timestamp) {
+        oldestLogDate = oldestLog.timestamp.toISOString();
+      }
+
+      count = await prisma.auditLog.count({
+        where: {
+          timestamp: {
+            lt: cutoffDate
+          }
+        }
+      });
+
+      const prismaPreview = await prisma.auditLog.findMany({
+        where: {
+          timestamp: {
+            lt: cutoffDate
+          }
+        },
+        orderBy: { timestamp: 'asc' },
+        take: 10,
+        select: {
+          id: true,
+          entity_type: true,
+          entity_id: true,
+          action: true,
+          timestamp: true,
+          actor: true
+        }
+      });
+
+      preview = prismaPreview.map(log => ({
+        id: log.id,
+        entity_type: log.entity_type,
+        entity_id: log.entity_id,
+        action: log.action,
+        timestamp: log.timestamp.toISOString(),
+        actor: log.actor,
+      }));
+    }
 
     return NextResponse.json({
       count,
       cutoff_date: cutoffDate.toISOString(),
-      oldest_log_date: oldestLog?.timestamp.toISOString() || null,
+      oldest_log_date: oldestLogDate,
       retention_policy_days: retention_days,
-      preview: preview.map(log => ({
-        ...log,
-        timestamp: log.timestamp.toISOString()
-      }))
+      preview
     });
   } catch (error) {
     console.error('Error in cleanup preview:', error);

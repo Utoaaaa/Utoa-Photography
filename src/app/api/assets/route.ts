@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma, logAudit } from '@/lib/db';
+
 import { requireAdminAuth } from '@/lib/auth';
-import { parseRequestJsonSafe } from '@/lib/utils';
+import { parseRequestJsonSafe, writeAudit } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
-import { LOCATION_UUID_REGEX } from '@/lib/prisma/location-service';
+import { LOCATION_UUID_REGEX } from '@/lib/location-service-shared';
 import {
   shouldUseD1Direct,
   d1GetAssets,
@@ -13,6 +13,26 @@ import {
 } from '@/lib/d1-queries';
 import { d1FindLocationById } from '@/lib/d1/location-service';
 import { getD1Database } from '@/lib/cloudflare';
+
+type PrismaClient = import('@prisma/client').PrismaClient;
+type LogAuditFn = typeof import('@/lib/db').logAudit;
+
+let nodeDbPromise: Promise<{ prisma: PrismaClient; logAudit: LogAuditFn }> | null = null;
+
+async function getNodeDb() {
+  if (!nodeDbPromise) {
+    nodeDbPromise = import('@/lib/db').then(({ prisma, logAudit }) => ({ prisma, logAudit }));
+  }
+  return nodeDbPromise;
+}
+
+function requireD1() {
+  const db = getD1Database();
+  if (!db) {
+    throw new Error('D1 database not available');
+  }
+  return db;
+}
 
 async function resolveLocationFolder(locationId: unknown) {
   const useD1 = shouldUseD1Direct();
@@ -42,9 +62,22 @@ async function resolveLocationFolder(locationId: unknown) {
     };
   }
 
-  const location = useD1
-    ? await d1FindLocationById(locationId)
-    : await prisma.location.findUnique({ where: { id: locationId }, select: { id: true } });
+  if (useD1) {
+    const location = await d1FindLocationById(locationId);
+    if (!location) {
+      return {
+        locationFolderId: null,
+        error: NextResponse.json(
+          { error: 'invalid location', message: 'Location not found' },
+          { status: 400 },
+        ),
+      };
+    }
+    return { locationFolderId: location.id, error: null };
+  }
+
+  const { prisma } = await getNodeDb();
+  const location = await prisma.location.findUnique({ where: { id: locationId }, select: { id: true } });
   if (!location) {
     return {
       locationFolderId: null,
@@ -70,7 +103,9 @@ export async function POST(request: NextRequest) {
     //   );
     // }
 
-  const body = await parseRequestJsonSafe(request, {} as any);
+    const useD1 = shouldUseD1Direct();
+
+    const body = await parseRequestJsonSafe(request, {} as any);
     const {
       id,
       alt,
@@ -130,9 +165,10 @@ export async function POST(request: NextRequest) {
 
     // Check if asset already exists
     let existingAsset;
-    if (shouldUseD1Direct()) {
+    if (useD1) {
       existingAsset = await d1AssetExists(id);
     } else {
+      const { prisma } = await getNodeDb();
       existingAsset = await prisma.asset.findUnique({ where: { id } });
     }
 
@@ -171,7 +207,7 @@ export async function POST(request: NextRequest) {
 
     // Create new asset - use D1 direct in production
     let asset;
-    if (shouldUseD1Direct()) {
+    if (useD1) {
       asset = await d1CreateAsset({
         id,
         alt,
@@ -191,10 +227,18 @@ export async function POST(request: NextRequest) {
           action: 'create',
           meta: JSON.stringify({ id: asset.id }),
         });
+        await writeAudit({
+          timestamp: new Date().toISOString(),
+          who: 'system',
+          action: 'create',
+          entity: `asset/${asset.id}`,
+          payload: { id: asset.id },
+        });
       } catch (e) {
         console.error('Audit log failed:', e);
       }
     } else {
+      const { prisma, logAudit } = await getNodeDb();
       const createData: Record<string, any> = {
         id,
         alt,
@@ -316,6 +360,7 @@ export async function GET(request: NextRequest) {
       assets = result;
     } else {
       // Use Prisma in development
+      const { prisma } = await getNodeDb();
       const where: Record<string, any> = {};
       if (locationFilter) {
         where.location_folder_id = locationFilter;

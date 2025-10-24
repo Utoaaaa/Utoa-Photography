@@ -2,8 +2,84 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { revalidatePathsWithRetry, revalidateTagsWithRetry } from '@/lib/cache';
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
 import { parseRequestJsonSafe } from '@/lib/utils';
+import { shouldUseD1Direct } from '@/lib/d1-queries';
+import { getD1Database } from '@/lib/cloudflare';
+import { d1FindYearByIdentifier } from '@/lib/d1/location-service';
+
+type PrismaClient = import('@prisma/client').PrismaClient;
+
+let prismaPromise: Promise<PrismaClient> | null = null;
+
+async function getPrisma() {
+  if (!prismaPromise) {
+    prismaPromise = import('@/lib/db').then(({ prisma }) => prisma);
+  }
+  return prismaPromise;
+}
+
+function requireD1() {
+  const db = getD1Database();
+  if (!db) {
+    throw new Error('D1 database not available');
+  }
+  return db;
+}
+
+async function getYearById(yearId: string) {
+  if (shouldUseD1Direct()) {
+    const year = await d1FindYearByIdentifier(yearId);
+    if (!year) {
+      return null;
+    }
+    return {
+      label: year.label,
+    };
+  }
+  const prisma = await getPrisma();
+  return prisma.year.findUnique({
+    where: { id: yearId },
+    select: { label: true },
+  });
+}
+
+async function getCollectionWithYear(collectionId: string) {
+  if (shouldUseD1Direct()) {
+    const db = requireD1();
+    const row = await db.prepare(
+      `
+        SELECT
+          c.id,
+          c.slug,
+          c.year_id,
+          y.label AS year_label
+        FROM collections c
+        JOIN years y ON y.id = c.year_id
+        WHERE c.id = ?1
+        LIMIT 1
+      `,
+    ).bind(collectionId).first() as { id: string; slug: string; year_id: string; year_label: string } | null;
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      slug: row.slug,
+      year: {
+        label: row.year_label,
+      },
+    };
+  }
+
+  const prisma = await getPrisma();
+  return prisma.collection.findUnique({
+    where: { id: collectionId },
+    include: {
+      year: { select: { label: true } },
+    },
+  });
+}
 
 const revalidateSchema = z.object({
   tags: z.array(z.string()).optional(),
@@ -41,12 +117,9 @@ async function invalidatePreciseTargets(targets: {
   // Year page invalidation
   if (targets.year) {
     try {
-      const year = await prisma.year.findUnique({
-        where: { id: targets.year },
-        select: { label: true }
-      });
-      
-      if (year) {
+      const year = await getYearById(targets.year);
+
+      if (year?.label) {
         const yearPath = `/${year.label}`;
         revalidatePath(yearPath);
         revalidateTag(`years:${targets.year}`);
@@ -62,14 +135,9 @@ async function invalidatePreciseTargets(targets: {
   // Collection page invalidation
   if (targets.collection) {
     try {
-      const collection = await prisma.collection.findUnique({
-        where: { id: targets.collection },
-        include: {
-          year: { select: { label: true } }
-        }
-      });
-      
-      if (collection) {
+      const collection = await getCollectionWithYear(targets.collection);
+
+      if (collection?.year?.label && collection.slug) {
         const collectionPath = `/${collection.year.label}/${collection.slug}`;
         revalidatePath(collectionPath);
         revalidateTag(`collections:${targets.collection}`);
