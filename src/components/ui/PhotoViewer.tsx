@@ -421,7 +421,9 @@ export function PhotoViewer({
 
   useEffect(() => {
     // Preload adjacent images using helper
-    preloadImages.forEach((photo) => prefetchImage(photo.id, 'medium'));
+    preloadImages.forEach((photo) =>
+      prefetchImage(photo.id, 'medium', { metadata: photo.metadata_json })
+    );
   }, [preloadImages]);
 
   photoRefs.current.length = photos.length;
@@ -438,7 +440,9 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const imgSrc = cfConfigured ? getImageUrl(currentPhoto.id, 'original') : '/placeholder.svg';
+    const imgSrc = cfConfigured
+      ? getImageUrl(currentPhoto.id, 'original', { metadata: currentPhoto.metadata_json })
+      : '/placeholder.svg';
 
     return (
       <div 
@@ -458,7 +462,7 @@ export function PhotoViewer({
               key={p.id}
               rel="preload"
               as="image"
-              href={cfConfigured ? getImageUrl(p.id, 'large') : undefined}
+              href={cfConfigured ? getImageUrl(p.id, 'large', { metadata: p.metadata_json }) : undefined}
             />
           ))}
         </Head>
@@ -555,7 +559,7 @@ export function PhotoViewer({
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
                 {cloudflareConfigured ? (
                   <Image
-                    src={getImageUrl(photo.id, 'original')}
+                    src={getImageUrl(photo.id, 'original', { metadata: photo.metadata_json })}
                     alt={photo.alt}
                     width={photo.width}
                     height={photo.height}
@@ -622,7 +626,7 @@ export function PhotoViewer({
           <ul>
             {photos.map((p, i) => (
               <li key={p.id} className="mb-4">
-                <a href={getImageUrl(p.id, 'original')}>
+                <a href={getImageUrl(p.id, 'original', { metadata: p.metadata_json })}>
                   {collectionTitle} - Photo {i + 1}
                 </a>
               </li>

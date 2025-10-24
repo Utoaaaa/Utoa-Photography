@@ -46,7 +46,7 @@ describe('POST /api/assets Contract Tests', () => {
       id: 'test-asset-full',
       alt: 'Complete test asset with all fields',
       caption: 'This is a test asset with caption and metadata',
-      width: 2560,
+      width: 3840,
       height: 1440,
       metadata_json: {
         camera: 'Canon EOS R5',
@@ -74,7 +74,7 @@ describe('POST /api/assets Contract Tests', () => {
       id: 'test-asset-full',
       alt: 'Complete test asset with all fields',
       caption: 'This is a test asset with caption and metadata',
-      width: 2560,
+      width: 3840,
       height: 1440,
       metadata_json: {
         camera: 'Canon EOS R5',

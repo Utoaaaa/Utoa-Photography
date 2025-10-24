@@ -41,8 +41,10 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
 
   const posterImage = useMemo(() => {
     if (!location.coverAssetId) return null;
-    return getImageUrl(location.coverAssetId, 'cover');
-  }, [location.coverAssetId]);
+    return getImageUrl(location.coverAssetId, 'cover', {
+      version: location.coverAssetVariantVersion ?? undefined,
+    });
+  }, [location.coverAssetId, location.coverAssetVariantVersion]);
 
   const lastUpdated = useMemo(() => {
     return location.collections.reduce<string | null>((latest, collection) => {
@@ -79,7 +81,8 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
         className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white/85 shadow-sm transition-transform duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl focus-visible:-translate-y-2 focus-visible:shadow-2xl"
       >
         <div className="relative m-5 overflow-hidden rounded-[2rem]">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem]">
+          {/* Match container aspect with cover variant (1200x900 → 4:3) to avoid perceived zoom */}
+          <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem]">
             {posterImage ? (
               <Image
                 src={posterImage}

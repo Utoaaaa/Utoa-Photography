@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from './d1-queries';
 import { getD1Database } from './cloudflare';
+import { getVariantVersion } from './images';
 
 export interface LocationCollectionSummary {
   id: string;
@@ -11,6 +12,7 @@ export interface LocationCollectionSummary {
   coverAssetId: string | null;
   coverAssetWidth: number | null;
   coverAssetHeight: number | null;
+  coverAssetVariantVersion: string | null;
   orderIndex: string;
   publishedAt: string | null;
   updatedAt: string | null;
@@ -23,6 +25,7 @@ export interface LocationEntry {
   name: string;
   summary: string | null;
   coverAssetId: string | null;
+  coverAssetVariantVersion: string | null;
   orderIndex: string;
   collectionCount: number;
   collections: LocationCollectionSummary[];
@@ -106,6 +109,7 @@ function mapCollection(record: CollectionRecord): LocationCollectionSummary {
     coverAssetId: record.cover_asset_id ?? null,
     coverAssetWidth: coverAsset?.width ?? null,
     coverAssetHeight: coverAsset?.height ?? null,
+    coverAssetVariantVersion: null,
     orderIndex: record.order_index,
     publishedAt: record.published_at ? record.published_at.toISOString() : null,
     updatedAt: record.updated_at.toISOString(),
@@ -121,6 +125,7 @@ function mapLocation(record: LocationRecord): LocationEntry {
     name: record.name,
     summary: record.summary ?? null,
     coverAssetId: record.cover_asset_id ?? null,
+    coverAssetVariantVersion: null,
     orderIndex: record.order_index,
     collectionCount: collections.length,
     collections,
@@ -279,6 +284,7 @@ async function fetchCollectionsForLocationD1(
     coverAssetId: row.cover_asset_id ?? null,
     coverAssetWidth: row.cover_asset_width != null ? Number(row.cover_asset_width) : null,
     coverAssetHeight: row.cover_asset_height != null ? Number(row.cover_asset_height) : null,
+    coverAssetVariantVersion: null,
     orderIndex: String(row.order_index),
     publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
@@ -308,17 +314,77 @@ async function fetchLocationsForYearD1(
       yearId: String(row.year_id),
       slug: String(row.slug),
       name: String(row.name),
-      summary: row.summary ?? null,
-      coverAssetId: row.cover_asset_id ?? null,
-      orderIndex: String(row.order_index),
-      collectionCount: collections.length,
-      collections,
-    });
+    summary: row.summary ?? null,
+    coverAssetId: row.cover_asset_id ?? null,
+    coverAssetVariantVersion: null,
+    orderIndex: String(row.order_index),
+    collectionCount: collections.length,
+    collections,
+  });
   }
   return locations;
 }
 
 type D1Database = ReturnType<typeof getD1Database>;
+
+async function enrichVariantVersions(years: YearEntry[]): Promise<void> {
+  if (years.length === 0) return;
+  const assetIds = new Set<string>();
+  years.forEach((year) => {
+    year.locations.forEach((location) => {
+      if (location.coverAssetId) assetIds.add(location.coverAssetId);
+      location.collections.forEach((collection) => {
+        if (collection.coverAssetId) assetIds.add(collection.coverAssetId);
+      });
+    });
+  });
+
+  if (assetIds.size === 0) return;
+
+  const idList = Array.from(assetIds);
+  const metadataLookup: Record<string, unknown> = {};
+
+  if (shouldUseD1Direct()) {
+    const db = requireD1();
+    const chunkSize = 50;
+    for (let offset = 0; offset < idList.length; offset += chunkSize) {
+      const chunk = idList.slice(offset, offset + chunkSize);
+      if (chunk.length === 0) continue;
+      const placeholders = chunk.map(() => '?').join(',');
+      const result = await db.prepare(
+        `SELECT id, metadata_json FROM assets WHERE id IN (${placeholders})`
+      ).bind(...chunk).all();
+      const rows = (result.results ?? []) as Array<{ id: string; metadata_json: string | null }>;
+      rows.forEach((row) => {
+        metadataLookup[String(row.id)] = row.metadata_json ?? null;
+      });
+    }
+  } else {
+    const prisma = await getPrisma();
+    const assets = await prisma.asset.findMany({
+      where: { id: { in: idList } },
+      select: { id: true, metadata_json: true },
+    });
+    assets.forEach((asset) => {
+      metadataLookup[asset.id] = asset.metadata_json ?? null;
+    });
+  }
+
+  years.forEach((year) => {
+    year.locations.forEach((location) => {
+      if (location.coverAssetId) {
+        const version = getVariantVersion(metadataLookup[location.coverAssetId], 'cover');
+        location.coverAssetVariantVersion = version ?? null;
+      }
+      location.collections.forEach((collection) => {
+        if (collection.coverAssetId) {
+          const version = getVariantVersion(metadataLookup[collection.coverAssetId], 'cover');
+          collection.coverAssetVariantVersion = version ?? null;
+        }
+      });
+    });
+  });
+}
 
 async function fetchYearsD1(): Promise<YearEntry[]> {
   const db = requireD1();
@@ -345,6 +411,7 @@ async function fetchYearsD1(): Promise<YearEntry[]> {
     });
   }
 
+  await enrichVariantVersions(entries);
   return entries;
 }
 
@@ -364,13 +431,15 @@ async function fetchYearByLabelD1(label: string): Promise<YearEntry | null> {
   }
 
   const locations = await fetchLocationsForYearD1(db, String(year.id));
-  return {
+  const entry: YearEntry = {
     id: String(year.id),
     label: String(year.label),
     orderIndex: String(year.order_index),
     status: String(year.status),
     locations,
   };
+  await enrichVariantVersions([entry]);
+  return entry;
 }
 
 async function fetchLocationBySlugD1(
@@ -400,9 +469,11 @@ export async function loadYearLocationData(): Promise<YearLocationPayload> {
   }
 
   const years = await fetchYears({ status: 'published' });
+  const mapped = years.map(mapYear);
+  await enrichVariantVersions(mapped);
   return {
     generatedAt: new Date().toISOString(),
-    years: years.map(mapYear),
+    years: mapped,
   };
 }
 
@@ -416,7 +487,10 @@ export async function getYearByLabel(label: string): Promise<YearEntry | null> {
   }
 
   const year = await fetchSingleYear({ label, status: 'published' });
-  return year ? mapYear(year) : null;
+  if (!year) return null;
+  const mapped = mapYear(year);
+  await enrichVariantVersions([mapped]);
+  return mapped;
 }
 
 export async function getLocationByYearAndSlug(
@@ -437,6 +511,7 @@ export async function getLocationByYearAndSlug(
   }
 
   const mappedYear = mapYear(year);
+  await enrichVariantVersions([mappedYear]);
   const location = mappedYear.locations.find((entry) => entry.slug === slug);
   if (!location) {
     return null;

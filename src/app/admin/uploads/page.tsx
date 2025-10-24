@@ -11,6 +11,7 @@ interface Asset {
   caption?: string | null;
   width: number;
   height: number;
+  metadata_json?: unknown;
   location_folder_id?: string | null;
   location_folder_name?: string | null;
   location_folder_year_id?: string | null;
@@ -51,6 +52,7 @@ const isAssetArray = (value: unknown): value is Asset[] =>
     const locationFolderName = (item as Asset).location_folder_name;
     const locationFolderYearId = (item as Asset).location_folder_year_id;
     const locationFolderYearLabel = (item as Asset).location_folder_year_label;
+    const metadataJson = (item as Asset).metadata_json;
     return (
       typeof id === 'string' &&
       typeof alt === 'string' &&
@@ -60,7 +62,8 @@ const isAssetArray = (value: unknown): value is Asset[] =>
       (locationFolderId === undefined || locationFolderId === null || typeof locationFolderId === 'string') &&
       (locationFolderName === undefined || locationFolderName === null || typeof locationFolderName === 'string') &&
       (locationFolderYearId === undefined || locationFolderYearId === null || typeof locationFolderYearId === 'string') &&
-      (locationFolderYearLabel === undefined || locationFolderYearLabel === null || typeof locationFolderYearLabel === 'string')
+      (locationFolderYearLabel === undefined || locationFolderYearLabel === null || typeof locationFolderYearLabel === 'string') &&
+      (metadataJson === undefined || metadataJson === null || typeof metadataJson === 'string' || typeof metadataJson === 'object')
     );
   });
 
@@ -437,6 +440,7 @@ export default function AdminUploadsPage() {
         try {
           // Upload to R2 via same-origin API
           let imageId = `test-uploaded-image-id-${Date.now()}-${index}`;
+          let variantVersions: Record<string, string> = {};
           if (currentFile) {
             // 1) Upload original
             const fd = new FormData();
@@ -448,82 +452,7 @@ export default function AdminUploadsPage() {
 
             // 2) Generate and upload variants client-side (small/medium/large + thumb/cover/og/blur)
             try {
-              const imgBitmap = await createImageBitmap(currentFile);
-              const tasks: Array<Promise<void>> = [];
-              const pushUpload = async (blob: Blob, variant: string) => {
-                const vfd = new FormData();
-                const fname = `${variant}.webp`;
-                vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
-                const res = await fetch(`/api/admin/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
-                if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
-              };
-
-              const scaleContain = async (targetW: number) => {
-                const ratio = imgBitmap.width / imgBitmap.height;
-                const w = Math.min(targetW, imgBitmap.width);
-                const h = Math.round(w / ratio);
-                const canvas = document.createElement('canvas');
-                canvas.width = w; canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return null;
-                ctx.drawImage(imgBitmap, 0, 0, w, h);
-                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
-                return blob;
-              };
-
-              const coverCrop = async (targetW: number, targetH: number) => {
-                const srcW = imgBitmap.width;
-                const srcH = imgBitmap.height;
-                const srcRatio = srcW / srcH;
-                const dstRatio = targetW / targetH;
-                let sw = srcW;
-                let sh = srcH;
-                let sx = 0;
-                let sy = 0;
-                if (srcRatio > dstRatio) {
-                  const desiredWidth = Math.round(srcH * dstRatio);
-                  sw = Math.min(desiredWidth, srcW);
-                  sx = Math.floor((srcW - sw) / 2);
-                } else {
-                  const desiredHeight = Math.round(srcW / dstRatio);
-                  sh = Math.min(desiredHeight, srcH);
-                  sy = Math.floor((srcH - sh) / 2);
-                }
-                const scale = Math.min(targetW / sw, targetH / sh, 1);
-                const destW = Math.max(1, Math.round(sw * scale));
-                const destH = Math.max(1, Math.round(sh * scale));
-                const canvas = document.createElement('canvas');
-                canvas.width = destW;
-                canvas.height = destH;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return null;
-                ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, destW, destH);
-                const blob = await new Promise<Blob | null>((resolve) =>
-                  canvas.toBlob((b) => resolve(b), 'image/webp', 0.86),
-                );
-                return blob;
-              };
-
-              const blurThumb = async () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 40; canvas.height = 40;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return null;
-                // simple downscale for blur placeholder
-                ctx.drawImage(imgBitmap, 0, 0, 40, 40);
-                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.3));
-                return blob;
-              };
-
-              const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
-              const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
-              const l = await scaleContain(2560); if (l) tasks.push(pushUpload(l, 'large'));
-              const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
-              const c = await coverCrop(1200, 900); if (c) tasks.push(pushUpload(c, 'cover'));
-              const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
-              const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
-
-              await Promise.allSettled(tasks);
+              variantVersions = await generateAndUploadVariants(imageId, currentFile);
             } catch (e) {
               console.warn('[admin/uploads] variant generation failed', e);
             }
@@ -562,6 +491,9 @@ export default function AdminUploadsPage() {
           if (!create.ok) {
             throw new Error('Asset creation failed');
           }
+          if (Object.keys(variantVersions).length > 0) {
+            await persistVariantVersions(assetId, variantVersions);
+          }
           successCount += 1;
         } catch (error) {
           if (currentFile) {
@@ -591,16 +523,34 @@ export default function AdminUploadsPage() {
     }
   }
 
-  async function generateAndUploadVariants(imageId: string, file: Blob) {
+  async function generateAndUploadVariants(imageId: string, file: Blob): Promise<Record<string, string>> {
+    const uploadedVersions: Record<string, string> = {};
     try {
       const imgBitmap = await createImageBitmap(file);
       const tasks: Array<Promise<void>> = [];
+      const variantsInOrder: string[] = [];
+      const baseVersion = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+
+      const buildVersion = (variant: string) => {
+        const sanitized = variant.replace(/[^a-zA-Z0-9_-]/g, '') || 'variant';
+        return `${baseVersion}-${sanitized}`;
+      };
+
       const pushUpload = async (blob: Blob, variant: string) => {
+        const version = buildVersion(variant);
         const vfd = new FormData();
-        const fname = `${variant}.webp`;
+        const fname = `${variant}-v${version}.webp`;
         vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
-        const res = await fetch(`/api/admin/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
-        if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
+        const params = new URLSearchParams({
+          variant,
+          image_id: imageId,
+          version,
+        });
+        const res = await fetch(`/api/admin/uploads/r2?${params.toString()}`, { method: 'POST', body: vfd });
+        if (!res.ok) {
+          throw new Error(`Variant upload failed: ${variant}`);
+        }
+        uploadedVersions[variant] = version;
       };
 
       const scaleContain = async (targetW: number) => {
@@ -664,17 +614,79 @@ export default function AdminUploadsPage() {
         return blob;
       };
 
-      const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
-      const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
-      const l = await scaleContain(2560); if (l) tasks.push(pushUpload(l, 'large'));
-      const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
-      const c = await coverCrop(1200, 900); if (c) tasks.push(pushUpload(c, 'cover'));
-      const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
-      const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
+      const s = await scaleContain(600); if (s) { variantsInOrder.push('small'); tasks.push(pushUpload(s, 'small')); }
+      const m = await scaleContain(1200); if (m) { variantsInOrder.push('medium'); tasks.push(pushUpload(m, 'medium')); }
+      const l = await scaleContain(3840); if (l) { variantsInOrder.push('large'); tasks.push(pushUpload(l, 'large')); }
+      const t = await coverCrop(300, 300); if (t) { variantsInOrder.push('thumb'); tasks.push(pushUpload(t, 'thumb')); }
+      const c = await coverCrop(1200, 900); if (c) { variantsInOrder.push('cover'); tasks.push(pushUpload(c, 'cover')); }
+      const og = await coverCrop(1200, 630); if (og) { variantsInOrder.push('og'); tasks.push(pushUpload(og, 'og')); }
+      const bl = await blurThumb(); if (bl) { variantsInOrder.push('blur'); tasks.push(pushUpload(bl, 'blur')); }
 
-      await Promise.allSettled(tasks);
+      const results = await Promise.allSettled(tasks);
+      results.forEach((result, index) => {
+        if (result.status !== 'fulfilled') {
+          const variant = variantsInOrder[index];
+          if (variant) {
+            delete uploadedVersions[variant];
+          }
+        }
+      });
     } catch (e) {
       console.warn('[admin/uploads] generateAndUploadVariants failed', e);
+    }
+    return uploadedVersions;
+  }
+
+  type AssetDetail = {
+    id?: string;
+    metadata_json?: unknown;
+  };
+
+  const isAssetDetail = (value: unknown): value is AssetDetail =>
+    !!value && typeof value === 'object';
+
+  async function persistVariantVersions(imageId: string, versions: Record<string, string>) {
+    if (!versions || Object.keys(versions).length === 0) return;
+    try {
+      const detailRes = await fetch(`/api/admin/assets/${encodeURIComponent(imageId)}`, { cache: 'no-store' });
+      if (!detailRes.ok) return;
+      const detail = await safeJson<AssetDetail>(detailRes, {} as AssetDetail, isAssetDetail);
+      const existingMetadata = detail.metadata_json;
+      let metadata: Record<string, unknown> = {};
+
+      if (existingMetadata) {
+        if (typeof existingMetadata === 'string') {
+          try {
+            const parsed = JSON.parse(existingMetadata);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              metadata = { ...parsed };
+            }
+          } catch {
+            metadata = {};
+          }
+        } else if (typeof existingMetadata === 'object' && !Array.isArray(existingMetadata)) {
+          metadata = { ...(existingMetadata as Record<string, unknown>) };
+        }
+      }
+
+      const VARIANT_KEY = 'variant_versions';
+      const currentVersions = metadata[VARIANT_KEY];
+      const variantMap = (currentVersions && typeof currentVersions === 'object' && !Array.isArray(currentVersions))
+        ? { ...(currentVersions as Record<string, string>) }
+        : {};
+
+      for (const [variant, version] of Object.entries(versions)) {
+        variantMap[variant] = version;
+      }
+      metadata[VARIANT_KEY] = variantMap;
+
+      await fetch(`/api/admin/assets/${encodeURIComponent(imageId)}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ metadata_json: metadata }),
+      });
+    } catch (error) {
+      console.warn('[admin/uploads] failed to persist variant versions', error);
     }
   }
 
@@ -694,7 +706,10 @@ export default function AdminUploadsPage() {
           }
           if (!res.ok) throw new Error('fetch original/large failed');
           const blob = await res.blob();
-          await generateAndUploadVariants(id, blob);
+          const variants = await generateAndUploadVariants(id, blob);
+          if (Object.keys(variants).length > 0) {
+            await persistVariantVersions(id, variants);
+          }
         } catch (e) {
           console.warn('[admin/uploads] regenerate failed for', id, e);
         }
@@ -1089,7 +1104,7 @@ export default function AdminUploadsPage() {
               const locationLabel = asset.location_folder_name
                 ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
                 : '未指派地點';
-              const previewSrc = getImageUrl(asset.id, 'thumb');
+              const previewSrc = getImageUrl(asset.id, 'thumb', { metadata: asset.metadata_json });
               const previewAlt = asset.alt || '素材預覽圖';
               const vs = variantStatus[asset.id] || {};
 

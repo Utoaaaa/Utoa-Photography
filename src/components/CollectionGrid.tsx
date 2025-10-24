@@ -84,8 +84,10 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
 
   const coverImageSrc = useMemo(() => {
     if (!collection.coverAssetId) return null;
-    return getImageUrl(collection.coverAssetId, 'cover');
-  }, [collection.coverAssetId]);
+    return getImageUrl(collection.coverAssetId, 'cover', {
+      version: collection.coverAssetVariantVersion ?? undefined,
+    });
+  }, [collection.coverAssetId, collection.coverAssetVariantVersion]);
 
   const coverOrientation = useMemo<'portrait' | 'landscape'>(() => {
     const width = collection.coverAssetWidth ?? null;
@@ -97,7 +99,8 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
   const imageWrapperClass = useMemo(
     () =>
       clsx(
-        'relative aspect-[3/4] overflow-hidden rounded-[2rem]',
+        // Use 4:3 container so portrait images fill width and crop top/bottom; landscape will crop sides if wider.
+        'relative aspect-[4/3] overflow-hidden rounded-[2rem]',
         coverOrientation === 'portrait'
           ? 'bg-white/80 dark:bg-gray-900/50'
           : undefined,
@@ -105,7 +108,8 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
     [coverOrientation],
   );
 
-  const imageClass = coverOrientation === 'portrait' ? 'object-contain object-center' : 'object-cover object-center';
+  // Always cover: portrait fills width (crop top/bottom), landscape fills height (crop sides), centered.
+  const imageClass = 'object-cover object-center';
 
   const formattedDate = useMemo(() => formatCollectionDate(collection), [collection]);
 

@@ -6,7 +6,7 @@ export const IMAGE_VARIANTS = {
   
   // Display variants
   medium: 'medium', // 1200px (longest edge)
-  large: 'large', // 2560px (longest edge)
+  large: 'large', // 3840px (longest edge)
   
   // Special variants
   cover: 'cover', // 1200x900 for collection covers
@@ -18,11 +18,72 @@ export const IMAGE_VARIANTS = {
 export type ImageVariant = keyof typeof IMAGE_VARIANTS;
 
 const FALLBACK_PLACEHOLDER = '/placeholder.svg';
+const VARIANT_VERSION_KEY = 'variant_versions';
+const VERSION_PATTERN = /^[a-zA-Z0-9_-]+$/;
 
-export function getImageUrl(imageId: string, variant: ImageVariant = 'medium'): string {
+type VariantVersionMap = Partial<Record<ImageVariant | string, unknown>>;
+
+function parseMetadata(metadata: unknown): Record<string, unknown> | null {
+  if (!metadata) return null;
+  if (typeof metadata === 'string') {
+    try {
+      const parsed = JSON.parse(metadata);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return null;
+    }
+  } else if (typeof metadata === 'object' && !Array.isArray(metadata)) {
+    return metadata as Record<string, unknown>;
+  }
+  return null;
+}
+
+function normalizeVersion(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!VERSION_PATTERN.test(trimmed)) return null;
+  return trimmed;
+}
+
+export function getVariantVersion(metadata: unknown, variant: ImageVariant): string | null {
+  const parsed = parseMetadata(metadata);
+  if (!parsed) return null;
+  const versions = parsed[VARIANT_VERSION_KEY];
+  if (!versions || typeof versions !== 'object' || Array.isArray(versions)) return null;
+  const map = versions as VariantVersionMap;
+  const value = map[variant];
+  return normalizeVersion(value);
+}
+
+function mergeVariantVersion(
+  metadata: unknown,
+  variant: ImageVariant,
+  version?: string | null
+): string | null {
+  if (version) {
+    return normalizeVersion(version);
+  }
+  return getVariantVersion(metadata, variant);
+}
+
+export interface GetImageUrlOptions {
+  version?: string | null;
+  metadata?: unknown;
+}
+
+export function getImageUrl(
+  imageId: string,
+  variant: ImageVariant = 'medium',
+  options?: GetImageUrlOptions
+): string {
   if (!imageId) return FALLBACK_PLACEHOLDER;
+  const resolvedVariant = IMAGE_VARIANTS[variant];
+  const version = mergeVariantVersion(options?.metadata, variant, options?.version);
+  const variantPath = version ? `${resolvedVariant}-v${version}` : resolvedVariant;
   // Served via Worker route backed by R2 bucket
-  return `/images/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}`;
+  return `/images/${encodeURIComponent(imageId)}/${variantPath}`;
 }
 
 // Next.js <Image> custom loader for Cloudflare Images named variants
@@ -50,7 +111,7 @@ export function getResponsiveSizes(variant: ImageVariant): string {
     case 'medium':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px';
     case 'large':
-      return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 2560px';
+      return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 3840px';
     case 'cover':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px';
     case 'og':
@@ -64,12 +125,12 @@ export function getResponsiveSizes(variant: ImageVariant): string {
   }
 }
 
-export function generateSrcSet(imageId: string): string {
+export function generateSrcSet(imageId: string, metadata?: unknown): string {
   if (!imageId) return '';
   return [
-    `${getImageUrl(imageId, 'small')} 600w`,
-    `${getImageUrl(imageId, 'medium')} 1200w`,
-    `${getImageUrl(imageId, 'large')} 1920w`,
+    `${getImageUrl(imageId, 'small', { metadata })} 600w`,
+    `${getImageUrl(imageId, 'medium', { metadata })} 1200w`,
+    `${getImageUrl(imageId, 'large', { metadata })} 3840w`,
   ].join(', ');
 }
 
@@ -93,7 +154,7 @@ export function getImageDimensions(variant: ImageVariant): { width: number; heig
     case 'medium':
       return { width: 1200, height: 1200 };
     case 'large':
-      return { width: 2560, height: 2560 };
+      return { width: 3840, height: 3840 };
     case 'cover':
       return { width: 1200, height: 900 };
     case 'og':
@@ -137,18 +198,26 @@ export function getOptimalImageSize(
 }
 
 // Performance utilities
-export function prefetchImage(imageId: string, variant: ImageVariant = 'medium'): void {
+export function prefetchImage(
+  imageId: string,
+  variant: ImageVariant = 'medium',
+  options?: GetImageUrlOptions
+): void {
   if (typeof window !== 'undefined') {
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
-    link.href = getImageUrl(imageId, variant);
+    link.href = getImageUrl(imageId, variant, options);
     document.head.appendChild(link);
   }
 }
 
-export function preloadCriticalImages(imageIds: string[], variant: ImageVariant = 'medium'): void {
-  imageIds.slice(0, 3).forEach(id => prefetchImage(id, variant));
+export function preloadCriticalImages(
+  imageIds: string[],
+  variant: ImageVariant = 'medium',
+  optionsProvider?: (imageId: string) => GetImageUrlOptions | undefined
+): void {
+  imageIds.slice(0, 3).forEach(id => prefetchImage(id, variant, optionsProvider?.(id)));
 }
 
 export function isCloudflareConfigured(): boolean {

@@ -9,6 +9,7 @@ interface Asset {
   alt?: string | null;
   caption?: string | null;
   used?: boolean;
+  metadata_json?: unknown;
   location_folder_id?: string | null;
   location_folder_name?: string | null;
   location_folder_year_label?: string | null;
@@ -19,6 +20,7 @@ type CollectionAsset = {
   alt?: string | null;
   caption?: string | null;
   order_index: string;
+  metadata_json?: unknown;
 };
 
 type CollectionWithAssets = {
@@ -41,6 +43,7 @@ const isAssetArray = (value: unknown): value is Asset[] =>
       (typeof alt === 'string' || alt === null || typeof alt === 'undefined') &&
       (typeof caption === 'string' || caption === null || typeof caption === 'undefined') &&
       (typeof used === 'boolean' || typeof used === 'undefined') &&
+      ((item as Asset).metadata_json === undefined || (item as Asset).metadata_json === null || typeof (item as Asset).metadata_json === 'string' || typeof (item as Asset).metadata_json === 'object') &&
       (locationFolderId === undefined || locationFolderId === null || typeof locationFolderId === 'string') &&
       (locationFolderName === undefined || locationFolderName === null || typeof locationFolderName === 'string') &&
       (locationFolderYearLabel === undefined || locationFolderYearLabel === null || typeof locationFolderYearLabel === 'string')
@@ -376,7 +379,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
             const locationLabel = asset.location_folder_name
               ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
               : '未指派地點';
-            const previewSrc = getImageUrl(asset.id, 'thumb');
+            const previewSrc = getImageUrl(asset.id, 'thumb', { metadata: asset.metadata_json });
             const previewAlt = asset.alt || 'Asset preview';
             return (
               <button
@@ -422,7 +425,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
           {collectionAssets.map((asset, index) => {
             const isFirst = index === 0;
             const isLast = index === collectionAssets.length - 1;
-            const previewSrc = getImageUrl(asset.id, 'thumb');
+            const previewSrc = getImageUrl(asset.id, 'thumb', { metadata: asset.metadata_json });
             const previewAlt = asset.alt || 'Collection asset preview';
             const orderNumber = index + 1;
             return (
