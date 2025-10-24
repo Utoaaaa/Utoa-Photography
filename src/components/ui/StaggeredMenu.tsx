@@ -75,6 +75,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
   const itemEntranceTweenRef = useRef<gsap.core.Tween | null>(null);
   const innerWrapRef = useRef<HTMLSpanElement | null>(null);
+  const pendingNavigationRef = useRef(false);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -394,9 +395,20 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
       body.style.width = prevState.bodyWidth;
       body.style.overflow = prevState.bodyOverflow;
       docEl.style.overflow = prevState.docOverflow;
-      window.scrollTo(0, scrollY);
+      if (!pendingNavigationRef.current) {
+        window.scrollTo(0, scrollY);
+      } else {
+        pendingNavigationRef.current = false;
+      }
     };
   }, [open]);
+
+  const handleMenuItemClick = useCallback(() => {
+    pendingNavigationRef.current = true;
+    if (openRef.current) {
+      toggleMenu();
+    }
+  }, [toggleMenu]);
 
   React.useEffect(() => {
     // Let the panel use native scrolling for best performance.
@@ -530,6 +542,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                       href={it.link}
                       aria-label={it.ariaLabel}
                       data-index={idx + 1}
+                      onClick={handleMenuItemClick}
                     >
                       <span className="sm-panel-itemLabel inline-block [transform-origin:50%_100%] will-change-transform">
                         {it.label}
@@ -564,6 +577,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="sm-socials-link text-base font-light text-gray-700 no-underline relative inline-block transition-colors duration-300 ease-out hover:text-gray-900"
+                        onClick={handleMenuItemClick}
                       >
                         {s.label}
                       </a>

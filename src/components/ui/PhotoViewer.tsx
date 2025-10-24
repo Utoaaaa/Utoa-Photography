@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
-import { cloudflareImageLoader, getImageUrl, prefetchImage, isCloudflareConfigured } from '@/lib/images';
+import { getImageUrl, prefetchImage, isCloudflareConfigured } from '@/lib/images';
 import { DotNavigation } from './DotNavigation';
 
 type Asset = {
@@ -438,7 +438,7 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const imgSrc = cfConfigured ? currentPhoto.id : '/placeholder.svg';
+    const imgSrc = cfConfigured ? getImageUrl(currentPhoto.id, 'large') : '/placeholder.svg';
 
     return (
       <div 
@@ -472,8 +472,7 @@ export function PhotoViewer({
           <div className="relative max-w-full max-h-full" data-testid="current-photo" id={`photo-${activePhotoIndex + 1}`}>
             {cfConfigured ? (
               <Image
-                loader={cloudflareImageLoader}
-                src={currentPhoto.id}
+                src={imgSrc}
                 alt={currentPhoto.alt}
                 width={currentPhoto.width}
                 height={currentPhoto.height}
@@ -481,6 +480,7 @@ export function PhotoViewer({
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
                 priority={activePhotoIndex === 0}
                 fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
+                unoptimized
               />
             ) : (
               <img
@@ -555,8 +555,7 @@ export function PhotoViewer({
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
                 {cloudflareConfigured ? (
                   <Image
-                    loader={cloudflareImageLoader}
-                    src={photo.id}
+                    src={getImageUrl(photo.id, 'large')}
                     alt={photo.alt}
                     width={photo.width}
                     height={photo.height}
@@ -565,6 +564,7 @@ export function PhotoViewer({
                     priority={index === 0}
                     fetchPriority={index === 0 ? 'high' : 'auto'}
                     onLoadingComplete={() => handlePhotoLoad(index)}
+                    unoptimized
                   />
                 ) : (
                   <img

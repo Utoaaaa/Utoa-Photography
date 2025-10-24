@@ -16,6 +16,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant">
+      <head>
+        {/* Preload self-hosted CJK serif fonts for faster first paint */}
+        <link
+          rel="preload"
+          as="font"
+          href="/fonts/noto-serif-tc/NotoSerifTC-Regular.ttf"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="font"
+          href="/fonts/noto-serif-tc/NotoSerifTC-SemiBold.ttf"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body
         className={`antialiased`}
         style={{ overscrollBehaviorX: 'auto' }}
