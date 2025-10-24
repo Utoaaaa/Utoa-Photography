@@ -8,6 +8,8 @@ interface LocationCollectionSummary {
   slug: string;
   title: string;
   summary: string | null;
+  coverAssetWidth: number | null;
+  coverAssetHeight: number | null;
   coverAssetId: string | null;
   orderIndex: string;
   publishedAt: string | null;

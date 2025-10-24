@@ -9,6 +9,8 @@ export interface LocationCollectionSummary {
   title: string;
   summary: string | null;
   coverAssetId: string | null;
+  coverAssetWidth: number | null;
+  coverAssetHeight: number | null;
   orderIndex: string;
   publishedAt: string | null;
   updatedAt: string | null;
@@ -48,6 +50,10 @@ type CollectionRecord = {
   order_index: string;
   published_at: Date | null;
   updated_at: Date;
+  cover_asset?: {
+    width: number | null;
+    height: number | null;
+  } | null;
 };
 
 type LocationRecord = {
@@ -91,12 +97,15 @@ function requireD1() {
 }
 
 function mapCollection(record: CollectionRecord): LocationCollectionSummary {
+  const coverAsset = record.cover_asset ?? null;
   return {
     id: record.id,
     slug: record.slug,
     title: record.title,
     summary: record.summary ?? null,
     coverAssetId: record.cover_asset_id ?? null,
+    coverAssetWidth: coverAsset?.width ?? null,
+    coverAssetHeight: coverAsset?.height ?? null,
     orderIndex: record.order_index,
     publishedAt: record.published_at ? record.published_at.toISOString() : null,
     updatedAt: record.updated_at.toISOString(),
@@ -147,6 +156,12 @@ async function fetchYears(where: YearWhereInput): Promise<YearRecord[]> {
               title: true,
               summary: true,
               cover_asset_id: true,
+              cover_asset: {
+                select: {
+                  width: true,
+                  height: true,
+                },
+              },
               order_index: true,
               published_at: true,
               updated_at: true,
@@ -178,6 +193,12 @@ async function fetchSingleYear(where: YearWhereInput): Promise<YearRecord | null
               title: true,
               summary: true,
               cover_asset_id: true,
+              cover_asset: {
+                select: {
+                  width: true,
+                  height: true,
+                },
+              },
               order_index: true,
               published_at: true,
               updated_at: true,
@@ -218,6 +239,8 @@ type D1CollectionRow = {
   title: string;
   summary: string | null;
   cover_asset_id: string | null;
+  cover_asset_width: number | null;
+  cover_asset_height: number | null;
   order_index: string;
   published_at: string | null;
   updated_at: string | null;
@@ -229,9 +252,20 @@ async function fetchCollectionsForLocationD1(
 ): Promise<LocationCollectionSummary[]> {
   const result = await db.prepare(
     `
-      SELECT id, slug, title, summary, cover_asset_id, order_index, published_at, updated_at
-      FROM collections
-      WHERE location_id = ?1 AND status = 'published'
+      SELECT
+        c.id,
+        c.slug,
+        c.title,
+        c.summary,
+        c.cover_asset_id,
+        a.width AS cover_asset_width,
+        a.height AS cover_asset_height,
+        c.order_index,
+        c.published_at,
+        c.updated_at
+      FROM collections c
+      LEFT JOIN assets a ON a.id = c.cover_asset_id
+      WHERE c.location_id = ?1 AND c.status = 'published'
       ORDER BY order_index ASC
     `,
   ).bind(locationId).all();
@@ -243,6 +277,8 @@ async function fetchCollectionsForLocationD1(
     title: String(row.title),
     summary: row.summary ?? null,
     coverAssetId: row.cover_asset_id ?? null,
+    coverAssetWidth: row.cover_asset_width != null ? Number(row.cover_asset_width) : null,
+    coverAssetHeight: row.cover_asset_height != null ? Number(row.cover_asset_height) : null,
     orderIndex: String(row.order_index),
     publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),

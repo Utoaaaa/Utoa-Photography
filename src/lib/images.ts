@@ -12,6 +12,7 @@ export const IMAGE_VARIANTS = {
   cover: 'cover', // 1200x900 for collection covers
   og: 'og', // 1200x630 for Open Graph
   blur: 'blur', // Low quality placeholder
+  original: 'original', // Original upload
 } as const;
 
 export type ImageVariant = keyof typeof IMAGE_VARIANTS;
@@ -56,6 +57,8 @@ export function getResponsiveSizes(variant: ImageVariant): string {
       return '1200px';
     case 'blur':
       return '40px';
+    case 'original':
+      return '100vw';
     default:
       return '100vw';
   }
@@ -97,6 +100,8 @@ export function getImageDimensions(variant: ImageVariant): { width: number; heig
       return { width: 1200, height: 630 };
     case 'blur':
       return { width: 40, height: 40 };
+    case 'original':
+      return { width: 4096, height: 4096 };
     default:
       return { width: 1200, height: 1200 };
   }

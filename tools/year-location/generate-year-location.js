@@ -37,6 +37,8 @@ function mapCollection(collection) {
     title: collection.title,
     summary: collection.summary ?? null,
     coverAssetId: collection.cover_asset_id ?? null,
+    coverAssetWidth: collection.cover_asset?.width ?? null,
+    coverAssetHeight: collection.cover_asset?.height ?? null,
     orderIndex: collection.order_index,
     publishedAt: collection.published_at ? collection.published_at.toISOString() : null,
     updatedAt: collection.updated_at.toISOString(),
@@ -86,6 +88,12 @@ async function fetchYearLocationData() {
               title: true,
               summary: true,
               cover_asset_id: true,
+              cover_asset: {
+                select: {
+                  width: true,
+                  height: true,
+                },
+              },
               order_index: true,
               published_at: true,
               updated_at: true,

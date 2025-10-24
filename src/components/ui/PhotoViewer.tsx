@@ -438,7 +438,7 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const imgSrc = cfConfigured ? getImageUrl(currentPhoto.id, 'large') : '/placeholder.svg';
+    const imgSrc = cfConfigured ? getImageUrl(currentPhoto.id, 'original') : '/placeholder.svg';
 
     return (
       <div 
@@ -477,7 +477,7 @@ export function PhotoViewer({
                 width={currentPhoto.width}
                 height={currentPhoto.height}
                 className="max-w-full max-h-screen object-contain"
-                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
+                sizes="100vw"
                 priority={activePhotoIndex === 0}
                 fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
                 unoptimized
@@ -555,12 +555,12 @@ export function PhotoViewer({
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
                 {cloudflareConfigured ? (
                   <Image
-                    src={getImageUrl(photo.id, 'large')}
+                    src={getImageUrl(photo.id, 'original')}
                     alt={photo.alt}
                     width={photo.width}
                     height={photo.height}
                     className="mx-auto h-auto max-h-[92vh] w-auto max-w-[92vw] object-contain"
-                    sizes="(max-width: 768px) 95vw, (max-width: 1280px) 88vw, 1280px"
+                    sizes="100vw"
                     priority={index === 0}
                     fetchPriority={index === 0 ? 'high' : 'auto'}
                     onLoadingComplete={() => handlePhotoLoad(index)}
@@ -622,7 +622,7 @@ export function PhotoViewer({
           <ul>
             {photos.map((p, i) => (
               <li key={p.id} className="mb-4">
-                <a href={getImageUrl(p.id, 'large')}>
+                <a href={getImageUrl(p.id, 'original')}>
                   {collectionTitle} - Photo {i + 1}
                 </a>
               </li>

@@ -9,6 +9,8 @@ interface LocationCollectionSummary {
   slug: string;
   title: string;
   summary: string | null;
+  coverAssetWidth: number | null;
+  coverAssetHeight: number | null;
   coverAssetId: string | null;
   orderIndex: string;
   publishedAt: string | null;
@@ -92,6 +94,8 @@ describe('Integration: Location detail flow', () => {
                   slug: 'urban-stories',
                   title: 'Urban Stories',
                   summary: 'Life in the city after dusk.',
+                  coverAssetWidth: null,
+                  coverAssetHeight: null,
                   coverAssetId: null,
                   orderIndex: '0001',
                   publishedAt: '2024-06-15T00:00:00.000Z',

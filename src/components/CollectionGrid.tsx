@@ -87,6 +87,26 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
     return getImageUrl(collection.coverAssetId, 'cover');
   }, [collection.coverAssetId]);
 
+  const coverOrientation = useMemo<'portrait' | 'landscape'>(() => {
+    const width = collection.coverAssetWidth ?? null;
+    const height = collection.coverAssetHeight ?? null;
+    if (!width || !height || width === height) return 'landscape';
+    return width < height ? 'portrait' : 'landscape';
+  }, [collection.coverAssetWidth, collection.coverAssetHeight]);
+
+  const imageWrapperClass = useMemo(
+    () =>
+      clsx(
+        'relative aspect-[3/4] overflow-hidden rounded-[2rem]',
+        coverOrientation === 'portrait'
+          ? 'bg-white/80 dark:bg-gray-900/50'
+          : undefined,
+      ),
+    [coverOrientation],
+  );
+
+  const imageClass = coverOrientation === 'portrait' ? 'object-contain object-center' : 'object-cover object-center';
+
   const formattedDate = useMemo(() => formatCollectionDate(collection), [collection]);
 
   const summary = collection.summary ?? '敬請期待更多來自這個地點的作品故事。';
@@ -103,14 +123,14 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
         className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white/85 shadow-sm transition-transform duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl focus-visible:-translate-y-2 focus-visible:shadow-2xl"
       >
         <div className="relative m-5 overflow-hidden rounded-[2rem]">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem]">
+          <div className={imageWrapperClass}>
             {coverImageSrc ? (
               <Image
                 src={coverImageSrc}
                 alt={`${collection.title} 封面視覺`}
                 fill
                 priority={false}
-                className="object-cover"
+                className={imageClass}
                 sizes={getResponsiveSizes('cover')}
                 unoptimized
               />

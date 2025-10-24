@@ -36,10 +36,10 @@ export default async function Homepage() {
             className="inline-block pointer-events-none"
           >
             <div className="px-3 py-2 md:px-4 md:py-3">
-              <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-light leading-none tracking-wide">
+              <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-normal leading-none tracking-wide">
                 Utoa
               </div>
-              <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-light leading-none tracking-wide mt-1">
+              <div className="font-serif text-2xl md:text-3xl lg:text-4xl font-normal leading-none tracking-wide mt-1">
                 Photography
               </div>
             </div>
@@ -89,7 +89,7 @@ export default async function Homepage() {
                   >
                     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                       <div>
-                        <h2 id={headingId} className="font-serif text-4xl font-light tracking-wide text-gray-900">
+                        <h2 id={headingId} className="font-serif text-4xl font-normal tracking-wide text-gray-900">
                           {year.label}
                         </h2>
                         <p className="mt-2 text-sm text-gray-600">
