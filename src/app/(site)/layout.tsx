@@ -50,7 +50,7 @@ async function buildMenuItems(): Promise<StaggeredMenuItem[]> {
 
 export const metadata: Metadata = {
   title: 'UTOA Photography',
-  description: '攝影作品集 - 捕捉生活中的美好瞬間',
+  description: 'Moments In Focus',
 };
 
 export default async function SiteLayout({

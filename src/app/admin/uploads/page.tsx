@@ -472,24 +472,35 @@ export default function AdminUploadsPage() {
               };
 
               const coverCrop = async (targetW: number, targetH: number) => {
-                const srcW = imgBitmap.width; const srcH = imgBitmap.height;
-                const srcRatio = srcW / srcH; const dstRatio = targetW / targetH;
-                let sw = srcW; let sh = srcH; let sx = 0; let sy = 0;
+                const srcW = imgBitmap.width;
+                const srcH = imgBitmap.height;
+                const srcRatio = srcW / srcH;
+                const dstRatio = targetW / targetH;
+                let sw = srcW;
+                let sh = srcH;
+                let sx = 0;
+                let sy = 0;
                 if (srcRatio > dstRatio) {
-                  // crop width
-                  sw = Math.round(srcH * dstRatio);
+                  const desiredWidth = Math.round(srcH * dstRatio);
+                  sw = Math.min(desiredWidth, srcW);
                   sx = Math.floor((srcW - sw) / 2);
                 } else {
-                  // crop height
-                  sh = Math.round(srcW / dstRatio);
+                  const desiredHeight = Math.round(srcW / dstRatio);
+                  sh = Math.min(desiredHeight, srcH);
                   sy = Math.floor((srcH - sh) / 2);
                 }
+                const scale = Math.min(targetW / sw, targetH / sh, 1);
+                const destW = Math.max(1, Math.round(sw * scale));
+                const destH = Math.max(1, Math.round(sh * scale));
                 const canvas = document.createElement('canvas');
-                canvas.width = targetW; canvas.height = targetH;
+                canvas.width = destW;
+                canvas.height = destH;
                 const ctx = canvas.getContext('2d');
                 if (!ctx) return null;
-                ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, targetW, targetH);
-                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
+                ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, destW, destH);
+                const blob = await new Promise<Blob | null>((resolve) =>
+                  canvas.toBlob((b) => resolve(b), 'image/webp', 0.86),
+                );
                 return blob;
               };
 
@@ -506,9 +517,9 @@ export default function AdminUploadsPage() {
 
               const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
               const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
-              const l = await scaleContain(1920); if (l) tasks.push(pushUpload(l, 'large'));
+              const l = await scaleContain(2560); if (l) tasks.push(pushUpload(l, 'large'));
               const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
-              const c = await coverCrop(800, 600); if (c) tasks.push(pushUpload(c, 'cover'));
+              const c = await coverCrop(1200, 900); if (c) tasks.push(pushUpload(c, 'cover'));
               const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
               const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
 
@@ -606,17 +617,40 @@ export default function AdminUploadsPage() {
       };
 
       const coverCrop = async (targetW: number, targetH: number) => {
-        const srcW = imgBitmap.width; const srcH = imgBitmap.height;
-        const srcRatio = srcW / srcH; const dstRatio = targetW / targetH;
-        let sw = srcW; let sh = srcH; let sx = 0; let sy = 0;
-        if (srcRatio > dstRatio) { sw = Math.round(srcH * dstRatio); sx = Math.floor((srcW - sw) / 2); }
-        else { sh = Math.round(srcW / dstRatio); sy = Math.floor((srcH - sh) / 2); }
+        const srcW = imgBitmap.width;
+        const srcH = imgBitmap.height;
+        const srcRatio = srcW / srcH;
+        const dstRatio = targetW / targetH;
+
+        let sw = srcW;
+        let sh = srcH;
+        let sx = 0;
+        let sy = 0;
+
+        if (srcRatio > dstRatio) {
+          const desiredWidth = Math.round(srcH * dstRatio);
+          sw = Math.min(desiredWidth, srcW);
+          sx = Math.floor((srcW - sw) / 2);
+        } else {
+          const desiredHeight = Math.round(srcW / dstRatio);
+          sh = Math.min(desiredHeight, srcH);
+          sy = Math.floor((srcH - sh) / 2);
+        }
+
+        const scale = Math.min(targetW / sw, targetH / sh, 1);
+        const destW = Math.max(1, Math.round(sw * scale));
+        const destH = Math.max(1, Math.round(sh * scale));
+
         const canvas = document.createElement('canvas');
-        canvas.width = targetW; canvas.height = targetH;
+        canvas.width = destW;
+        canvas.height = destH;
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
-        ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, targetW, targetH);
-        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
+
+        ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, destW, destH);
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob((b) => resolve(b), 'image/webp', 0.86),
+        );
         return blob;
       };
 
@@ -632,9 +666,9 @@ export default function AdminUploadsPage() {
 
       const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
       const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
-      const l = await scaleContain(1920); if (l) tasks.push(pushUpload(l, 'large'));
+      const l = await scaleContain(2560); if (l) tasks.push(pushUpload(l, 'large'));
       const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
-      const c = await coverCrop(800, 600); if (c) tasks.push(pushUpload(c, 'cover'));
+      const c = await coverCrop(1200, 900); if (c) tasks.push(pushUpload(c, 'cover'));
       const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
       const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
 

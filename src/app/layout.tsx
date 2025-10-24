@@ -4,9 +4,34 @@ import LoaderClient from "./loader-client";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
 
+const SITE_URL = "https://utoa.studio";
+const OG_IMAGE_PATH = "/assets/og-camera.svg";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "UTOA Photography",
   description: "Capturing Moments, Creating Stories",
+  openGraph: {
+    title: "UTOA Photography",
+    description: "Capturing Moments, Creating Stories",
+    url: SITE_URL,
+    siteName: "UTOA Photography",
+    type: "website",
+    images: [
+      {
+        url: OG_IMAGE_PATH,
+        width: 980,
+        height: 901,
+        alt: "UTOA camera wireframe illustration",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "UTOA Photography",
+    description: "Capturing Moments, Creating Stories",
+    images: [OG_IMAGE_PATH],
+  },
 };
 
 export default function RootLayout({

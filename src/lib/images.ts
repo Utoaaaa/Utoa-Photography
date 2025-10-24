@@ -5,11 +5,11 @@ export const IMAGE_VARIANTS = {
   small: 'small', // 600x600
   
   // Display variants
-  medium: 'medium', // 1200x1200
-  large: 'large', // 1920x1920
+  medium: 'medium', // 1200px (longest edge)
+  large: 'large', // 2560px (longest edge)
   
   // Special variants
-  cover: 'cover', // 800x600 for collection covers
+  cover: 'cover', // 1200x900 for collection covers
   og: 'og', // 1200x630 for Open Graph
   blur: 'blur', // Low quality placeholder
 } as const;
@@ -49,7 +49,7 @@ export function getResponsiveSizes(variant: ImageVariant): string {
     case 'medium':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px';
     case 'large':
-      return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1920px';
+      return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 2560px';
     case 'cover':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px';
     case 'og':
@@ -90,9 +90,9 @@ export function getImageDimensions(variant: ImageVariant): { width: number; heig
     case 'medium':
       return { width: 1200, height: 1200 };
     case 'large':
-      return { width: 1920, height: 1920 };
+      return { width: 2560, height: 2560 };
     case 'cover':
-      return { width: 800, height: 600 };
+      return { width: 1200, height: 900 };
     case 'og':
       return { width: 1200, height: 630 };
     case 'blur':

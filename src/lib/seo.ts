@@ -16,7 +16,26 @@ interface SEOData {
 }
 
 export function generateSEOMetadata(data: SEOData): Metadata {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.photography';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.studio';
+  const fallbackImage = {
+    url: `${baseUrl}/assets/og-camera.svg`,
+    width: 980,
+    height: 901,
+    alt: 'UTOA camera wireframe illustration',
+  };
+
+  type SEOImage = NonNullable<SEOData['images']>[number];
+  const normalizeImage = (img: SEOImage) => ({
+    url: img.url.startsWith('http') ? img.url : `${baseUrl}${img.url}`,
+    width: img.width,
+    height: img.height,
+    alt: img.alt,
+  });
+
+  const ogImages =
+    Array.isArray(data.images) && data.images.length > 0
+      ? data.images.map(normalizeImage)
+      : [fallbackImage];
   
   return {
     title: data.title,
@@ -29,14 +48,7 @@ export function generateSEOMetadata(data: SEOData): Metadata {
       url: data.url ? `${baseUrl}${data.url}` : baseUrl,
       siteName: 'UTOA Photography',
       type: data.type || 'website',
-      images: Array.isArray((data as any).images)
-        ? (data as any).images.map((img: any) => ({
-            url: img.url,
-            width: img.width,
-            height: img.height,
-            alt: img.alt,
-          }))
-        : [],
+      images: ogImages,
       ...(data.publishedTime && { publishedTime: data.publishedTime }),
       ...(data.modifiedTime && { modifiedTime: data.modifiedTime }),
     },
@@ -47,9 +59,7 @@ export function generateSEOMetadata(data: SEOData): Metadata {
       title: data.title,
       description: data.description,
       creator: '@utoa_photo',
-      images: Array.isArray((data as any).images) && (data as any).images.length > 0
-        ? ((data as any).images[0] && (data as any).images[0].url) || ''
-        : '',
+      images: ogImages.length > 0 ? ogImages[0].url : '',
     },
     
     // Additional meta tags
@@ -75,7 +85,7 @@ export function generateSEOMetadata(data: SEOData): Metadata {
 }
 
 export function generateStructuredData(type: 'website' | 'collection' | 'imageGallery', data: any) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.photography';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.studio';
   
   switch (type) {
     case 'website':
@@ -83,7 +93,7 @@ export function generateStructuredData(type: 'website' | 'collection' | 'imageGa
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: 'UTOA Photography',
-        description: '攝影作品集 - 捕捉生活中的美好瞬間',
+        description: 'Moments In Focus',
         url: baseUrl,
         author: {
           '@type': 'Person',
@@ -144,7 +154,7 @@ export function generateStructuredData(type: 'website' | 'collection' | 'imageGa
 
 export function generateSitemap() {
   // This would typically be generated from your data
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.photography';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.studio';
   
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

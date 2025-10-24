@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
-import { cloudflareImageLoader, getResponsiveSizes } from '@/lib/images';
+import { getImageUrl, getResponsiveSizes } from '@/lib/images';
 
 interface CollectionGridProps {
   yearLabel: string;
@@ -82,7 +82,10 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
     return () => observer.disconnect();
   }, []);
 
-  const coverImageId = collection.coverAssetId ?? null;
+  const coverImageSrc = useMemo(() => {
+    if (!collection.coverAssetId) return null;
+    return getImageUrl(collection.coverAssetId, 'cover');
+  }, [collection.coverAssetId]);
 
   const formattedDate = useMemo(() => formatCollectionDate(collection), [collection]);
 
@@ -101,16 +104,15 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
       >
         <div className="relative m-5 overflow-hidden rounded-[2rem]">
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem]">
-            {coverImageId ? (
+            {coverImageSrc ? (
               <Image
-                loader={cloudflareImageLoader}
-                src={coverImageId}
+                src={coverImageSrc}
                 alt={`${collection.title} 封面視覺`}
                 fill
                 priority={false}
                 className="object-cover"
                 sizes={getResponsiveSizes('cover')}
-                quality={90}
+                unoptimized
               />
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-[#01AFF6]/60 via-[#F20085]/45 to-[#FFD036]/65" />
