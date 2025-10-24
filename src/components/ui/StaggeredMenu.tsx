@@ -536,7 +536,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                   <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
                     <a
                       className={
-                        'sm-panel-item relative text-gray-900 font-serif font-normal cursor-pointer leading-none tracking-tight transition-colors duration-300 ease-out inline-block no-underline ' +
+                        'sm-panel-item relative text-gray-900 font-serif font-semibold cursor-pointer leading-none tracking-tight transition-colors duration-300 ease-out inline-block no-underline ' +
                         (it.variant ? `sm-panel-item--${it.variant}` : 'sm-panel-item--default')
                       }
                       href={it.link}
@@ -552,7 +552,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                 ))
               ) : (
                 <li className="sm-panel-itemWrap relative overflow-hidden leading-none" aria-hidden="true">
-                  <span className="sm-panel-item relative text-gray-900 font-serif font-normal text-[3rem] md:text-[4rem] cursor-pointer leading-none tracking-tight transition-colors duration-300 ease-out inline-block no-underline">
+                  <span className="sm-panel-item relative text-gray-900 font-serif font-semibold text-[3rem] md:text-[4rem] cursor-pointer leading-none tracking-tight transition-colors duration-300 ease-out inline-block no-underline">
                     <span className="sm-panel-itemLabel inline-block [transform-origin:50%_100%] will-change-transform">
                       No items
                     </span>

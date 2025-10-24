@@ -10,10 +10,10 @@ const OG_IMAGE_PATH = "/assets/og-camera.svg";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "UTOA Photography",
-  description: "Capturing Moments, Creating Stories",
+  description: "Moments In Focus",
   openGraph: {
     title: "UTOA Photography",
-    description: "Capturing Moments, Creating Stories",
+    description: "Moments In Focus",
     url: SITE_URL,
     siteName: "UTOA Photography",
     type: "website",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "UTOA Photography",
-    description: "Capturing Moments, Creating Stories",
+    description: "Moments In Focus",
     images: [OG_IMAGE_PATH],
   },
 };
@@ -54,6 +54,13 @@ export default function RootLayout({
           rel="preload"
           as="font"
           href="/fonts/noto-serif-tc/NotoSerifTC-SemiBold.ttf"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="font"
+          href="/fonts/noto-serif-tc/NotoSerifTC-Bold.ttf"
           type="font/ttf"
           crossOrigin="anonymous"
         />
