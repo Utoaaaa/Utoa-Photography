@@ -52,7 +52,13 @@ export async function GET(
       if (obj) {
         const ext = key.split('.').pop() || 'jpg';
         const ct = CONTENT_TYPES[ext] || 'application/octet-stream';
-        const headers = new Headers(obj.httpMetadata?.contentType ? undefined : { 'Content-Type': ct });
+        const headers = new Headers();
+
+        if (obj.httpMetadata?.contentType) {
+          headers.set('Content-Type', obj.httpMetadata.contentType);
+        } else {
+          headers.set('Content-Type', ct);
+        }
         // Long cache for immutable images
         headers.set('Cache-Control', 'public, max-age=31536000, immutable');
         if (obj.httpMetadata?.contentLanguage) headers.set('Content-Language', obj.httpMetadata.contentLanguage);
