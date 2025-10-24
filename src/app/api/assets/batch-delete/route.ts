@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
-import { getD1Database } from '@/lib/cloudflare';
+import { getD1Database, getR2Bucket } from '@/lib/cloudflare';
 import { writeAudit } from '@/lib/utils';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
@@ -60,6 +60,41 @@ async function recordAudit(useD1: boolean, assetId: string) {
 
 type FailedItem = { id: string; reason: 'not_found' | 'referenced' | 'error'; details?: any };
 
+const R2_VARIANTS = ['thumb', 'small', 'medium', 'large', 'cover', 'og', 'blur'] as const;
+const R2_EXTS = ['webp', 'avif', 'jpg', 'jpeg', 'png'] as const;
+
+async function deleteR2ObjectsForAsset(assetId: string): Promise<void> {
+  try {
+    const bucket = getR2Bucket() as undefined | { delete?: (key: string) => Promise<void> };
+    const deleteFn = bucket?.delete?.bind(bucket);
+    if (!deleteFn) {
+      return;
+    }
+
+    const keys: string[] = [];
+    for (const ext of R2_EXTS) {
+      keys.push(`images/${assetId}/original.${ext}`);
+    }
+    for (const variant of R2_VARIANTS) {
+      for (const ext of R2_EXTS) {
+        keys.push(`images/${assetId}/${variant}.${ext}`);
+      }
+    }
+
+    await Promise.allSettled(
+      keys.map(async (key) => {
+        try {
+          await deleteFn(key);
+        } catch (error) {
+          console.warn('[asset-batch-delete] failed to delete R2 object', { key, error });
+        }
+      }),
+    );
+  } catch (error) {
+    console.warn('[asset-batch-delete] R2 cleanup skipped', error);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     requireAdminAuth(request);
@@ -75,6 +110,7 @@ export async function POST(request: NextRequest) {
     const useD1 = shouldUseD1Direct();
 
     const deletedIds: string[] = [];
+    const r2CleanupQueue: string[] = [];
     const failed: FailedItem[] = [];
 
     for (const id of asset_ids) {
@@ -106,6 +142,7 @@ export async function POST(request: NextRequest) {
           await db.prepare('DELETE FROM assets WHERE id = ?1').bind(id).run();
           await recordAudit(true, id);
           deletedIds.push(id);
+          r2CleanupQueue.push(id);
         } else {
           const { prisma } = await getNodeDb();
           const existing = await prisma.asset.findUnique({ where: { id } });
@@ -128,6 +165,7 @@ export async function POST(request: NextRequest) {
           await prisma.asset.delete({ where: { id } });
           await recordAudit(false, id);
           deletedIds.push(id);
+          r2CleanupQueue.push(id);
         }
       } catch (e: any) {
         failed.push({ id, reason: 'error', details: String(e?.message || e) });
@@ -140,6 +178,10 @@ export async function POST(request: NextRequest) {
       for (const id of deletedIds) tags.add(`${CACHE_TAGS.ASSETS}:${id}`);
       await invalidateCache(Array.from(tags));
     } catch {}
+
+    if (r2CleanupQueue.length > 0) {
+      await Promise.allSettled(r2CleanupQueue.map(deleteR2ObjectsForAsset));
+    }
 
     return NextResponse.json({ deletedIds, failed, total: asset_ids.length }, { status: 200 });
   } catch (error) {
