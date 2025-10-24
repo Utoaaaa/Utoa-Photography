@@ -50,6 +50,8 @@ type CollectionRecord = {
   title: string;
   summary: string | null;
   cover_asset_id: string | null;
+  cover_asset_width?: number | null;
+  cover_asset_height?: number | null;
   order_index: string;
   published_at: Date | null;
   updated_at: Date;
@@ -101,14 +103,16 @@ function requireD1() {
 
 function mapCollection(record: CollectionRecord): LocationCollectionSummary {
   const coverAsset = record.cover_asset ?? null;
+  const width = record.cover_asset_width ?? coverAsset?.width ?? null;
+  const height = record.cover_asset_height ?? coverAsset?.height ?? null;
   return {
     id: record.id,
     slug: record.slug,
     title: record.title,
     summary: record.summary ?? null,
     coverAssetId: record.cover_asset_id ?? null,
-    coverAssetWidth: coverAsset?.width ?? null,
-    coverAssetHeight: coverAsset?.height ?? null,
+    coverAssetWidth: width,
+    coverAssetHeight: height,
     coverAssetVariantVersion: null,
     orderIndex: record.order_index,
     publishedAt: record.published_at ? record.published_at.toISOString() : null,
@@ -161,12 +165,6 @@ async function fetchYears(where: YearWhereInput): Promise<YearRecord[]> {
               title: true,
               summary: true,
               cover_asset_id: true,
-              cover_asset: {
-                select: {
-                  width: true,
-                  height: true,
-                },
-              },
               order_index: true,
               published_at: true,
               updated_at: true,
@@ -198,12 +196,6 @@ async function fetchSingleYear(where: YearWhereInput): Promise<YearRecord | null
               title: true,
               summary: true,
               cover_asset_id: true,
-              cover_asset: {
-                select: {
-                  width: true,
-                  height: true,
-                },
-              },
               order_index: true,
               published_at: true,
               updated_at: true,
@@ -342,7 +334,7 @@ async function enrichVariantVersions(years: YearEntry[]): Promise<void> {
   if (assetIds.size === 0) return;
 
   const idList = Array.from(assetIds);
-  const metadataLookup: Record<string, unknown> = {};
+  const assetInfo: Record<string, { metadata: unknown; width: number | null; height: number | null }> = {};
 
   if (shouldUseD1Direct()) {
     const db = requireD1();
@@ -352,34 +344,50 @@ async function enrichVariantVersions(years: YearEntry[]): Promise<void> {
       if (chunk.length === 0) continue;
       const placeholders = chunk.map(() => '?').join(',');
       const result = await db.prepare(
-        `SELECT id, metadata_json FROM assets WHERE id IN (${placeholders})`
+        `SELECT id, metadata_json, width, height FROM assets WHERE id IN (${placeholders})`
       ).bind(...chunk).all();
-      const rows = (result.results ?? []) as Array<{ id: string; metadata_json: string | null }>;
+      const rows = (result.results ?? []) as Array<{ id: string; metadata_json: string | null; width: number | null; height: number | null }>;
       rows.forEach((row) => {
-        metadataLookup[String(row.id)] = row.metadata_json ?? null;
+        assetInfo[String(row.id)] = {
+          metadata: row.metadata_json ?? null,
+          width: row.width != null ? Number(row.width) : null,
+          height: row.height != null ? Number(row.height) : null,
+        };
       });
     }
   } else {
     const prisma = await getPrisma();
     const assets = await prisma.asset.findMany({
       where: { id: { in: idList } },
-      select: { id: true, metadata_json: true },
+      select: { id: true, metadata_json: true, width: true, height: true },
     });
     assets.forEach((asset) => {
-      metadataLookup[asset.id] = asset.metadata_json ?? null;
+      assetInfo[asset.id] = {
+        metadata: asset.metadata_json ?? null,
+        width: asset.width ?? null,
+        height: asset.height ?? null,
+      };
     });
   }
 
   years.forEach((year) => {
     year.locations.forEach((location) => {
       if (location.coverAssetId) {
-        const version = getVariantVersion(metadataLookup[location.coverAssetId], 'cover');
-        location.coverAssetVariantVersion = version ?? null;
+        const info = assetInfo[location.coverAssetId];
+        if (info) {
+          const version = getVariantVersion(info.metadata, 'cover');
+          location.coverAssetVariantVersion = version ?? null;
+        }
       }
       location.collections.forEach((collection) => {
         if (collection.coverAssetId) {
-          const version = getVariantVersion(metadataLookup[collection.coverAssetId], 'cover');
-          collection.coverAssetVariantVersion = version ?? null;
+          const info = assetInfo[collection.coverAssetId];
+          if (info) {
+            const version = getVariantVersion(info.metadata, 'cover');
+            collection.coverAssetVariantVersion = version ?? null;
+            if (info.width != null) collection.coverAssetWidth = info.width;
+            if (info.height != null) collection.coverAssetHeight = info.height;
+          }
         }
       });
     });

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-10-24T11:15:41.854Z",
+  "generatedAt": "2025-10-24T16:57:28.465Z",
   "years": [
     {
       "id": "ec4045ba-b717-4486-998c-3a516370dfba",
@@ -21,6 +21,7 @@
           "name": "新竹",
           "summary": "High-altitude adventures across alpine ridges.",
           "coverAssetId": "cloudflare-image-id-1",
+          "coverAssetVariantVersion": null,
           "orderIndex": "1.0",
           "collectionCount": 1,
           "collections": [
@@ -30,6 +31,9 @@
               "title": "Spring Vibes",
               "summary": "Capturing the beauty of spring season",
               "coverAssetId": "cloudflare-image-id-1",
+              "coverAssetWidth": 1920,
+              "coverAssetHeight": 1080,
+              "coverAssetVariantVersion": null,
               "orderIndex": "1.0",
               "publishedAt": "2024-03-15T00:00:00.000Z",
               "updatedAt": "2025-10-10T12:24:20.558Z"
@@ -43,6 +47,7 @@
           "name": "City Lights",
           "summary": "Neon-drenched explorations through late-night streets.",
           "coverAssetId": "cloudflare-image-id-2",
+          "coverAssetVariantVersion": null,
           "orderIndex": "2.0",
           "collectionCount": 1,
           "collections": [
@@ -52,6 +57,9 @@
               "title": "Urban Stories",
               "summary": "Stories from the city streets",
               "coverAssetId": "cloudflare-image-id-2",
+              "coverAssetWidth": null,
+              "coverAssetHeight": null,
+              "coverAssetVariantVersion": null,
               "orderIndex": "2.0",
               "publishedAt": "2024-06-01T00:00:00.000Z",
               "updatedAt": "2025-10-10T12:24:20.560Z"
@@ -65,6 +73,7 @@
           "name": "基隆",
           "summary": null,
           "coverAssetId": null,
+          "coverAssetVariantVersion": null,
           "orderIndex": "3.0",
           "collectionCount": 0,
           "collections": []
@@ -76,6 +85,7 @@
           "name": "taipei",
           "summary": null,
           "coverAssetId": null,
+          "coverAssetVariantVersion": null,
           "orderIndex": "4.0",
           "collectionCount": 0,
           "collections": []
@@ -95,6 +105,7 @@
           "name": "Harbor Glow",
           "summary": "Golden-hour reflections along the harbor front.",
           "coverAssetId": "fixture-test-image-test-square",
+          "coverAssetVariantVersion": null,
           "orderIndex": "1.0",
           "collectionCount": 1,
           "collections": [
@@ -104,6 +115,9 @@
               "title": "Portraits",
               "summary": "Character studies and portraits",
               "coverAssetId": "cloudflare-image-id-3",
+              "coverAssetWidth": null,
+              "coverAssetHeight": null,
+              "coverAssetVariantVersion": null,
               "orderIndex": "1.0",
               "publishedAt": "2023-08-20T00:00:00.000Z",
               "updatedAt": "2025-10-10T12:24:20.561Z"
@@ -117,6 +131,7 @@
           "name": "Forest Whispers",
           "summary": "Moody woodland portraits with ambient fog.",
           "coverAssetId": "fixture-test-image-test-editorial",
+          "coverAssetVariantVersion": null,
           "orderIndex": "2.0",
           "collectionCount": 1,
           "collections": [
@@ -126,6 +141,9 @@
               "title": "345",
               "summary": null,
               "coverAssetId": "fixture-test-image-test-landscape",
+              "coverAssetWidth": 1920,
+              "coverAssetHeight": 1080,
+              "coverAssetVariantVersion": null,
               "orderIndex": "1.0",
               "publishedAt": "2025-10-15T15:18:35.026Z",
               "updatedAt": "2025-10-14T00:00:00.000Z"

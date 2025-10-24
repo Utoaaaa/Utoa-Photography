@@ -36,7 +36,6 @@ export function CollectionList({ collections, yearLabel }: CollectionListProps) 
                 <Image
                   src={getImageUrl(collection.cover_asset_id, 'cover', {
                     version: (collection as any).cover_asset_variant_version ?? undefined,
-                    metadata: collection.metadata_json,
                   })}
                   alt={collection.title}
                   fill

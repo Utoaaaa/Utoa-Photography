@@ -29,16 +29,53 @@ try {
 } catch (_) {}
 
 const prisma = new PrismaClient();
+const VERSION_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+function parseMetadata(metadata) {
+  if (!metadata) return null;
+  if (typeof metadata === 'string') {
+    try {
+      const parsed = JSON.parse(metadata);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return null;
+    }
+  } else if (typeof metadata === 'object' && !Array.isArray(metadata)) {
+    return metadata;
+  }
+  return null;
+}
+
+function normalizeVersion(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!VERSION_PATTERN.test(trimmed)) return null;
+  return trimmed;
+}
+
+function getVariantVersion(metadata, variant) {
+  const parsed = parseMetadata(metadata);
+  if (!parsed) return null;
+  const versions = parsed.variant_versions;
+  if (!versions || typeof versions !== 'object' || Array.isArray(versions)) return null;
+  return normalizeVersion(versions[variant]);
+}
 
 function mapCollection(collection) {
+  const coverAsset = collection.cover_asset ?? null;
+  const width = (collection.cover_asset_width ?? coverAsset?.width) ?? null;
+  const height = (collection.cover_asset_height ?? coverAsset?.height) ?? null;
   return {
     id: collection.id,
     slug: collection.slug,
     title: collection.title,
     summary: collection.summary ?? null,
     coverAssetId: collection.cover_asset_id ?? null,
-    coverAssetWidth: collection.cover_asset?.width ?? null,
-    coverAssetHeight: collection.cover_asset?.height ?? null,
+    coverAssetWidth: width,
+    coverAssetHeight: height,
+    coverAssetVariantVersion: null,
     orderIndex: collection.order_index,
     publishedAt: collection.published_at ? collection.published_at.toISOString() : null,
     updatedAt: collection.updated_at.toISOString(),
@@ -54,6 +91,7 @@ function mapLocation(location) {
     name: location.name,
     summary: location.summary ?? null,
     coverAssetId: location.cover_asset_id ?? null,
+    coverAssetVariantVersion: null,
     orderIndex: location.order_index,
     collectionCount: collections.length,
     collections,
@@ -88,12 +126,6 @@ async function fetchYearLocationData() {
               title: true,
               summary: true,
               cover_asset_id: true,
-              cover_asset: {
-                select: {
-                  width: true,
-                  height: true,
-                },
-              },
               order_index: true,
               published_at: true,
               updated_at: true,
@@ -104,7 +136,59 @@ async function fetchYearLocationData() {
     },
   });
 
-  return years.map(mapYear);
+  const mapped = years.map(mapYear);
+  await attachAssetDetails(mapped);
+  return mapped;
+}
+
+async function attachAssetDetails(years) {
+  if (!years || years.length === 0) return;
+  const assetIds = new Set();
+  for (const year of years) {
+    for (const location of year.locations ?? []) {
+      if (typeof location.coverAssetId === 'string') {
+        assetIds.add(location.coverAssetId);
+      }
+      for (const collection of location.collections ?? []) {
+        if (typeof collection.coverAssetId === 'string') {
+          assetIds.add(collection.coverAssetId);
+        }
+      }
+    }
+  }
+  if (assetIds.size === 0) return;
+
+  const assets = await prisma.asset.findMany({
+    where: { id: { in: Array.from(assetIds) } },
+    select: { id: true, metadata_json: true, width: true, height: true },
+  });
+  const infoMap = new Map();
+  for (const asset of assets) {
+    infoMap.set(asset.id, {
+      metadata: asset.metadata_json ?? null,
+      width: asset.width ?? null,
+      height: asset.height ?? null,
+    });
+  }
+
+  for (const year of years) {
+    for (const location of year.locations ?? []) {
+      if (typeof location.coverAssetId === 'string') {
+        const info = infoMap.get(location.coverAssetId);
+        if (info) {
+          location.coverAssetVariantVersion = getVariantVersion(info.metadata, 'cover');
+        }
+      }
+      for (const collection of location.collections ?? []) {
+        if (typeof collection.coverAssetId !== 'string') continue;
+        const info = infoMap.get(collection.coverAssetId);
+        if (!info) continue;
+        collection.coverAssetVariantVersion = getVariantVersion(info.metadata, 'cover');
+        if (info.width != null) collection.coverAssetWidth = info.width;
+        if (info.height != null) collection.coverAssetHeight = info.height;
+      }
+    }
+  }
 }
 
 async function writeOutputFile(data) {
