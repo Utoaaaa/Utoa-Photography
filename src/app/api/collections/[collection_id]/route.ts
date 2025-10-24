@@ -247,11 +247,7 @@ export async function GET(
 
     const { prisma } = await getNodeDb();
 
-    const include: {
-      year: true;
-      _count: { select: { collection_assets: true } };
-      collection_assets?: { include: { asset: true }; orderBy: { order_index: 'asc' } };
-    } = {
+    const include: Prisma.CollectionInclude = {
       year: true,
       _count: { select: { collection_assets: true } },
     };
@@ -263,7 +259,7 @@ export async function GET(
       };
     }
 
-    let collection: Prisma.CollectionGetPayload<typeof include> | null = null;
+    let collection: any | null = null;
     if (isUUID(collection_id)) {
       collection = await prisma.collection.findUnique({ where: { id: collection_id }, include });
     } else {

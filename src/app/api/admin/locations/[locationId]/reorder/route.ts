@@ -215,8 +215,8 @@ async function postImpl(request: NextRequest, context: RouteContextLike) {
         return validationError('排序列表與現有地點數量不一致。', 'orderedIds');
       }
 
-      const existingSet = new Set(existingLocations);
-      const orderedSet = new Set(ids);
+      const existingSet = new Set<string>(existingLocations);
+      const orderedSet = new Set<string>(ids);
       if (existingSet.size !== orderedSet.size || [...existingSet].some((id) => !orderedSet.has(id))) {
         return validationError('排序列表包含不存在的地點。', 'orderedIds');
       }
@@ -288,8 +288,8 @@ async function postImpl(request: NextRequest, context: RouteContextLike) {
       return validationError('排序列表與現有地點數量不一致。', 'orderedIds');
     }
 
-    const existingSet = new Set(existingLocations.map((item) => item.id));
-    const orderedSet = new Set(ids);
+    const existingSet = new Set<string>(existingLocations.map((item) => item.id));
+    const orderedSet = new Set<string>(ids);
     if (existingSet.size !== orderedSet.size || [...existingSet].some((id) => !orderedSet.has(id))) {
       return validationError('排序列表包含不存在的地點。', 'orderedIds');
     }
