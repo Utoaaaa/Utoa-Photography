@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getR2Bucket } from '@/lib/cloudflare';
 
-const VARIANTS = ['thumb','small','medium','large','cover','og','blur'] as const;
+const VARIANTS = ['small','medium','large','original'] as const;
 const EXTS = ['webp','avif','jpg','jpeg','png'] as const;
 
 type R2Bucket = {

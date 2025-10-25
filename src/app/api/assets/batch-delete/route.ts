@@ -60,7 +60,7 @@ async function recordAudit(useD1: boolean, assetId: string) {
 
 type FailedItem = { id: string; reason: 'not_found' | 'referenced' | 'error'; details?: any };
 
-const R2_VARIANTS = ['thumb', 'small', 'medium', 'large', 'cover', 'og', 'blur'] as const;
+const R2_VARIANTS = ['small', 'medium', 'large', 'original'] as const;
 const R2_EXTS = ['webp', 'avif', 'jpg', 'jpeg', 'png'] as const;
 
 async function deleteR2ObjectsForAsset(assetId: string): Promise<void> {

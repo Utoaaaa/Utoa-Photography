@@ -272,9 +272,9 @@ export default function AdminUploadsPage() {
       }
       const list = await safeJson<Asset[]>(res, [], isAssetArray);
       setAssets(Array.isArray(list) ? list : []);
-      // Load variant statuses for visible assets (limit concurrency)
-      const ids = (Array.isArray(list) ? list : []).map(a => a.id);
-      const concurrency = 6;
+      // Load variant statuses for visible assets (limit concurrency and count)
+      const ids = (Array.isArray(list) ? list : []).slice(0, 20).map(a => a.id); // Only load first 20
+      const concurrency = 2; // Reduced from 6 to 2
       const chunks: string[][] = [];
       for (let i = 0; i < ids.length; i += concurrency) chunks.push(ids.slice(i, i+concurrency));
       const statusUpdates: Record<string, any> = {};
