@@ -197,7 +197,7 @@ export default function AdminUploadsPage() {
   const [locationFolders, setLocationFolders] = useState<LocationFolderOption[]>([]);
   const [uploadLocationId, setUploadLocationId] = useState<string>('');
   const [assetFilterLocationId, setAssetFilterLocationId] = useState<'all' | 'unassigned' | string>('all');
-  const [variantStatus, setVariantStatus] = useState<Record<string, Partial<Record<'thumb'|'small'|'medium'|'large'|'cover'|'og'|'blur', boolean>>>>({});
+  const [variantStatus, setVariantStatus] = useState<Record<string, Partial<Record<'small' | 'medium' | 'large', boolean>>>>({});
 
   const locationFolderMap = useMemo(() => {
     const map = new Map<string, LocationFolderOption>();
@@ -446,7 +446,7 @@ export default function AdminUploadsPage() {
             const upJson = await safeJson<{ image_id?: string }>(up, {});
             if (upJson.image_id) imageId = upJson.image_id;
 
-            // 2) Generate and upload variants client-side (small/medium/large + thumb/cover/og/blur)
+            // 2) Generate and upload medium variant only
             try {
               const imgBitmap = await createImageBitmap(currentFile);
               const tasks: Array<Promise<void>> = [];
@@ -471,57 +471,9 @@ export default function AdminUploadsPage() {
                 return blob;
               };
 
-              const coverCrop = async (targetW: number, targetH: number) => {
-                const srcW = imgBitmap.width;
-                const srcH = imgBitmap.height;
-                const srcRatio = srcW / srcH;
-                const dstRatio = targetW / targetH;
-                let sw = srcW;
-                let sh = srcH;
-                let sx = 0;
-                let sy = 0;
-                if (srcRatio > dstRatio) {
-                  const desiredWidth = Math.round(srcH * dstRatio);
-                  sw = Math.min(desiredWidth, srcW);
-                  sx = Math.floor((srcW - sw) / 2);
-                } else {
-                  const desiredHeight = Math.round(srcW / dstRatio);
-                  sh = Math.min(desiredHeight, srcH);
-                  sy = Math.floor((srcH - sh) / 2);
-                }
-                const scale = Math.min(targetW / sw, targetH / sh, 1);
-                const destW = Math.max(1, Math.round(sw * scale));
-                const destH = Math.max(1, Math.round(sh * scale));
-                const canvas = document.createElement('canvas');
-                canvas.width = destW;
-                canvas.height = destH;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return null;
-                ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, destW, destH);
-                const blob = await new Promise<Blob | null>((resolve) =>
-                  canvas.toBlob((b) => resolve(b), 'image/webp', 0.86),
-                );
-                return blob;
-              };
-
-              const blurThumb = async () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 40; canvas.height = 40;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return null;
-                // simple downscale for blur placeholder
-                ctx.drawImage(imgBitmap, 0, 0, 40, 40);
-                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.3));
-                return blob;
-              };
-
               const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
               const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
               const l = await scaleContain(3840); if (l) tasks.push(pushUpload(l, 'large'));
-              const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
-              const c = await coverCrop(1200, 900); if (c) tasks.push(pushUpload(c, 'cover'));
-              const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
-              const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
 
               await Promise.allSettled(tasks);
             } catch (e) {
@@ -616,61 +568,9 @@ export default function AdminUploadsPage() {
         return blob;
       };
 
-      const coverCrop = async (targetW: number, targetH: number) => {
-        const srcW = imgBitmap.width;
-        const srcH = imgBitmap.height;
-        const srcRatio = srcW / srcH;
-        const dstRatio = targetW / targetH;
-
-        let sw = srcW;
-        let sh = srcH;
-        let sx = 0;
-        let sy = 0;
-
-        if (srcRatio > dstRatio) {
-          const desiredWidth = Math.round(srcH * dstRatio);
-          sw = Math.min(desiredWidth, srcW);
-          sx = Math.floor((srcW - sw) / 2);
-        } else {
-          const desiredHeight = Math.round(srcW / dstRatio);
-          sh = Math.min(desiredHeight, srcH);
-          sy = Math.floor((srcH - sh) / 2);
-        }
-
-        const scale = Math.min(targetW / sw, targetH / sh, 1);
-        const destW = Math.max(1, Math.round(sw * scale));
-        const destH = Math.max(1, Math.round(sh * scale));
-
-        const canvas = document.createElement('canvas');
-        canvas.width = destW;
-        canvas.height = destH;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return null;
-
-        ctx.drawImage(imgBitmap, sx, sy, sw, sh, 0, 0, destW, destH);
-        const blob = await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob((b) => resolve(b), 'image/webp', 0.86),
-        );
-        return blob;
-      };
-
-      const blurThumb = async () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 40; canvas.height = 40;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return null;
-        ctx.drawImage(imgBitmap, 0, 0, 40, 40);
-        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.3));
-        return blob;
-      };
-
       const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
       const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
       const l = await scaleContain(3840); if (l) tasks.push(pushUpload(l, 'large'));
-      const t = await coverCrop(300, 300); if (t) tasks.push(pushUpload(t, 'thumb'));
-      const c = await coverCrop(1200, 900); if (c) tasks.push(pushUpload(c, 'cover'));
-      const og = await coverCrop(1200, 630); if (og) tasks.push(pushUpload(og, 'og'));
-      const bl = await blurThumb(); if (bl) tasks.push(pushUpload(bl, 'blur'));
 
       await Promise.allSettled(tasks);
     } catch (e) {
@@ -1089,7 +989,7 @@ export default function AdminUploadsPage() {
               const locationLabel = asset.location_folder_name
                 ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
                 : '未指派地點';
-              const previewSrc = getImageUrl(asset.id, 'thumb');
+              const previewSrc = getImageUrl(asset.id, 'medium');
               const previewAlt = asset.alt || '素材預覽圖';
               const vs = variantStatus[asset.id] || {};
 
@@ -1117,10 +1017,6 @@ export default function AdminUploadsPage() {
                         ['S','small'],
                         ['M','medium'],
                         ['L','large'],
-                        ['T','thumb'],
-                        ['C','cover'],
-                        ['OG','og'],
-                        ['B','blur'],
                       ] as const
                     ).map(([label, key]) => (
                       <span key={key} className={`px-1.5 py-[1px] rounded border ${vs[key] ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>

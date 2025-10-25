@@ -315,11 +315,18 @@ export async function PUT(
       );
     }
 
-    const { title, summary, cover_asset_id, status, order_index, updated_at } = body;
+    const { title, summary, cover_asset_id, status, order_index, updated_at, slug } = body;
 
     if (status && !['draft', 'published'].includes(String(status))) {
       return NextResponse.json(
         { error: 'Invalid status', message: 'Status must be draft or published' },
+        { status: 400 },
+      );
+    }
+
+    if (slug !== undefined && (typeof slug !== 'string' || !slug.trim())) {
+      return NextResponse.json(
+        { error: 'Invalid slug', message: 'Slug must be a non-empty string' },
         { status: 400 },
       );
     }
@@ -356,6 +363,21 @@ export async function PUT(
       }
       if (summary !== undefined && summary !== existingRow.summary) {
         setField('summary', summary, 'summary');
+      }
+      if (slug !== undefined && slug !== existingRow.slug) {
+        // Check for slug uniqueness
+        const existingSlug = await db.prepare(
+          'SELECT id FROM collections WHERE slug = ?1 AND id != ?2 LIMIT 1',
+        ).bind(slug, collection_id).first() as { id: string } | null;
+        
+        if (existingSlug) {
+          return NextResponse.json(
+            { error: 'Conflict', message: 'Slug already exists' },
+            { status: 409 },
+          );
+        }
+        
+        setField('slug', slug, 'slug');
       }
       if (cover_asset_id !== undefined && cover_asset_id !== existingRow.cover_asset_id) {
         setField('cover_asset_id', cover_asset_id, 'cover_asset_id');
@@ -412,6 +434,21 @@ export async function PUT(
     const updateData: Prisma.CollectionUpdateInput = {};
     if (title !== undefined) updateData.title = title as string;
     if (summary !== undefined) updateData.summary = summary as string | null;
+    if (slug !== undefined) {
+      // Check for slug uniqueness
+      const existingSlug = await prisma.collection.findFirst({
+        where: { slug: slug as string, id: { not: collection_id } },
+      });
+      
+      if (existingSlug) {
+        return NextResponse.json(
+          { error: 'Conflict', message: 'Slug already exists' },
+          { status: 409 },
+        );
+      }
+      
+      updateData.slug = slug as string;
+    }
     if (cover_asset_id !== undefined) updateData.cover_asset_id = cover_asset_id as string | null;
     if (order_index !== undefined) updateData.order_index = order_index as string;
 

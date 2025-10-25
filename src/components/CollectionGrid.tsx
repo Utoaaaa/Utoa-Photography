@@ -84,7 +84,7 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
 
   const coverImageSrc = useMemo(() => {
     if (!collection.coverAssetId) return null;
-    return getImageUrl(collection.coverAssetId, 'cover');
+    return getImageUrl(collection.coverAssetId, 'medium');
   }, [collection.coverAssetId]);
 
   const coverOrientation = useMemo<'portrait' | 'landscape'>(() => {
@@ -133,7 +133,7 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
                 fill
                 priority={false}
                 className={imageClass}
-                sizes={getResponsiveSizes('cover')}
+                sizes={getResponsiveSizes('medium')}
                 unoptimized
               />
             ) : (

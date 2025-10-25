@@ -1,17 +1,12 @@
 // Image variants configuration (R2-backed)
 export const IMAGE_VARIANTS = {
   // Thumbnail variants
-  thumb: 'thumb', // 300x300
   small: 'small', // 600x600
   
   // Display variants
   medium: 'medium', // 1200px (longest edge)
   large: 'large', // 3840px (longest edge)
   
-  // Special variants
-  cover: 'cover', // 1200x900 for collection covers
-  og: 'og', // 1200x630 for Open Graph
-  blur: 'blur', // Low quality placeholder
   original: 'original', // Original upload
 } as const;
 
@@ -44,19 +39,12 @@ export function cloudflareImageLoader({
 
 export function getResponsiveSizes(variant: ImageVariant): string {
   switch (variant) {
-    case 'thumb':
     case 'small':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw';
     case 'medium':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px';
     case 'large':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 3840px';
-    case 'cover':
-      return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px';
-    case 'og':
-      return '1200px';
-    case 'blur':
-      return '40px';
     case 'original':
       return '100vw';
     default:
@@ -86,20 +74,12 @@ export interface OptimizedImageProps {
 
 export function getImageDimensions(variant: ImageVariant): { width: number; height: number } {
   switch (variant) {
-    case 'thumb':
-      return { width: 300, height: 300 };
     case 'small':
       return { width: 600, height: 600 };
     case 'medium':
       return { width: 1200, height: 1200 };
     case 'large':
       return { width: 3840, height: 3840 };
-    case 'cover':
-      return { width: 1200, height: 900 };
-    case 'og':
-      return { width: 1200, height: 630 };
-    case 'blur':
-      return { width: 40, height: 40 };
     case 'original':
       return { width: 4096, height: 4096 };
     default:
