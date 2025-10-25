@@ -376,7 +376,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
             const locationLabel = asset.location_folder_name
               ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
               : '未指派地點';
-            const previewSrc = getImageUrl(asset.id, 'small');
+            const previewSrc = getImageUrl(asset.id, 'thumb');
             const previewAlt = asset.alt || 'Asset preview';
             return (
               <button
@@ -422,7 +422,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
           {collectionAssets.map((asset, index) => {
             const isFirst = index === 0;
             const isLast = index === collectionAssets.length - 1;
-            const previewSrc = getImageUrl(asset.id, 'small');
+            const previewSrc = getImageUrl(asset.id, 'thumb');
             const previewAlt = asset.alt || 'Collection asset preview';
             const orderNumber = index + 1;
             return (
