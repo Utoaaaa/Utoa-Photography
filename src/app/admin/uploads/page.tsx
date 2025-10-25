@@ -179,8 +179,8 @@ const readImageDimensions = async (file: File): Promise<{ width: number; height:
 
 export default function AdminUploadsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [alt, setAlt] = useState('管理介面測試圖片');
-  const [caption, setCaption] = useState('此圖片透過管理介面上傳');
+  const [alt, setAlt] = useState('圖片');
+  const [caption, setCaption] = useState('');
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -197,7 +197,7 @@ export default function AdminUploadsPage() {
   const [locationFolders, setLocationFolders] = useState<LocationFolderOption[]>([]);
   const [uploadLocationId, setUploadLocationId] = useState<string>('');
   const [assetFilterLocationId, setAssetFilterLocationId] = useState<'all' | 'unassigned' | string>('all');
-  const [variantStatus, setVariantStatus] = useState<Record<string, Partial<Record<'small' | 'medium' | 'large', boolean>>>>({});
+  const [variantStatus, setVariantStatus] = useState<Record<string, Partial<Record<'thumb' | 'medium' | 'large', boolean>>>>({});
 
   const locationFolderMap = useMemo(() => {
     const map = new Map<string, LocationFolderOption>();
@@ -471,7 +471,7 @@ export default function AdminUploadsPage() {
                 return blob;
               };
 
-              const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
+              const t = await scaleContain(300); if (t) tasks.push(pushUpload(t, 'thumb'));
               const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
               const l = await scaleContain(3840); if (l) tasks.push(pushUpload(l, 'large'));
 
@@ -568,7 +568,7 @@ export default function AdminUploadsPage() {
         return blob;
       };
 
-      const s = await scaleContain(600); if (s) tasks.push(pushUpload(s, 'small'));
+      const t = await scaleContain(300); if (t) tasks.push(pushUpload(t, 'thumb'));
       const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
       const l = await scaleContain(3840); if (l) tasks.push(pushUpload(l, 'large'));
 
@@ -989,7 +989,7 @@ export default function AdminUploadsPage() {
               const locationLabel = asset.location_folder_name
                 ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
                 : '未指派地點';
-              const previewSrc = getImageUrl(asset.id, 'medium');
+              const previewSrc = getImageUrl(asset.id, 'thumb');
               const previewAlt = asset.alt || '素材預覽圖';
               const vs = variantStatus[asset.id] || {};
 
@@ -1014,7 +1014,7 @@ export default function AdminUploadsPage() {
                   <div className="flex flex-wrap gap-1 text-[10px]">
                     {(
                       [
-                        ['S','small'],
+                        ['T','thumb'],
                         ['M','medium'],
                         ['L','large'],
                       ] as const

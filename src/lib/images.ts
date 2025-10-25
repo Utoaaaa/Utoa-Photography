@@ -1,7 +1,7 @@
 // Image variants configuration (R2-backed)
 export const IMAGE_VARIANTS = {
   // Thumbnail variants
-  small: 'small', // 600x600
+  thumb: 'thumb', // 300x300 (for admin previews)
   
   // Display variants
   medium: 'medium', // 1200px (longest edge)
@@ -31,7 +31,7 @@ export function cloudflareImageLoader({
   quality?: number;
 }): string {
   let variant: ImageVariant = 'medium';
-  if (width <= 640) variant = 'small';
+  if (width <= 320) variant = 'thumb';
   else if (width <= 1280) variant = 'medium';
   else variant = 'large';
   return getImageUrl(src, variant);
@@ -39,8 +39,8 @@ export function cloudflareImageLoader({
 
 export function getResponsiveSizes(variant: ImageVariant): string {
   switch (variant) {
-    case 'small':
-      return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw';
+    case 'thumb':
+      return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw';
     case 'medium':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px';
     case 'large':
@@ -55,7 +55,7 @@ export function getResponsiveSizes(variant: ImageVariant): string {
 export function generateSrcSet(imageId: string): string {
   if (!imageId) return '';
   return [
-    `${getImageUrl(imageId, 'small')} 600w`,
+    `${getImageUrl(imageId, 'thumb')} 300w`,
     `${getImageUrl(imageId, 'medium')} 1200w`,
     `${getImageUrl(imageId, 'large')} 3840w`,
   ].join(', ');
@@ -74,8 +74,8 @@ export interface OptimizedImageProps {
 
 export function getImageDimensions(variant: ImageVariant): { width: number; height: number } {
   switch (variant) {
-    case 'small':
-      return { width: 600, height: 600 };
+    case 'thumb':
+      return { width: 300, height: 300 };
     case 'medium':
       return { width: 1200, height: 1200 };
     case 'large':

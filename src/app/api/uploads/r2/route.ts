@@ -7,7 +7,7 @@ function randomId() {
 }
 
 const ALLOWED_EXTS = ['jpg','jpeg','png','webp','avif'];
-const ALLOWED_VARIANTS = new Set(['small', 'medium', 'large', 'original']);
+const ALLOWED_VARIANTS = new Set(['thumb', 'medium', 'large', 'original']);
 
 export async function POST(request: NextRequest) {
   try {
