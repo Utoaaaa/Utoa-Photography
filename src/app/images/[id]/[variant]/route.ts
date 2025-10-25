@@ -38,17 +38,9 @@ export async function GET(
 
     // Try preferred extensions and fallbacks
     const exts = ['webp', 'avif', 'jpg', 'jpeg', 'png'];
-    const variantsToTry: string[] = [variant];
-    const versionDelimiterIndex = variant.indexOf('-v');
-    if (versionDelimiterIndex > 0) {
-      variantsToTry.push(variant.slice(0, versionDelimiterIndex));
-    }
-
     const tryKeys: string[] = [];
-    for (const candidate of variantsToTry) {
-      for (const ext of exts) {
-        tryKeys.push(`images/${id}/${candidate}.${ext}`);
-      }
+    for (const ext of exts) {
+      tryKeys.push(`images/${id}/${variant}.${ext}`);
     }
     // Fallback to original if variant not found
     for (const ext of exts) {

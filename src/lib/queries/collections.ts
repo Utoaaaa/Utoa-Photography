@@ -1,6 +1,5 @@
 import { shouldUseD1Direct } from '@/lib/d1-queries';
 import { getD1Database } from '@/lib/cloudflare';
-import { getVariantVersion } from '@/lib/images';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
 
@@ -19,68 +18,6 @@ function requireD1() {
     throw new Error('D1 database not available');
   }
   return db;
-}
-
-async function getAssetMetadataLookup(assetIds: string[]): Promise<Record<string, unknown>> {
-  const lookup: Record<string, unknown> = {};
-  if (assetIds.length === 0) return lookup;
-
-  if (shouldUseD1Direct()) {
-    const db = requireD1();
-    const chunkSize = 50;
-    for (let index = 0; index < assetIds.length; index += chunkSize) {
-      const chunk = assetIds.slice(index, index + chunkSize);
-      if (chunk.length === 0) continue;
-      const placeholders = chunk.map(() => '?').join(',');
-      const result = await db.prepare(
-        `SELECT id, metadata_json FROM assets WHERE id IN (${placeholders})`
-      ).bind(...chunk).all();
-      const rows = (result.results ?? []) as Array<{ id: string; metadata_json: string | null }>;
-      rows.forEach((row) => {
-        lookup[String(row.id)] = row.metadata_json ?? null;
-      });
-    }
-    return lookup;
-  }
-
-  const prisma = await getPrisma();
-  const assets = await prisma.asset.findMany({
-    where: { id: { in: assetIds } },
-    select: { id: true, metadata_json: true },
-  });
-  assets.forEach((asset) => {
-    lookup[asset.id] = asset.metadata_json ?? null;
-  });
-  return lookup;
-}
-
-async function attachCoverVariantVersions(collections: Array<Record<string, any>>): Promise<void> {
-  if (!collections || collections.length === 0) return;
-  const assetIds = Array.from(new Set(
-    collections
-      .map((collection) => {
-        const id = collection.cover_asset_id ?? (collection.coverAssetId ?? null);
-        return typeof id === 'string' ? id : null;
-      })
-      .filter((id): id is string => !!id)
-  ));
-  if (assetIds.length === 0) {
-    collections.forEach((collection) => {
-      (collection as any).cover_asset_variant_version = null;
-    });
-    return;
-  }
-
-  const metadataLookup = await getAssetMetadataLookup(assetIds);
-  collections.forEach((collection) => {
-    const assetId = collection.cover_asset_id ?? (collection.coverAssetId ?? null);
-    if (typeof assetId === 'string') {
-      const version = getVariantVersion(metadataLookup[assetId], 'cover');
-      (collection as any).cover_asset_variant_version = version ?? null;
-    } else {
-      (collection as any).cover_asset_variant_version = null;
-    }
-  });
 }
 
 function mapCollectionWithCount(row: Record<string, unknown>) {
@@ -156,21 +93,17 @@ export async function getCollectionsByYear(yearId: string) {
       ).bind(yearId).all();
 
       const rows = (result.results ?? []) as Array<Record<string, unknown>>;
-      const mapped = rows.map(mapCollectionWithCount);
-      await attachCoverVariantVersions(mapped);
-      return mapped;
+      return rows.map(mapCollectionWithCount);
     }
 
     const prisma = await getPrisma();
-    const collections = await prisma.collection.findMany({
+    return await prisma.collection.findMany({
       where: { year_id: yearId, status: 'published' },
       include: {
         _count: { select: { collection_assets: true } },
       },
       orderBy: { order_index: 'asc' },
     });
-    await attachCoverVariantVersions(collections as Array<Record<string, any>>);
-    return collections;
   } catch (error) {
     console.error('Error fetching collections by year:', error);
     return [];
@@ -225,7 +158,7 @@ export async function getCollectionBySlug(yearId: string, slug: string) {
 
       const assetRows = (assetsResult.results ?? []) as Array<Record<string, unknown>>;
 
-      const mapped = {
+      return {
         ...mapCollectionWithCount(row),
         year: {
           id: String(row.year_id),
@@ -237,12 +170,10 @@ export async function getCollectionBySlug(yearId: string, slug: string) {
         },
         collection_assets: assetRows.map(mapAssetRow),
       };
-      await attachCoverVariantVersions([mapped]);
-      return mapped;
     }
 
     const prisma = await getPrisma();
-    const collection = await prisma.collection.findUnique({
+    return await prisma.collection.findUnique({
       where: {
         year_id_slug: {
           year_id: yearId,
@@ -257,10 +188,6 @@ export async function getCollectionBySlug(yearId: string, slug: string) {
         },
       },
     });
-    if (collection) {
-      await attachCoverVariantVersions([collection as Record<string, any>]);
-    }
-    return collection;
   } catch (error) {
     console.error('Error fetching collection by slug:', error);
     return null;

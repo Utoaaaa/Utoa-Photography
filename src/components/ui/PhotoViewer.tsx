@@ -420,10 +420,8 @@ export function PhotoViewer({
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    // Preload adjacent images using helper (use large variant for display fidelity)
-    preloadImages.forEach((photo) =>
-      prefetchImage(photo.id, 'large', { metadata: photo.metadata_json })
-    );
+    // Preload adjacent images using helper
+    preloadImages.forEach((photo) => prefetchImage(photo.id, 'large'));
   }, [preloadImages]);
 
   photoRefs.current.length = photos.length;
@@ -440,9 +438,7 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const imgSrc = cfConfigured
-      ? getImageUrl(currentPhoto.id, 'large', { metadata: currentPhoto.metadata_json })
-      : '/placeholder.svg';
+    const imgSrc = cfConfigured ? getImageUrl(currentPhoto.id, 'large') : '/placeholder.svg';
 
     return (
       <div 
@@ -462,7 +458,7 @@ export function PhotoViewer({
               key={p.id}
               rel="preload"
               as="image"
-              href={cfConfigured ? getImageUrl(p.id, 'large', { metadata: p.metadata_json }) : undefined}
+              href={cfConfigured ? getImageUrl(p.id, 'large') : undefined}
             />
           ))}
         </Head>
@@ -559,7 +555,7 @@ export function PhotoViewer({
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
                 {cloudflareConfigured ? (
                   <Image
-                    src={getImageUrl(photo.id, 'large', { metadata: photo.metadata_json })}
+                    src={getImageUrl(photo.id, 'large')}
                     alt={photo.alt}
                     width={photo.width}
                     height={photo.height}
@@ -626,7 +622,7 @@ export function PhotoViewer({
           <ul>
             {photos.map((p, i) => (
               <li key={p.id} className="mb-4">
-                <a href={getImageUrl(p.id, 'large', { metadata: p.metadata_json })}>
+                <a href={getImageUrl(p.id, 'large')}>
                   {collectionTitle} - Photo {i + 1}
                 </a>
               </li>

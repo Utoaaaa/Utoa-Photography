@@ -15,11 +15,6 @@ export async function POST(request: NextRequest) {
 
     const url = new URL(request.url);
     const variant = url.searchParams.get('variant') || undefined;
-    const rawVariantVersion = url.searchParams.get('version') || undefined;
-    const trimmedVariantVersion = rawVariantVersion?.trim();
-    const normalizedVariantVersion = trimmedVariantVersion && /^[a-zA-Z0-9_-]+$/.test(trimmedVariantVersion)
-      ? trimmedVariantVersion
-      : undefined;
     const providedImageId = url.searchParams.get('image_id') || undefined;
 
     const contentType = request.headers.get('content-type') || '';
@@ -57,14 +52,8 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const body = new Uint8Array(arrayBuffer);
 
-    const variantKey = variant
-      ? normalizedVariantVersion && normalizedVariantVersion.length > 0
-        ? `${variant}-v${normalizedVariantVersion}`
-        : variant
-      : undefined;
-
-    const key = variantKey
-      ? `images/${imageId}/${variantKey}.${ext}`
+    const key = variant
+      ? `images/${imageId}/${variant}.${ext}`
       : `images/${imageId}/original.${ext}`;
 
     await bucket.put(key, body, {

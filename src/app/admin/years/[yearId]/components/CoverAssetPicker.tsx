@@ -8,7 +8,6 @@ interface BaseAsset {
   id: string;
   alt?: string | null;
   caption?: string | null;
-  metadata_json?: unknown;
 }
 
 interface LocationAsset extends BaseAsset {
@@ -221,7 +220,7 @@ function renderContent({
 
   return assets.map((asset) => {
     const isSelected = asset.id === selectedAssetId;
-    const previewUrl = getImageUrl(asset.id, 'thumb', { metadata: asset.metadata_json });
+    const previewUrl = getImageUrl(asset.id, 'thumb');
     const alt = typeof asset.alt === 'string' && asset.alt.trim().length > 0 ? asset.alt : '封面圖片預覽';
     const caption = typeof asset.caption === 'string' && asset.caption.trim().length > 0 ? asset.caption : null;
     return (

@@ -2,7 +2,6 @@ import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from './d1-queries';
 import { getD1Database } from './cloudflare';
-import { getVariantVersion } from './images';
 
 export interface LocationCollectionSummary {
   id: string;
@@ -12,7 +11,6 @@ export interface LocationCollectionSummary {
   coverAssetId: string | null;
   coverAssetWidth: number | null;
   coverAssetHeight: number | null;
-  coverAssetVariantVersion: string | null;
   orderIndex: string;
   publishedAt: string | null;
   updatedAt: string | null;
@@ -25,7 +23,6 @@ export interface LocationEntry {
   name: string;
   summary: string | null;
   coverAssetId: string | null;
-  coverAssetVariantVersion: string | null;
   orderIndex: string;
   collectionCount: number;
   collections: LocationCollectionSummary[];
@@ -113,7 +110,6 @@ function mapCollection(record: CollectionRecord): LocationCollectionSummary {
     coverAssetId: record.cover_asset_id ?? null,
     coverAssetWidth: width,
     coverAssetHeight: height,
-    coverAssetVariantVersion: null,
     orderIndex: record.order_index,
     publishedAt: record.published_at ? record.published_at.toISOString() : null,
     updatedAt: record.updated_at.toISOString(),
@@ -129,7 +125,6 @@ function mapLocation(record: LocationRecord): LocationEntry {
     name: record.name,
     summary: record.summary ?? null,
     coverAssetId: record.cover_asset_id ?? null,
-    coverAssetVariantVersion: null,
     orderIndex: record.order_index,
     collectionCount: collections.length,
     collections,
@@ -276,7 +271,6 @@ async function fetchCollectionsForLocationD1(
     coverAssetId: row.cover_asset_id ?? null,
     coverAssetWidth: row.cover_asset_width != null ? Number(row.cover_asset_width) : null,
     coverAssetHeight: row.cover_asset_height != null ? Number(row.cover_asset_height) : null,
-    coverAssetVariantVersion: null,
     orderIndex: String(row.order_index),
     publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
@@ -306,94 +300,17 @@ async function fetchLocationsForYearD1(
       yearId: String(row.year_id),
       slug: String(row.slug),
       name: String(row.name),
-    summary: row.summary ?? null,
-    coverAssetId: row.cover_asset_id ?? null,
-    coverAssetVariantVersion: null,
-    orderIndex: String(row.order_index),
-    collectionCount: collections.length,
-    collections,
-  });
+      summary: row.summary ?? null,
+      coverAssetId: row.cover_asset_id ?? null,
+      orderIndex: String(row.order_index),
+      collectionCount: collections.length,
+      collections,
+    });
   }
   return locations;
 }
 
 type D1Database = ReturnType<typeof getD1Database>;
-
-async function enrichVariantVersions(years: YearEntry[]): Promise<void> {
-  if (years.length === 0) return;
-  const assetIds = new Set<string>();
-  years.forEach((year) => {
-    year.locations.forEach((location) => {
-      if (location.coverAssetId) assetIds.add(location.coverAssetId);
-      location.collections.forEach((collection) => {
-        if (collection.coverAssetId) assetIds.add(collection.coverAssetId);
-      });
-    });
-  });
-
-  if (assetIds.size === 0) return;
-
-  const idList = Array.from(assetIds);
-  const assetInfo: Record<string, { metadata: unknown; width: number | null; height: number | null }> = {};
-
-  if (shouldUseD1Direct()) {
-    const db = requireD1();
-    const chunkSize = 50;
-    for (let offset = 0; offset < idList.length; offset += chunkSize) {
-      const chunk = idList.slice(offset, offset + chunkSize);
-      if (chunk.length === 0) continue;
-      const placeholders = chunk.map(() => '?').join(',');
-      const result = await db.prepare(
-        `SELECT id, metadata_json, width, height FROM assets WHERE id IN (${placeholders})`
-      ).bind(...chunk).all();
-      const rows = (result.results ?? []) as Array<{ id: string; metadata_json: string | null; width: number | null; height: number | null }>;
-      rows.forEach((row) => {
-        assetInfo[String(row.id)] = {
-          metadata: row.metadata_json ?? null,
-          width: row.width != null ? Number(row.width) : null,
-          height: row.height != null ? Number(row.height) : null,
-        };
-      });
-    }
-  } else {
-    const prisma = await getPrisma();
-    const assets = await prisma.asset.findMany({
-      where: { id: { in: idList } },
-      select: { id: true, metadata_json: true, width: true, height: true },
-    });
-    assets.forEach((asset) => {
-      assetInfo[asset.id] = {
-        metadata: asset.metadata_json ?? null,
-        width: asset.width ?? null,
-        height: asset.height ?? null,
-      };
-    });
-  }
-
-  years.forEach((year) => {
-    year.locations.forEach((location) => {
-      if (location.coverAssetId) {
-        const info = assetInfo[location.coverAssetId];
-        if (info) {
-          const version = getVariantVersion(info.metadata, 'cover');
-          location.coverAssetVariantVersion = version ?? null;
-        }
-      }
-      location.collections.forEach((collection) => {
-        if (collection.coverAssetId) {
-          const info = assetInfo[collection.coverAssetId];
-          if (info) {
-            const version = getVariantVersion(info.metadata, 'cover');
-            collection.coverAssetVariantVersion = version ?? null;
-            if (info.width != null) collection.coverAssetWidth = info.width;
-            if (info.height != null) collection.coverAssetHeight = info.height;
-          }
-        }
-      });
-    });
-  });
-}
-
 async function fetchYearsD1(): Promise<YearEntry[]> {
   const db = requireD1();
   const result = await db.prepare(
@@ -419,7 +336,6 @@ async function fetchYearsD1(): Promise<YearEntry[]> {
     });
   }
 
-  await enrichVariantVersions(entries);
   return entries;
 }
 
@@ -439,15 +355,13 @@ async function fetchYearByLabelD1(label: string): Promise<YearEntry | null> {
   }
 
   const locations = await fetchLocationsForYearD1(db, String(year.id));
-  const entry: YearEntry = {
+  return {
     id: String(year.id),
     label: String(year.label),
     orderIndex: String(year.order_index),
     status: String(year.status),
     locations,
   };
-  await enrichVariantVersions([entry]);
-  return entry;
 }
 
 async function fetchLocationBySlugD1(
@@ -477,11 +391,9 @@ export async function loadYearLocationData(): Promise<YearLocationPayload> {
   }
 
   const years = await fetchYears({ status: 'published' });
-  const mapped = years.map(mapYear);
-  await enrichVariantVersions(mapped);
   return {
     generatedAt: new Date().toISOString(),
-    years: mapped,
+    years: years.map(mapYear),
   };
 }
 
@@ -495,10 +407,7 @@ export async function getYearByLabel(label: string): Promise<YearEntry | null> {
   }
 
   const year = await fetchSingleYear({ label, status: 'published' });
-  if (!year) return null;
-  const mapped = mapYear(year);
-  await enrichVariantVersions([mapped]);
-  return mapped;
+  return year ? mapYear(year) : null;
 }
 
 export async function getLocationByYearAndSlug(
@@ -519,7 +428,6 @@ export async function getLocationByYearAndSlug(
   }
 
   const mappedYear = mapYear(year);
-  await enrichVariantVersions([mappedYear]);
   const location = mappedYear.locations.find((entry) => entry.slug === slug);
   if (!location) {
     return null;

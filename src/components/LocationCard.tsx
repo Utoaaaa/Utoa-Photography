@@ -41,10 +41,12 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
 
   const posterImage = useMemo(() => {
     if (!location.coverAssetId) return null;
-    return getImageUrl(location.coverAssetId, 'cover', {
-      version: location.coverAssetVariantVersion ?? undefined,
-    });
-  }, [location.coverAssetId, location.coverAssetVariantVersion]);
+    return getImageUrl(location.coverAssetId, 'cover');
+  }, [location.coverAssetId]);
+
+  // When portrait images are much narrower than the 3:4 container,
+  // use object-contain with a blurred background fill to reduce cropping.
+  const [useContainForPortrait, setUseContainForPortrait] = useState(false);
 
   const lastUpdated = useMemo(() => {
     return location.collections.reduce<string | null>((latest, collection) => {
@@ -84,14 +86,42 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
           {/* Revert to original portrait container; keep object-cover for cropping behavior */}
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem]">
             {posterImage ? (
-              <Image
-                src={posterImage}
-                alt={`${location.name} 封面視覺`}
-                fill
-                priority={false}
-                className="object-cover"
-                sizes={getResponsiveSizes('cover')}
-              />
+              <>
+                {/* Blurred background fill when using contain to avoid empty sides */}
+                {useContainForPortrait && (
+                  <div
+                    className="absolute inset-0 scale-110 blur-xl"
+                    style={{
+                      backgroundImage: `url(${posterImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      filter: 'blur(18px)',
+                      transform: 'scale(1.08)',
+                    }}
+                    aria-hidden
+                  />
+                )}
+                <Image
+                  src={posterImage}
+                  alt={`${location.name} 封面視覺`}
+                  fill
+                  priority={false}
+                  className={useContainForPortrait ? 'object-contain object-center' : 'object-cover object-center'}
+                  sizes={getResponsiveSizes('cover')}
+                  onLoadingComplete={(img) => {
+                    try {
+                      const nw = (img as HTMLImageElement).naturalWidth || 0;
+                      const nh = (img as HTMLImageElement).naturalHeight || 1;
+                      const ratio = nw / nh;
+                      // Container is 3/4 = 0.75. If image ratio is significantly narrower,
+                      // switch to contain to reduce side cropping.
+                      setUseContainForPortrait(ratio < 0.72);
+                    } catch {
+                      // no-op
+                    }
+                  }}
+                />
+              </>
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-[#01AFF6]/60 via-[#F20085]/45 to-[#FFD036]/65" />
             )}

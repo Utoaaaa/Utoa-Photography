@@ -84,10 +84,8 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
 
   const coverImageSrc = useMemo(() => {
     if (!collection.coverAssetId) return null;
-    return getImageUrl(collection.coverAssetId, 'cover', {
-      version: collection.coverAssetVariantVersion ?? undefined,
-    });
-  }, [collection.coverAssetId, collection.coverAssetVariantVersion]);
+    return getImageUrl(collection.coverAssetId, 'cover');
+  }, [collection.coverAssetId]);
 
   const coverOrientation = useMemo<'portrait' | 'landscape'>(() => {
     const width = collection.coverAssetWidth ?? null;
