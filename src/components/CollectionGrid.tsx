@@ -99,8 +99,8 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
   const imageWrapperClass = useMemo(
     () =>
       clsx(
-        // Use 4:3 container so portrait images fill width and crop top/bottom; landscape will crop sides if wider.
-        'relative aspect-[4/3] overflow-hidden rounded-[2rem]',
+        // Revert to original container ratio while keeping object-cover behavior for consistent cropping
+        'relative aspect-[3/4] overflow-hidden rounded-[2rem]',
         coverOrientation === 'portrait'
           ? 'bg-white/80 dark:bg-gray-900/50'
           : undefined,

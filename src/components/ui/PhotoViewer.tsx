@@ -420,9 +420,9 @@ export function PhotoViewer({
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    // Preload adjacent images using helper
+    // Preload adjacent images using helper (use large variant for display fidelity)
     preloadImages.forEach((photo) =>
-      prefetchImage(photo.id, 'medium', { metadata: photo.metadata_json })
+      prefetchImage(photo.id, 'large', { metadata: photo.metadata_json })
     );
   }, [preloadImages]);
 
@@ -441,7 +441,7 @@ export function PhotoViewer({
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
     const imgSrc = cfConfigured
-      ? getImageUrl(currentPhoto.id, 'original', { metadata: currentPhoto.metadata_json })
+      ? getImageUrl(currentPhoto.id, 'large', { metadata: currentPhoto.metadata_json })
       : '/placeholder.svg';
 
     return (
@@ -559,7 +559,7 @@ export function PhotoViewer({
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
                 {cloudflareConfigured ? (
                   <Image
-                    src={getImageUrl(photo.id, 'original', { metadata: photo.metadata_json })}
+                    src={getImageUrl(photo.id, 'large', { metadata: photo.metadata_json })}
                     alt={photo.alt}
                     width={photo.width}
                     height={photo.height}
@@ -626,7 +626,7 @@ export function PhotoViewer({
           <ul>
             {photos.map((p, i) => (
               <li key={p.id} className="mb-4">
-                <a href={getImageUrl(p.id, 'original', { metadata: p.metadata_json })}>
+                <a href={getImageUrl(p.id, 'large', { metadata: p.metadata_json })}>
                   {collectionTitle} - Photo {i + 1}
                 </a>
               </li>

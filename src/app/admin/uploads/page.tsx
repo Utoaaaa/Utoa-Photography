@@ -566,6 +566,23 @@ export default function AdminUploadsPage() {
         return blob;
       };
 
+      // Ensure longest edge does not exceed targetMax (e.g., 3840)
+      const scaleLongestEdge = async (targetMax: number) => {
+        const srcW = imgBitmap.width;
+        const srcH = imgBitmap.height;
+        const longest = Math.max(srcW, srcH);
+        const scale = Math.min(targetMax / longest, 1);
+        const w = Math.max(1, Math.round(srcW * scale));
+        const h = Math.max(1, Math.round(srcH * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.drawImage(imgBitmap, 0, 0, w, h);
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
+        return blob;
+      };
+
       const coverCrop = async (targetW: number, targetH: number) => {
         const srcW = imgBitmap.width;
         const srcH = imgBitmap.height;
@@ -616,7 +633,7 @@ export default function AdminUploadsPage() {
 
       const s = await scaleContain(600); if (s) { variantsInOrder.push('small'); tasks.push(pushUpload(s, 'small')); }
       const m = await scaleContain(1200); if (m) { variantsInOrder.push('medium'); tasks.push(pushUpload(m, 'medium')); }
-      const l = await scaleContain(3840); if (l) { variantsInOrder.push('large'); tasks.push(pushUpload(l, 'large')); }
+      const l = await scaleLongestEdge(3840); if (l) { variantsInOrder.push('large'); tasks.push(pushUpload(l, 'large')); }
       const t = await coverCrop(300, 300); if (t) { variantsInOrder.push('thumb'); tasks.push(pushUpload(t, 'thumb')); }
       const c = await coverCrop(1200, 900); if (c) { variantsInOrder.push('cover'); tasks.push(pushUpload(c, 'cover')); }
       const og = await coverCrop(1200, 630); if (og) { variantsInOrder.push('og'); tasks.push(pushUpload(og, 'og')); }
