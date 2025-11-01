@@ -42,6 +42,17 @@ type BatchDeleteResponse = {
 
 type Feedback = { type: 'success' | 'error' | 'info'; text: string } | null;
 
+type VariantKey = 'thumb' | 'medium' | 'large';
+type VariantStatusEntry = Partial<Record<VariantKey, boolean>>;
+type VariantStatusState = Record<string, VariantStatusEntry>;
+
+type GroupedLocationFolder = {
+  yearId: string;
+  yearLabel: string;
+  options: LocationFolderOption[];
+  yearOrderIndex: string;
+};
+
 const isAssetArray = (value: unknown): value is Asset[] =>
   Array.isArray(value) &&
   value.every((item) => {
@@ -177,6 +188,14 @@ const readImageDimensions = async (file: File): Promise<{ width: number; height:
   });
 };
 
+const isVariantStatusResponse = (value: unknown): value is { variants?: Record<string, boolean> } => {
+  if (!value || typeof value !== 'object') return false;
+  const variants = (value as { variants?: unknown }).variants;
+  if (typeof variants === 'undefined') return true;
+  if (!variants || typeof variants !== 'object') return false;
+  return Object.values(variants).every((entry) => typeof entry === 'boolean');
+};
+
 async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknown) => value is T): Promise<T> {
   try {
     const ct = res.headers.get('content-type') || '';
@@ -189,6 +208,205 @@ async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknow
   } catch {
     return fallback;
   }
+}
+
+interface AssetCardProps {
+  asset: Asset;
+  previewSrc: string;
+  previewAlt: string;
+  locationLabel: string;
+  variantStatus: VariantStatusEntry;
+  hasVariantStatus: boolean;
+  loadVariantStatus: (assetId: string) => Promise<void>;
+  groupedLocationFolders: GroupedLocationFolder[];
+  formatLocationOptionLabel: (folder: LocationFolderOption) => string;
+  locationFolderMap: Map<string, LocationFolderOption>;
+  onAssetChange: (updater: (current: Asset) => Asset) => void;
+  onSaveInline: (asset: Asset) => void;
+  selected: boolean;
+  onToggleSelected: () => void;
+}
+
+function AssetCard({
+  asset,
+  previewSrc,
+  previewAlt,
+  locationLabel,
+  variantStatus,
+  hasVariantStatus,
+  loadVariantStatus,
+  groupedLocationFolders,
+  formatLocationOptionLabel,
+  locationFolderMap,
+  onAssetChange,
+  onSaveInline,
+  selected,
+  onToggleSelected,
+}: AssetCardProps) {
+  const cardRef = useRef<HTMLElement>(null);
+  const hasRequestedVariants = useRef(false);
+
+  useEffect(() => {
+    if (hasVariantStatus) {
+      hasRequestedVariants.current = true;
+      return;
+    }
+
+    hasRequestedVariants.current = false;
+    const target = cardRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !hasRequestedVariants.current) {
+          hasRequestedVariants.current = true;
+          void loadVariantStatus(asset.id);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [asset.id, hasVariantStatus, loadVariantStatus]);
+
+  const variantBadges = ([
+    ['T', 'thumb'],
+    ['M', 'medium'],
+    ['L', 'large'],
+  ] as const).map(([label, key]) => (
+    <span
+      key={key}
+      className={`px-1.5 py-[1px] rounded border ${variantStatus[key] ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-gray-50 text-gray-500'}`}
+    >
+      {label}
+    </span>
+  ));
+
+  return (
+    <article
+      ref={cardRef}
+      data-testid="asset-card"
+      className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md"
+    >
+      <div
+        className="relative overflow-hidden rounded-lg border border-gray-100 bg-gray-50"
+        style={{ aspectRatio: '4 / 3' }}
+        aria-hidden={false}
+      >
+        <img
+          src={previewSrc}
+          alt={previewAlt}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-1 text-[10px]">{variantBadges}</div>
+
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-gray-900">{asset.alt || '未設定替代文字'}</p>
+          <p className="text-xs text-gray-500">
+            {asset.width}×{asset.height}
+          </p>
+        </div>
+        {(asset as AssetMaybeUsed).used === true && (
+          <span
+            className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700"
+            title="此照片已用於作品集"
+            data-testid="asset-used-badge"
+          >
+            已使用
+          </span>
+        )}
+      </div>
+
+      <div className={`text-xs ${asset.location_folder_id ? 'text-gray-600' : 'text-gray-400'}`} data-testid="asset-location-label">
+        {locationLabel}
+      </div>
+
+      {asset.caption ? <p className="text-sm text-gray-600">{asset.caption}</p> : null}
+
+      <details className="group rounded-lg border border-gray-200 bg-gray-50/60 p-3 text-sm text-gray-700">
+        <summary className="cursor-pointer font-medium text-gray-800 transition group-open:text-blue-700">
+          編輯中繼資料
+        </summary>
+        <div className="mt-3 grid gap-3 text-xs text-gray-600">
+          <label className="flex flex-col gap-1">
+            <span>替代文字</span>
+            <input
+              className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={asset.alt}
+              onChange={(event) => onAssetChange((current) => ({ ...current, alt: event.target.value }))}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span>說明文字</span>
+            <textarea
+              className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={asset.caption || ''}
+              rows={2}
+              onChange={(event) => onAssetChange((current) => ({ ...current, caption: event.target.value }))}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span>地點資料夾</span>
+            <select
+              className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={asset.location_folder_id ?? ''}
+              data-testid="asset-location-inline-select"
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                const nextFolder = nextValue ? locationFolderMap.get(nextValue) : undefined;
+                onAssetChange((current) => ({
+                  ...current,
+                  location_folder_id: nextValue || null,
+                  location_folder_name: nextFolder?.name ?? null,
+                  location_folder_year_id: nextFolder?.yearId ?? null,
+                  location_folder_year_label: nextFolder?.yearLabel ?? null,
+                }));
+              }}
+            >
+              <option value="">未指派地點</option>
+              {groupedLocationFolders.map((group) => (
+                <optgroup key={`inline-${group.yearId || group.yearLabel || 'unlabelled'}`} label={group.yearLabel || '其他年份'}>
+                  {group.options.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {formatLocationOptionLabel(folder)}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+
+          <div className="flex justify-end">
+            <button
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              onClick={() => void onSaveInline(asset)}
+            >
+              儲存
+            </button>
+          </div>
+        </div>
+      </details>
+      <label className="mt-1 inline-flex items-center gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          data-testid="asset-checkbox"
+          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          checked={selected}
+          onChange={onToggleSelected}
+        />
+        <span>加入批次操作</span>
+      </label>
+    </article>
+  );
 }
 
 export default function AdminUploadsPage() {
@@ -211,7 +429,7 @@ export default function AdminUploadsPage() {
   const [locationFolders, setLocationFolders] = useState<LocationFolderOption[]>([]);
   const [uploadLocationId, setUploadLocationId] = useState<string>('');
   const [assetFilterLocationId, setAssetFilterLocationId] = useState<'all' | 'unassigned' | string>('all');
-  const [variantStatus, setVariantStatus] = useState<Record<string, Partial<Record<'thumb' | 'medium' | 'large', boolean>>>>({});
+  const [variantStatus, setVariantStatus] = useState<VariantStatusState>({});
 
   const locationFolderMap = useMemo(() => {
     const map = new Map<string, LocationFolderOption>();
@@ -221,7 +439,7 @@ export default function AdminUploadsPage() {
     return map;
   }, [locationFolders]);
 
-  const groupedLocationFolders = useMemo(() => {
+  const groupedLocationFolders = useMemo<GroupedLocationFolder[]>(() => {
     const groups = new Map<string, { yearLabel: string; yearOrderIndex: string; options: LocationFolderOption[] }>();
     locationFolders.forEach((folder) => {
       const existing = groups.get(folder.yearId);
@@ -375,6 +593,17 @@ export default function AdminUploadsPage() {
       setAssetFilterLocationId((prev) => (prev === 'all' || prev === 'unassigned' ? prev : 'all'));
     }
   }, []);
+
+  const loadVariantStatusForAsset = useCallback(async (assetId: string) => {
+    try {
+      const res = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(assetId)}`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await safeJson<{ variants?: Record<string, boolean> }>(res, {} as { variants?: Record<string, boolean> }, isVariantStatusResponse);
+      setVariantStatus((prev) => ({ ...prev, [assetId]: data.variants ?? {} }));
+    } catch {
+      // ignore
+    }
+  }, [setVariantStatus]);
 
   const formatLocationOptionLabel = useCallback(
     (folder: LocationFolderOption) => (folder.yearLabel ? `${folder.yearLabel} · ${folder.name}` : folder.name),
@@ -573,19 +802,14 @@ export default function AdminUploadsPage() {
       }
       // Refresh variant status for affected ids
       try {
-        const updates: Record<string, any> = {};
+        const updates: Record<string, VariantStatusEntry> = {};
         await Promise.all(Array.from(selectedIds).map(async (id) => {
           const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
           if (r.ok) {
-            const isVariantsResponse = (value: unknown): value is { variants?: Record<string, boolean> } => {
-              if (!value || typeof value !== 'object') return false;
-              const v = (value as any).variants;
-              return typeof v === 'undefined' || (v && typeof v === 'object');
-            };
             const j = await safeJson<{ variants?: Record<string, boolean> }>(
               r,
               {} as { variants?: Record<string, boolean> },
-              isVariantsResponse,
+              isVariantStatusResponse,
             );
             updates[id] = j.variants ?? {};
           }
@@ -963,186 +1187,30 @@ export default function AdminUploadsPage() {
                 : '未指派地點';
               const previewSrc = getImageUrl(asset.id, 'thumb');
               const previewAlt = asset.alt || '素材預覽圖';
-              const vs = variantStatus[asset.id] || {};
-
-              // Lazy load variant status when card enters viewport
-              const cardRef = useRef<HTMLElement>(null);
-              useEffect(() => {
-                const observer = new IntersectionObserver(
-                  (entries) => {
-                    entries.forEach((entry) => {
-                      if (entry.isIntersecting && !(asset.id in variantStatus)) {
-                        // Load variant status for this asset
-                        void (async () => {
-                          try {
-                            const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(asset.id)}`, { cache: 'no-store' });
-                            if (!r.ok) return;
-                            const isVariantsResponse = (value: unknown): value is { variants?: Record<string, boolean> } => {
-                              if (!value || typeof value !== 'object') return false;
-                              const v = (value as any).variants;
-                              return typeof v === 'undefined' || (v && typeof v === 'object');
-                            };
-                            const j = await safeJson<{ variants?: Record<string, boolean> }>(
-                              r,
-                              {} as { variants?: Record<string, boolean> },
-                              isVariantsResponse,
-                            );
-                            setVariantStatus(prev => ({ ...prev, [asset.id]: j.variants ?? {} }));
-                          } catch {}
-                        })();
-                      }
-                    });
-                  },
-                  { threshold: 0.1 }
-                );
-
-                if (cardRef.current) {
-                  observer.observe(cardRef.current);
-                }
-
-                return () => {
-                  if (cardRef.current) {
-                    observer.unobserve(cardRef.current);
-                  }
-                };
-              }, [asset.id]);
+              const variantEntry = variantStatus[asset.id] || {};
+              const hasVariants = asset.id in variantStatus;
+              const updateAsset = (updater: (current: Asset) => Asset) => {
+                setAssets((prev) => prev.map((item) => (item.id === asset.id ? updater(item) : item)));
+              };
 
               return (
-                <article
-                  ref={cardRef}
+                <AssetCard
                   key={asset.id}
-                  data-testid="asset-card"
-                  className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md"
-                >
-                  <div
-                    className="relative overflow-hidden rounded-lg border border-gray-100 bg-gray-50"
-                    style={{ aspectRatio: '4 / 3' }}
-                    aria-hidden={false}
-                  >
-                    <img
-                      src={previewSrc}
-                      alt={previewAlt}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-1 text-[10px]">
-                    {(
-                      [
-                        ['T','thumb'],
-                        ['M','medium'],
-                        ['L','large'],
-                      ] as const
-                    ).map(([label, key]) => (
-                      <span key={key} className={`px-1.5 py-[1px] rounded border ${vs[key] ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-gray-900">{asset.alt || '未設定替代文字'}</p>
-                      <p className="text-xs text-gray-500">{asset.width}×{asset.height}</p>
-                    </div>
-                    {(asset as AssetMaybeUsed).used === true && (
-                      <span
-                        className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700"
-                        title="此照片已用於作品集"
-                        data-testid="asset-used-badge"
-                      >
-                        已使用
-                      </span>
-                    )}
-                  </div>
-
-                  <div className={`text-xs ${asset.location_folder_id ? 'text-gray-600' : 'text-gray-400'}`} data-testid="asset-location-label">
-                    {locationLabel}
-                  </div>
-
-                  {asset.caption ? (
-                    <p className="text-sm text-gray-600">{asset.caption}</p>
-                  ) : null}
-
-                  <details className="group rounded-lg border border-gray-200 bg-gray-50/60 p-3 text-sm text-gray-700">
-                    <summary className="cursor-pointer font-medium text-gray-800 transition group-open:text-blue-700">
-                      編輯中繼資料
-                    </summary>
-                    <div className="mt-3 grid gap-3 text-xs text-gray-600">
-                      <label className="flex flex-col gap-1">
-                        <span>替代文字</span>
-                        <input
-                          className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                          value={asset.alt}
-                          onChange={(event) => setAssets((prev) => prev.map((item) => (item.id === asset.id ? { ...item, alt: event.target.value } : item)))}
-                        />
-                      </label>
-
-                      <label className="flex flex-col gap-1">
-                        <span>說明文字</span>
-                        <textarea
-                          className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                          value={asset.caption || ''}
-                          rows={2}
-                          onChange={(event) => setAssets((prev) => prev.map((item) => (item.id === asset.id ? { ...item, caption: event.target.value } : item)))}
-                        />
-                      </label>
-
-                      <label className="flex flex-col gap-1">
-                        <span>地點資料夾</span>
-                        <select
-                          className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                          value={asset.location_folder_id ?? ''}
-                          data-testid="asset-location-inline-select"
-                          onChange={(event) => {
-                            const nextValue = event.target.value;
-                            const nextFolder = nextValue ? locationFolderMap.get(nextValue) : undefined;
-                            setAssets((prev) => prev.map((item) => (
-                              item.id === asset.id
-                                ? {
-                                    ...item,
-                                    location_folder_id: nextValue || null,
-                                    location_folder_name: nextFolder?.name ?? null,
-                                    location_folder_year_id: nextFolder?.yearId ?? null,
-                                    location_folder_year_label: nextFolder?.yearLabel ?? null,
-                                  }
-                                : item
-                            )));
-                          }}
-                        >
-                          <option value="">未指派地點</option>
-                          {groupedLocationFolders.map((group) => (
-                            <optgroup key={`inline-${group.yearId || group.yearLabel || 'unlabelled'}`} label={group.yearLabel || '其他年份'}>
-                              {group.options.map((folder) => (
-                                <option key={folder.id} value={folder.id}>{formatLocationOptionLabel(folder)}</option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-                      </label>
-
-                      <div className="flex justify-end">
-                        <button
-                          className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-                          onClick={() => void saveInlineAsset(asset)}
-                        >
-                          儲存
-                        </button>
-                      </div>
-                    </div>
-                  </details>
-
-                  <label className="mt-1 inline-flex items-center gap-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      data-testid="asset-checkbox"
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      checked={selectedIds.has(asset.id)}
-                      onChange={() => toggleSelected(asset.id)}
-                    />
-                    <span>加入批次操作</span>
-                  </label>
-                </article>
+                  asset={asset}
+                  previewSrc={previewSrc}
+                  previewAlt={previewAlt}
+                  locationLabel={locationLabel}
+                  variantStatus={variantEntry}
+                  hasVariantStatus={hasVariants}
+                  loadVariantStatus={loadVariantStatusForAsset}
+                  groupedLocationFolders={groupedLocationFolders}
+                  formatLocationOptionLabel={formatLocationOptionLabel}
+                  locationFolderMap={locationFolderMap}
+                  onAssetChange={updateAsset}
+                  onSaveInline={saveInlineAsset}
+                  selected={selectedIds.has(asset.id)}
+                  onToggleSelected={() => toggleSelected(asset.id)}
+                />
               );
             })}
           </div>
