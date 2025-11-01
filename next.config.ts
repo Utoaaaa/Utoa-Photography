@@ -23,7 +23,7 @@ const baseConfig: NextConfig = {
   // Image optimization (we serve from external CDN directly)
   images: {
     domains: (() => {
-      const domains = ['imagedelivery.net'];
+      const domains = ['imagedelivery.net','images.utoa.studio'];
       const r2Host = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST;
       if (r2Host) domains.push(r2Host);
       const r2Origin = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
@@ -54,6 +54,7 @@ const baseConfig: NextConfig = {
     }
     // Cloudflare Images
     imgSrcExtras.push('https://imagedelivery.net');
+    imgSrcExtras.push('https://images.utoa.studio');
 
     const baseCspParts = [
       "default-src 'self'",
