@@ -39,6 +39,11 @@ routes = [
 [env.production.vars]
 NODE_ENV = "production"
 BYPASS_ACCESS_FOR_TESTS = "false"
+NEXT_PUBLIC_IMAGE_ORIGIN = "r2_resize"
+NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN = "https://images.utoa.studio"
+NEXT_PUBLIC_R2_PUBLIC_BASE_HOST = "images.utoa.studio"
+NEXT_PUBLIC_R2_OBJECT_PREFIX = "images"
+NEXT_PUBLIC_R2_VARIANT_EXT = "webp"
 # Comma-separated admin email whitelist (not a secret; OK to version)
 ADMIN_EMAILS = "nick940624@gmail.com"
 

@@ -15,10 +15,7 @@ export type ImageVariant = keyof typeof IMAGE_VARIANTS;
 const FALLBACK_PLACEHOLDER = '/placeholder.svg';
 
 // Direct delivery configuration
-const IMAGE_ORIGIN = (process.env.NEXT_PUBLIC_IMAGE_ORIGIN || 'worker') as
-  | 'worker'
-  | 'cf_images'
-  | 'r2_resize';
+const IMAGE_ORIGIN = (process.env.NEXT_PUBLIC_IMAGE_ORIGIN || (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN ? 'r2_resize' : 'worker')) as 'worker' | 'cf_images' | 'r2_resize';
 
 // Cloudflare Images account hash for imagedelivery.net
 const CF_IMAGES_ACCOUNT_HASH = process.env.NEXT_PUBLIC_CF_IMAGES_ACCOUNT_HASH;
