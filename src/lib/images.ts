@@ -202,9 +202,23 @@ export function getR2VariantUrl(imageId: string, variant: ImageVariant): string 
   const ext = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');
   if (base) {
     const params = getResizeParamsForVariant(variant) || '';
+    // Always source from large.webp to avoid missing medium/thumb objects
+    const sourceVariant = 'large';
+    const objectPath = `${prefix}/${encodeURIComponent(imageId)}/${sourceVariant}.${ext}`;
     if (params) {
-      return `${base}/cdn-cgi/image/${params}/${prefix}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}.${ext}`;
+      return `${base}/cdn-cgi/image/${params}/${objectPath}`;
     }
+    return `${base}/${objectPath}`;
+  }
+  return getImageUrl(imageId, variant);
+}
+
+export function getR2VariantDirectUrl(imageId: string, variant: ImageVariant): string {
+  if (!imageId) return '/placeholder.svg';
+  const base = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
+  const prefix = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
+  const ext = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');
+  if (base) {
     return `${base}/${prefix}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}.${ext}`;
   }
   return getImageUrl(imageId, variant);
