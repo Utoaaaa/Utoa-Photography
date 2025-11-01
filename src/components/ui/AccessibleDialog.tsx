@@ -81,6 +81,8 @@ export default function AccessibleDialog({ open, titleId, onClose, children, dat
   return (
     <div
       data-testid={dataTestId}
+      data-lenis-prevent
+      data-lenis-prevent-wheel
       className="fixed inset-0 z-50 flex min-h-full items-center justify-center bg-black/30 p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
