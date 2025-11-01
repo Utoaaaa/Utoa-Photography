@@ -63,12 +63,16 @@ export default function AccessibleDialog({ open, titleId, onClose, children, dat
   return (
     <div
       data-testid={dataTestId}
-      className="fixed inset-0 bg-black/30 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex min-h-full items-center justify-center bg-black/30 p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <div ref={containerRef} tabIndex={-1} className="bg-white p-4 rounded shadow min-w-80">
+      <div
+        ref={containerRef}
+        tabIndex={-1}
+        className="w-full max-w-5xl transform rounded bg-white p-4 shadow outline-none sm:min-w-[24rem] max-h-[90vh] overflow-y-auto"
+      >
         {children}
       </div>
     </div>

@@ -67,91 +67,93 @@ export function DotNavigation({
 
   return (
     <nav 
-      className={`fixed right-6 top-1/2 z-50 -translate-y-1/2 transition-all duration-300 ease-out ${visibilityClasses}`}
+      className={`fixed right-6 top-1/2 z-50 transition-all duration-300 ease-out ${visibilityClasses}`}
       aria-label={`${collectionTitle} photo navigation`}
       data-testid="dot-navigation"
       aria-hidden={!visible}
     >
-      <div
-        role="radiogroup"
-        aria-orientation="vertical"
-        className={`flex flex-col space-y-2 ${
-          shouldGroup ? 'max-h-96 overflow-y-auto scrollbar-thin' : ''
-        }`}
-      >
-        {visibleDots.map((dotIndex) => {
-          const isActive = shouldGroup 
-            ? activeGroupIndex === dotIndex 
-            : activeIndex === dotIndex;
-          
-          const displayNumber = dotIndex + 1;
-          const endNumber = shouldGroup 
-            ? Math.min(dotIndex + groupSize, totalPhotos)
-            : displayNumber;
-          
-          return (
-            <div key={dotIndex}>
-              <button
-                onClick={() => onDotClick(dotIndex)}
-                onKeyDown={(e) => handleKeyDown(e, dotIndex)}
-                className={`relative transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 focus:ring-offset-white ${
-                shouldGroup 
-                  ? 'w-6 h-6 text-xs font-medium rounded border-2' 
-                  : 'w-3 h-3 rounded-full border-2'
-              } ${
-                isActive
-                  ? (shouldGroup
-                      ? 'bg-gray-900 text-white border-gray-900 scale-110'
-                      : 'bg-gray-900 border-gray-900 scale-125')
-                  : (shouldGroup
-                      ? 'bg-white text-gray-900 border-gray-400 hover:border-gray-600 hover:bg-gray-100'
-                      : 'bg-white border-gray-400 hover:border-gray-600 hover:bg-gray-100')
-              }`}
-                aria-label={shouldGroup 
-                  ? `Go to photos ${displayNumber} to ${endNumber} of ${totalPhotos}`
-                  : `Go to photo ${displayNumber} of ${totalPhotos}`
-                }
-                role="radio"
-                aria-checked={isActive}
-                data-testid="nav-dot"
-                tabIndex={isActive ? 0 : -1}
-              >
-                {shouldGroup && (
-                  <span className="leading-none">
-                    {groupSize === 1 ? displayNumber : `${displayNumber}`}
-                  </span>
-                )}
-              </button>
-            </div>
-          );
-        })}
-      </div>
-      <noscript>
-        <div className={`mt-4 text-xs text-gray-600`}>
-          快速導覽：
-          <ul>
-            {visibleDots.map((dotIndex) => (
-              <li key={`ns-${dotIndex}`}>
-                <a href={`#photo-${dotIndex + 1}`}>{dotIndex + 1}</a>
-              </li>
-            ))}
-          </ul>
+      <div className="-translate-y-1/2 transform flex flex-col items-center">
+        <div
+          role="radiogroup"
+          aria-orientation="vertical"
+          className={`flex flex-col space-y-2 ${
+            shouldGroup ? 'max-h-96 overflow-y-auto scrollbar-thin' : ''
+          }`}
+        >
+          {visibleDots.map((dotIndex) => {
+            const isActive = shouldGroup 
+              ? activeGroupIndex === dotIndex 
+              : activeIndex === dotIndex;
+            
+            const displayNumber = dotIndex + 1;
+            const endNumber = shouldGroup 
+              ? Math.min(dotIndex + groupSize, totalPhotos)
+              : displayNumber;
+            
+            return (
+              <div key={dotIndex}>
+                <button
+                  onClick={() => onDotClick(dotIndex)}
+                  onKeyDown={(e) => handleKeyDown(e, dotIndex)}
+                  className={`relative transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 focus:ring-offset-white ${
+                  shouldGroup 
+                    ? 'w-6 h-6 text-xs font-medium rounded border-2' 
+                    : 'w-3 h-3 rounded-full border-2'
+                } ${
+                  isActive
+                    ? (shouldGroup
+                        ? 'bg-gray-900 text-white border-gray-900 scale-110'
+                        : 'bg-gray-900 border-gray-900 scale-125')
+                    : (shouldGroup
+                        ? 'bg-white text-gray-900 border-gray-400 hover:border-gray-600 hover:bg-gray-100'
+                        : 'bg-white border-gray-400 hover:border-gray-600 hover:bg-gray-100')
+                }`}
+                  aria-label={shouldGroup 
+                    ? `Go to photos ${displayNumber} to ${endNumber} of ${totalPhotos}`
+                    : `Go to photo ${displayNumber} of ${totalPhotos}`
+                  }
+                  role="radio"
+                  aria-checked={isActive}
+                  data-testid="nav-dot"
+                  tabIndex={isActive ? 0 : -1}
+                >
+                  {shouldGroup && (
+                    <span className="leading-none">
+                      {groupSize === 1 ? displayNumber : `${displayNumber}`}
+                    </span>
+                  )}
+                </button>
+              </div>
+            );
+          })}
         </div>
-      </noscript>
-      
-      {/* Progress indicator with enhanced ARIA support */}
-      <div 
-        className={`mt-4 text-xs text-center min-w-max text-gray-500`}
-        role="status"
-        aria-live="polite"
-        aria-label={`Currently viewing photo ${activeIndex + 1} of ${totalPhotos}`}
-      >
-        {activeIndex + 1} / {totalPhotos}
-        {shouldGroup && (
-          <div className="text-xs opacity-75 mt-1">
-            {Math.ceil(totalPhotos / maxVisibleDots) > 1 && 'Grouped view'}
+        <noscript>
+          <div className={`mt-4 text-xs text-gray-600`}>
+            快速導覽：
+            <ul>
+              {visibleDots.map((dotIndex) => (
+                <li key={`ns-${dotIndex}`}>
+                  <a href={`#photo-${dotIndex + 1}`}>{dotIndex + 1}</a>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
+        </noscript>
+        
+        {/* Progress indicator with enhanced ARIA support */}
+        <div 
+          className={`mt-4 text-xs text-center min-w-max text-gray-500`}
+          role="status"
+          aria-live="polite"
+          aria-label={`Currently viewing photo ${activeIndex + 1} of ${totalPhotos}`}
+        >
+          {activeIndex + 1} / {totalPhotos}
+          {shouldGroup && (
+            <div className="text-xs opacity-75 mt-1">
+              {Math.ceil(totalPhotos / maxVisibleDots) > 1 && 'Grouped view'}
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
