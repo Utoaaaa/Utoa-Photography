@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationEntry } from '@/lib/year-location';
-import { getImageUrl, getResponsiveSizes } from '@/lib/images';
+import { getR2VariantUrl, getResponsiveSizes } from '@/lib/images';
 
 interface LocationCardProps {
   yearLabel: string;
@@ -41,7 +41,7 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
 
   const posterImage = useMemo(() => {
     if (!location.coverAssetId) return null;
-    return getImageUrl(location.coverAssetId, 'medium');
+    return getR2VariantUrl(location.coverAssetId, 'medium');
   }, [location.coverAssetId]);
 
   const lastUpdated = useMemo(() => {

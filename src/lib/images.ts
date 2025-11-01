@@ -194,3 +194,18 @@ export function getR2LargeUrl(imageId: string): string {
   }
   return getImageUrl(imageId, 'large');
 }
+
+export function getR2VariantUrl(imageId: string, variant: ImageVariant): string {
+  if (!imageId) return '/placeholder.svg';
+  const base = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
+  const prefix = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
+  const ext = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');
+  if (base) {
+    const params = getResizeParamsForVariant(variant) || '';
+    if (params) {
+      return `${base}/cdn-cgi/image/${params}/${prefix}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}.${ext}`;
+    }
+    return `${base}/${prefix}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}.${ext}`;
+  }
+  return getImageUrl(imageId, variant);
+}

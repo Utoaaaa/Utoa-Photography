@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
-import { getImageUrl, getResponsiveSizes } from '@/lib/images';
+import { getR2VariantUrl, getResponsiveSizes } from '@/lib/images';
 
 interface CollectionGridProps {
   yearLabel: string;
@@ -84,7 +84,7 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
 
   const coverImageSrc = useMemo(() => {
     if (!collection.coverAssetId) return null;
-    return getImageUrl(collection.coverAssetId, 'medium');
+    return getR2VariantUrl(collection.coverAssetId, 'medium');
   }, [collection.coverAssetId]);
 
   const coverOrientation = useMemo<'portrait' | 'landscape'>(() => {

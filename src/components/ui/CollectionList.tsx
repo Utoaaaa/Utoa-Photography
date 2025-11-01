@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { getImageUrl } from '@/lib/images';
+import { getR2VariantUrl } from '@/lib/images';
 import { getCollectionsByYear } from '@/lib/queries/collections';
 
 type Collection = Awaited<ReturnType<typeof getCollectionsByYear>>[0];
@@ -34,7 +34,7 @@ export function CollectionList({ collections, yearLabel }: CollectionListProps) 
             <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
               {collection.cover_asset_id ? (
                 <Image
-                  src={getImageUrl(collection.cover_asset_id, 'medium')}
+                  src={getR2VariantUrl(collection.cover_asset_id, 'medium')}
                   alt={collection.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
