@@ -37,11 +37,13 @@ export async function GET(
     }
 
     // Edge cache: serve from caches.default when available
-    const cache = (globalThis as unknown as { caches?: CacheStorage })?.caches?.default as Cache | undefined;
+    const cachesAny = (globalThis as any)?.caches as any;
+    const cache: undefined | { match: (req: Request) => Promise<Response | undefined | null>; put: (req: Request, res: Response) => Promise<void> } =
+      cachesAny && cachesAny.default ? (cachesAny.default as any) : undefined
     const cacheKey = new Request(new URL(request.url), request as unknown as Request);
     if (cache) {
-      const cached = await cache.match(cacheKey);
-      if (cached) return cached;
+      const cached = await (cache as any).match(cacheKey);
+      if (cached) return cached as Response;
     }
 
     // Choose a single best extension from Accept header to avoid multiple R2 reads
@@ -78,7 +80,7 @@ export async function GET(
         const response = new Response(obj.body, { status: 200, headers });
         // Store to edge cache for future hits
         if (cache) {
-          try { await cache.put(cacheKey, response.clone()); } catch {}
+          try { await (cache as any).put(cacheKey, response.clone()); } catch {}
         }
         return response;
       }
