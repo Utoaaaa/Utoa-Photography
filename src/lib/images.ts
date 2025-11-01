@@ -183,3 +183,14 @@ function getResizeParamsForVariant(variant: ImageVariant): string | null {
       return null;
   }
 }
+
+export function getR2LargeUrl(imageId: string): string {
+  if (!imageId) return '/placeholder.svg';
+  const base = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
+  const prefix = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
+  const ext = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');
+  if (base) {
+    return `${base}/cdn-cgi/image/w=3840,q=85,fit=contain,f=auto/${prefix}/${encodeURIComponent(imageId)}/large.${ext}`;
+  }
+  return getImageUrl(imageId, 'large');
+}

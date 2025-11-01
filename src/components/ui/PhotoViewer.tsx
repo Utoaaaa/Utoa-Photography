@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
-import { getImageUrl, prefetchImage, isCloudflareConfigured } from '@/lib/images';
+import { getImageUrl, getR2LargeUrl, prefetchImage, isCloudflareConfigured } from '@/lib/images';
 import { DotNavigation } from './DotNavigation';
 
 type Asset = {
@@ -420,8 +420,14 @@ export function PhotoViewer({
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    // Preload adjacent images using helper (use 'medium' to reduce bytes)
-    preloadImages.forEach((photo) => prefetchImage(photo.id, 'medium'));
+    // Preload adjacent images with direct R2 large URLs to avoid hitting Worker
+    preloadImages.forEach((photo) => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = getR2LargeUrl(photo.id);
+      document.head.appendChild(link);
+    });
   }, [preloadImages]);
 
   photoRefs.current.length = photos.length;
@@ -438,7 +444,7 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const imgSrc = cfConfigured ? getImageUrl(currentPhoto.id, 'large') : '/placeholder.svg';
+    const imgSrc = cfConfigured ? getR2LargeUrl(currentPhoto.id) : '/placeholder.svg';
 
     return (
       <div 
@@ -458,7 +464,7 @@ export function PhotoViewer({
               key={p.id}
               rel="preload"
               as="image"
-              href={cfConfigured ? getImageUrl(p.id, 'medium') : undefined}
+              href={cfConfigured ? getR2LargeUrl(p.id) : undefined}
             />
           ))}
         </Head>
@@ -555,7 +561,7 @@ export function PhotoViewer({
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
                 {cloudflareConfigured ? (
                   <Image
-                    src={getImageUrl(photo.id, 'large')}
+                    src={getR2LargeUrl(photo.id)}
                     alt={photo.alt}
                     width={photo.width}
                     height={photo.height}
@@ -622,7 +628,7 @@ export function PhotoViewer({
           <ul>
             {photos.map((p, i) => (
               <li key={p.id} className="mb-4">
-                <a href={getImageUrl(p.id, 'large')}>
+                <a href={getR2LargeUrl(p.id)}>
                   {collectionTitle} - Photo {i + 1}
                 </a>
               </li>
