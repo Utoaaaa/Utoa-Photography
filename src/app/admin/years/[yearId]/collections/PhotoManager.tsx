@@ -132,6 +132,9 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const locationFilterActive = Boolean(collectionLocationId);
+  // Tabs: default show unused photos; only render used list after click
+  const [activeTab, setActiveTab] = useState<'unused' | 'used'>('unused');
+  const [usedTabInitialized, setUsedTabInitialized] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -348,7 +351,34 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
 
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h3 className="text-base font-medium text-gray-900">Available assets</h3>
+          <div className="flex flex-col">
+            <h3 className="text-base font-medium text-gray-900">Available assets</h3>
+            <div className="mt-2 inline-flex rounded-md border border-gray-200 bg-gray-50 p-0.5" role="tablist" aria-label="asset usage tabs">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'unused'}
+                data-testid="tab-unused"
+                className={`px-3 py-1 text-sm rounded ${activeTab === 'unused' ? 'bg-white text-gray-900 shadow' : 'text-gray-600 hover:text-gray-900'}`}
+                onClick={() => setActiveTab('unused')}
+              >
+                未使用
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'used'}
+                data-testid="tab-used"
+                className={`px-3 py-1 text-sm rounded ${activeTab === 'used' ? 'bg-white text-gray-900 shadow' : 'text-gray-600 hover:text-gray-900'}`}
+                onClick={() => {
+                  setActiveTab('used');
+                  if (!usedTabInitialized) setUsedTabInitialized(true);
+                }}
+              >
+                已使用於其他作品集
+              </button>
+            </div>
+          </div>
           <button
             type="button"
             data-testid="add-to-collection-btn"
@@ -364,61 +394,100 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
             僅顯示指派至此地點資料夾的照片。若缺少照片，請到「Uploads」頁面上傳或指派地點。
           </p>
         )}
-        <div data-testid="available-assets" className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {loading && <div className="col-span-full text-sm text-gray-500">Loading assets…</div>}
-          {!loading && assets.length === 0 && (
-            <div className="col-span-full text-sm text-gray-500">
-              {locationFilterActive ? '此地點尚未有照片，請於上傳頁面建立後再試。' : 'No assets'}
+        {/* Enable vertical scroll for photo previews */}
+        <div className="max-h-[65vh] overflow-y-auto pr-1" data-testid="available-assets-scroll">
+          {activeTab === 'unused' && (
+            <div data-testid="available-assets-unused" className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {loading && <div className="col-span-full text-sm text-gray-500">Loading assets…</div>}
+              {!loading && assets.filter((a) => !a.used).length === 0 && (
+                <div className="col-span-full text-sm text-gray-500">
+                  {locationFilterActive ? '此地點尚未有照片，請於上傳頁面建立後再試。' : '沒有可用的未使用照片'}
+                </div>
+              )}
+              {!loading && assets.filter((a) => !a.used).map((asset) => {
+                const isSelected = selected.has(asset.id);
+                const locationLabel = asset.location_folder_name
+                  ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
+                  : '未指派地點';
+                const previewSrc = getImageUrl(asset.id, 'thumb');
+                const previewAlt = asset.alt || 'Asset preview';
+                return (
+                  <button
+                    type="button"
+                    key={asset.id}
+                    data-testid="asset-card"
+                    className={`flex flex-col rounded border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring ${
+                      isSelected ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                    aria-pressed={isSelected}
+                    onClick={() => toggleSelect(asset.id)}
+                  >
+                    <div
+                      className="mb-2 overflow-hidden rounded border bg-gray-50"
+                      style={{ aspectRatio: '4 / 3' }}
+                    >
+                      <img src={previewSrc} alt={previewAlt} loading="lazy" className="h-full w-full object-cover" />
+                    </div>
+                    <div className="font-mono text-xs text-gray-700">{asset.id}</div>
+                    {asset.alt && <div className="mt-1 text-sm text-gray-900">{asset.alt}</div>}
+                    <div className={`mt-1 text-[11px] ${asset.location_folder_id ? 'text-gray-600' : 'text-gray-400'}`}>{locationLabel}</div>
+                  </button>
+                );
+              })}
             </div>
           )}
-          {!loading && assets.map((asset) => {
-            const isSelected = selected.has(asset.id);
-            const locationLabel = asset.location_folder_name
-              ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
-              : '未指派地點';
-            const previewSrc = getImageUrl(asset.id, 'thumb');
-            const previewAlt = asset.alt || 'Asset preview';
-            return (
-              <button
-                type="button"
-                key={asset.id}
-                data-testid="asset-card"
-                className={`flex flex-col rounded border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring ${
-                  isSelected ? 'ring-2 ring-blue-500' : ''
-                }`}
-                aria-pressed={isSelected}
-                onClick={() => toggleSelect(asset.id)}
-              >
-                <div
-                  className="mb-2 overflow-hidden rounded border bg-gray-50"
-                  style={{ aspectRatio: '4 / 3' }}
-                >
-                  <img src={previewSrc} alt={previewAlt} loading="lazy" className="h-full w-full object-cover" />
-                </div>
-                <div className="font-mono text-xs text-gray-700">{asset.id}</div>
-                {asset.alt && <div className="mt-1 text-sm text-gray-900">{asset.alt}</div>}
-                <div className={`mt-1 text-[11px] ${asset.location_folder_id ? 'text-gray-600' : 'text-gray-400'}`}>{locationLabel}</div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                  {asset.caption && <span>{asset.caption}</span>}
-                  {asset.used && (
-                    <span
-                      className="ml-auto inline-block rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700"
-                      title="This photo is already used in a collection"
-                      data-testid="asset-used-badge"
+          {activeTab === 'used' && usedTabInitialized && (
+            <div data-testid="available-assets-used" className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {loading && <div className="col-span-full text-sm text-gray-500">Loading assets…</div>}
+              {!loading && assets.filter((a) => !!a.used).length === 0 && (
+                <div className="col-span-full text-sm text-gray-500">目前沒有「已使用」的照片</div>
+              )}
+              {!loading && assets.filter((a) => !!a.used).map((asset) => {
+                const isSelected = selected.has(asset.id);
+                const locationLabel = asset.location_folder_name
+                  ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
+                  : '未指派地點';
+                const previewSrc = getImageUrl(asset.id, 'thumb');
+                const previewAlt = asset.alt || 'Asset preview';
+                return (
+                  <button
+                    type="button"
+                    key={asset.id}
+                    data-testid="asset-card"
+                    className={`flex flex-col rounded border px-3 py-2 text-left text-sm transition focus:outline-none focus:ring ${
+                      isSelected ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                    aria-pressed={isSelected}
+                    onClick={() => toggleSelect(asset.id)}
+                  >
+                    <div
+                      className="mb-2 overflow-hidden rounded border bg-gray-50 relative"
+                      style={{ aspectRatio: '4 / 3' }}
                     >
-                      USED
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+                      <img src={previewSrc} alt={previewAlt} loading="lazy" className="h-full w-full object-cover" />
+                      <span
+                        className="absolute left-2 top-2 inline-block rounded bg-gray-900/70 px-2 py-0.5 text-[10px] font-medium text-white"
+                        title="This photo is already used in a collection"
+                        data-testid="asset-used-badge"
+                      >
+                        USED
+                      </span>
+                    </div>
+                    <div className="font-mono text-xs text-gray-700">{asset.id}</div>
+                    {asset.alt && <div className="mt-1 text-sm text-gray-900">{asset.alt}</div>}
+                    <div className={`mt-1 text-[11px] ${asset.location_folder_id ? 'text-gray-600' : 'text-gray-400'}`}>{locationLabel}</div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       <div>
         <h3 className="mb-3 text-base font-medium text-gray-900">Assets in collection</h3>
-        <div data-testid="collection-assets" className="grid grid-cols-1 gap-2">
+        <div className="max-h-[40vh] overflow-y-auto pr-1" data-testid="collection-assets-scroll">
+          <div data-testid="collection-assets" className="grid grid-cols-1 gap-2">
           {collectionAssets.map((asset, index) => {
             const isFirst = index === 0;
             const isLast = index === collectionAssets.length - 1;
@@ -492,6 +561,7 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
           {!loading && collectionAssets.length === 0 && (
             <div className="text-sm text-gray-500">No assets in this collection yet</div>
           )}
+          </div>
         </div>
       </div>
     </div>

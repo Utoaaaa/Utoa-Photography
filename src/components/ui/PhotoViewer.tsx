@@ -403,13 +403,13 @@ export function PhotoViewer({
     };
   }, [activePhotoIndex, singleScreen, prefersReducedMotion, scrollToPhoto, triggerDotNavVisibility]);
 
-  // T027: Preload adjacent 1-2 images
+  // T027: Preload adjacent images (reduced count and size)
   const preloadImages = useMemo(() => {
     const toPreload = [];
     const currentIndex = activePhotoIndex;
     
-    // Preload previous and next images
-    for (let i = -2; i <= 2; i++) {
+    // Preload only previous and next 1 image to limit concurrent fetches
+    for (let i = -1; i <= 1; i++) {
       const index = currentIndex + i;
       if (index >= 0 && index < photos.length && index !== currentIndex) {
         toPreload.push(photos[index]);
@@ -420,8 +420,8 @@ export function PhotoViewer({
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    // Preload adjacent images using helper
-    preloadImages.forEach((photo) => prefetchImage(photo.id, 'large'));
+    // Preload adjacent images using helper (use 'medium' to reduce bytes)
+    preloadImages.forEach((photo) => prefetchImage(photo.id, 'medium'));
   }, [preloadImages]);
 
   photoRefs.current.length = photos.length;
@@ -452,13 +452,13 @@ export function PhotoViewer({
       >
         {/* Preload adjacent images for smoother navigation */}
         <Head>
-          {preloadImages.slice(0, 3).map((p) => (
+          {preloadImages.slice(0, 2).map((p) => (
             <link
               // Use preload only when Cloudflare is configured
               key={p.id}
               rel="preload"
               as="image"
-              href={cfConfigured ? getImageUrl(p.id, 'large') : undefined}
+              href={cfConfigured ? getImageUrl(p.id, 'medium') : undefined}
             />
           ))}
         </Head>

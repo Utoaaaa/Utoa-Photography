@@ -14,9 +14,44 @@ export type ImageVariant = keyof typeof IMAGE_VARIANTS;
 
 const FALLBACK_PLACEHOLDER = '/placeholder.svg';
 
+// Direct delivery configuration
+const IMAGE_ORIGIN = (process.env.NEXT_PUBLIC_IMAGE_ORIGIN || 'worker') as
+  | 'worker'
+  | 'cf_images'
+  | 'r2_resize';
+
+// Cloudflare Images account hash for imagedelivery.net
+const CF_IMAGES_ACCOUNT_HASH = process.env.NEXT_PUBLIC_CF_IMAGES_ACCOUNT_HASH;
+
+// R2 public base origin, e.g. https://images.utoa.studio
+const R2_PUBLIC_BASE_ORIGIN = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
+// Optional path prefix inside the bucket, default 'images'
+const R2_OBJECT_PREFIX = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
+// When linking R2 variants directly, choose a canonical extension to avoid probing
+const R2_VARIANT_EXT = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');
+
 export function getImageUrl(imageId: string, variant: ImageVariant = 'medium'): string {
   if (!imageId) return FALLBACK_PLACEHOLDER;
-  // Served via Worker route backed by R2 bucket
+
+  // 1) Cloudflare Images direct delivery
+  if (IMAGE_ORIGIN === 'cf_images' && CF_IMAGES_ACCOUNT_HASH) {
+    // Requires you to define variants named: thumb, medium, large, original
+    return `https://imagedelivery.net/${CF_IMAGES_ACCOUNT_HASH}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}`;
+  }
+
+  // 2) R2 public + (optional) Cloudflare Image Resizing
+  if (IMAGE_ORIGIN === 'r2_resize' && R2_PUBLIC_BASE_ORIGIN) {
+    // If you already generate variants per id, link them directly with a fixed extension
+    // Example path: https://images.utoa.studio/images/<id>/<variant>.webp
+    const objectPath = `${R2_OBJECT_PREFIX}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}.${R2_VARIANT_EXT}`;
+    const resizingParams = getResizeParamsForVariant(variant);
+    if (resizingParams) {
+      return `${R2_PUBLIC_BASE_ORIGIN}/cdn-cgi/image/${resizingParams}/${objectPath}`;
+    }
+    return `${R2_PUBLIC_BASE_ORIGIN}/${objectPath}`;
+  }
+
+  // 3) Fallback to Worker proxy
   return `/images/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}`;
 }
 
@@ -134,4 +169,20 @@ export function preloadCriticalImages(imageIds: string[], variant: ImageVariant 
 export function isCloudflareConfigured(): boolean {
   // For R2-backed images, always true on server side
   return true;
+}
+
+function getResizeParamsForVariant(variant: ImageVariant): string | null {
+  // Tune these per your preferred quality/policy
+  switch (variant) {
+    case 'thumb':
+      return 'w=300,q=85,fit=cover,f=auto';
+    case 'medium':
+      return 'w=1200,q=85,fit=contain,f=auto';
+    case 'large':
+      return 'w=3840,q=85,fit=contain,f=auto';
+    case 'original':
+      return null; // no resizing
+    default:
+      return null;
+  }
 }

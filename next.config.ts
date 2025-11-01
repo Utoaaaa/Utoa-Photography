@@ -20,9 +20,18 @@ const baseConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   
-  // Image optimization
+  // Image optimization (we serve from external CDN directly)
   images: {
-    domains: [],
+    domains: (() => {
+      const domains = ['imagedelivery.net'];
+      const r2Host = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST;
+      if (r2Host) domains.push(r2Host);
+      const r2Origin = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
+      if (r2Origin) {
+        try { domains.push(new URL(r2Origin).host); } catch {}
+      }
+      return domains;
+    })(),
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -36,6 +45,16 @@ const baseConfig: NextConfig = {
   // Headers for performance and security
   async headers() {
     const isDev = process.env.NODE_ENV !== 'production';
+    const imgSrcExtras: string[] = [];
+    if (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN) {
+      try {
+        const u = new URL(process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN);
+        imgSrcExtras.push(u.origin);
+      } catch {}
+    }
+    // Cloudflare Images
+    imgSrcExtras.push('https://imagedelivery.net');
+
     const baseCspParts = [
       "default-src 'self'",
       "base-uri 'self'",
@@ -43,8 +62,8 @@ const baseConfig: NextConfig = {
       "frame-ancestors 'none'",
       // Styles: allow inline for Next/Tailwind runtime classes
       "style-src 'self' 'unsafe-inline'",
-      // Images from Cloudflare Images and self; allow data/blob for placeholders
-      "img-src 'self' data: blob:",
+      // Images from self + external CDNs; allow data/blob for placeholders
+      `img-src 'self' data: blob: ${imgSrcExtras.join(' ')}`,
       // Fonts and media
       "font-src 'self' data:",
       "media-src 'self'",

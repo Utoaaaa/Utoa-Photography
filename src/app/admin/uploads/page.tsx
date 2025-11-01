@@ -177,6 +177,20 @@ const readImageDimensions = async (file: File): Promise<{ width: number; height:
   });
 };
 
+async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknown) => value is T): Promise<T> {
+  try {
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return fallback;
+    const text = await res.text();
+    if (!text) return fallback;
+    const parsed: unknown = JSON.parse(text);
+    if (validate && !validate(parsed)) return fallback;
+    return parsed as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function AdminUploadsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [alt, setAlt] = useState('圖片');
@@ -241,20 +255,6 @@ export default function AdminUploadsPage() {
       });
   }, [locationFolders]);
 
-  async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknown) => value is T): Promise<T> {
-    try {
-      const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) return fallback;
-      const text = await res.text();
-      if (!text) return fallback;
-      const parsed: unknown = JSON.parse(text);
-      if (validate && !validate(parsed)) return fallback;
-      return parsed as T;
-    } catch {
-      return fallback;
-    }
-  }
-
   const loadAssets = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: '50', offset: '0' });
@@ -272,34 +272,6 @@ export default function AdminUploadsPage() {
       }
       const list = await safeJson<Asset[]>(res, [], isAssetArray);
       setAssets(Array.isArray(list) ? list : []);
-      // Load variant statuses for visible assets (limit concurrency and count)
-      const ids = (Array.isArray(list) ? list : []).slice(0, 20).map(a => a.id); // Only load first 20
-      const concurrency = 2; // Reduced from 6 to 2
-      const chunks: string[][] = [];
-      for (let i = 0; i < ids.length; i += concurrency) chunks.push(ids.slice(i, i+concurrency));
-      const statusUpdates: Record<string, any> = {};
-      // Helper to validate variant probe
-      const isVariantsResponse = (value: unknown): value is { variants?: Record<string, boolean> } => {
-        if (!value || typeof value !== 'object') return false;
-        const v = (value as any).variants;
-        return typeof v === 'undefined' || (v && typeof v === 'object');
-      };
-
-      for (const chunk of chunks) {
-        await Promise.all(chunk.map(async (id) => {
-          try {
-            const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
-            if (!r.ok) return;
-            const j = await safeJson<{ variants?: Record<string, boolean> }>(
-              r,
-              {} as { variants?: Record<string, boolean> },
-              isVariantsResponse,
-            );
-            statusUpdates[id] = j.variants ?? {};
-          } catch {}
-        }));
-      }
-      setVariantStatus(prev => ({ ...prev, ...statusUpdates }));
     } catch {
       setAssets([]);
     }
@@ -993,8 +965,51 @@ export default function AdminUploadsPage() {
               const previewAlt = asset.alt || '素材預覽圖';
               const vs = variantStatus[asset.id] || {};
 
+              // Lazy load variant status when card enters viewport
+              const cardRef = useRef<HTMLElement>(null);
+              useEffect(() => {
+                const observer = new IntersectionObserver(
+                  (entries) => {
+                    entries.forEach((entry) => {
+                      if (entry.isIntersecting && !(asset.id in variantStatus)) {
+                        // Load variant status for this asset
+                        void (async () => {
+                          try {
+                            const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(asset.id)}`, { cache: 'no-store' });
+                            if (!r.ok) return;
+                            const isVariantsResponse = (value: unknown): value is { variants?: Record<string, boolean> } => {
+                              if (!value || typeof value !== 'object') return false;
+                              const v = (value as any).variants;
+                              return typeof v === 'undefined' || (v && typeof v === 'object');
+                            };
+                            const j = await safeJson<{ variants?: Record<string, boolean> }>(
+                              r,
+                              {} as { variants?: Record<string, boolean> },
+                              isVariantsResponse,
+                            );
+                            setVariantStatus(prev => ({ ...prev, [asset.id]: j.variants ?? {} }));
+                          } catch {}
+                        })();
+                      }
+                    });
+                  },
+                  { threshold: 0.1 }
+                );
+
+                if (cardRef.current) {
+                  observer.observe(cardRef.current);
+                }
+
+                return () => {
+                  if (cardRef.current) {
+                    observer.unobserve(cardRef.current);
+                  }
+                };
+              }, [asset.id]);
+
               return (
                 <article
+                  ref={cardRef}
                   key={asset.id}
                   data-testid="asset-card"
                   className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-4 shadow-sm transition hover:border-blue-200 hover:shadow-md"

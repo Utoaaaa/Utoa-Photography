@@ -10,7 +10,7 @@ const CONTENT_TYPES: Record<string, string> = {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; variant: string }> }
 ) {
   const { id, variant } = await params;
@@ -36,16 +36,26 @@ export async function GET(
       return new Response('Storage not configured', { status: 500 });
     }
 
-    // Try preferred extensions and fallbacks
-    const exts = ['webp', 'avif', 'jpg', 'jpeg', 'png'];
-    const tryKeys: string[] = [];
-    for (const ext of exts) {
-      tryKeys.push(`images/${id}/${variant}.${ext}`);
+    // Edge cache: serve from caches.default when available
+    const cache = (globalThis as unknown as { caches?: CacheStorage })?.caches?.default as Cache | undefined;
+    const cacheKey = new Request(new URL(request.url), request as unknown as Request);
+    if (cache) {
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
     }
-    // Fallback to original if variant not found
-    for (const ext of exts) {
-      tryKeys.push(`images/${id}/original.${ext}`);
-    }
+
+    // Choose a single best extension from Accept header to avoid multiple R2 reads
+    const accept = request.headers.get('accept') || '';
+    const prefersAvif = /image\/avif/.test(accept);
+    const prefersWebp = /image\/webp/.test(accept);
+    const preferredExt = prefersAvif ? 'avif' : prefersWebp ? 'webp' : 'jpg';
+
+    // Build a short, deterministic probe list: variant with preferred ext, then JPG fallback, then original with preferred ext
+    const tryKeys: string[] = [
+      `images/${id}/${variant}.${preferredExt}`,
+      preferredExt === 'jpg' ? `images/${id}/${variant}.jpeg` : `images/${id}/${variant}.jpg`,
+      `images/${id}/original.${preferredExt}`,
+    ];
 
     for (const key of tryKeys) {
       const obj = await bucket.get(key);
@@ -64,7 +74,13 @@ export async function GET(
         if (obj.httpMetadata?.contentLanguage) headers.set('Content-Language', obj.httpMetadata.contentLanguage);
         if (obj.httpMetadata?.contentDisposition) headers.set('Content-Disposition', obj.httpMetadata.contentDisposition);
         if (obj.httpMetadata?.cacheControl) headers.set('Cache-Control', obj.httpMetadata.cacheControl);
-        return new Response(obj.body, { status: 200, headers });
+
+        const response = new Response(obj.body, { status: 200, headers });
+        // Store to edge cache for future hits
+        if (cache) {
+          try { await cache.put(cacheKey, response.clone()); } catch {}
+        }
+        return response;
       }
     }
 
