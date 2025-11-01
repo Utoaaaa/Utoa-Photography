@@ -327,10 +327,11 @@ export async function GET(request: NextRequest) {
           const usageStmt = db.prepare(
             `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`
           ).bind(...ids);
-          const usageResult = await usageStmt.all<{ asset_id: string; count: number }>();
-          const rows = usageResult.results ?? [];
+          const usageResult = await usageStmt.all();
+          const rows = (usageResult.results ?? []) as Array<{ asset_id: string; count: number | string | null }>;
           rows.forEach((row) => {
-            usageMap.set(row.asset_id, row.count ?? 0);
+            const count = typeof row.count === 'string' ? Number(row.count) : row.count ?? 0;
+            usageMap.set(row.asset_id, count);
           });
         } catch (usageError) {
           console.error('Failed to load asset usage counts', usageError);
