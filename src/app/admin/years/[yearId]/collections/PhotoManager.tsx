@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { getImageUrl } from '@/lib/images';
 
@@ -135,6 +135,20 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
   // Tabs: default show unused photos; only render used list after click
   const [activeTab, setActiveTab] = useState<'unused' | 'used'>('unused');
   const [usedTabInitialized, setUsedTabInitialized] = useState(false);
+  const { unusedAssets, usedAssets } = useMemo(() => {
+    const collectionAssetIds = new Set(collectionAssets.map((asset) => asset.id));
+    const unused: Asset[] = [];
+    const used: Asset[] = [];
+    for (const asset of assets) {
+      if (collectionAssetIds.has(asset.id)) continue;
+      if (asset.used) {
+        used.push(asset);
+      } else {
+        unused.push(asset);
+      }
+    }
+    return { unusedAssets: unused, usedAssets: used };
+  }, [assets, collectionAssets]);
 
   useEffect(() => {
     (async () => {
@@ -399,12 +413,12 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
           {activeTab === 'unused' && (
             <div data-testid="available-assets-unused" className="grid grid-cols-2 gap-3 md:grid-cols-3">
               {loading && <div className="col-span-full text-sm text-gray-500">Loading assets…</div>}
-              {!loading && assets.filter((a) => !a.used).length === 0 && (
+              {!loading && unusedAssets.length === 0 && (
                 <div className="col-span-full text-sm text-gray-500">
                   {locationFilterActive ? '此地點尚未有照片，請於上傳頁面建立後再試。' : '沒有可用的未使用照片'}
                 </div>
               )}
-              {!loading && assets.filter((a) => !a.used).map((asset) => {
+              {!loading && unusedAssets.map((asset) => {
                 const isSelected = selected.has(asset.id);
                 const locationLabel = asset.location_folder_name
                   ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
@@ -439,10 +453,10 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
           {activeTab === 'used' && usedTabInitialized && (
             <div data-testid="available-assets-used" className="grid grid-cols-2 gap-3 md:grid-cols-3">
               {loading && <div className="col-span-full text-sm text-gray-500">Loading assets…</div>}
-              {!loading && assets.filter((a) => !!a.used).length === 0 && (
+              {!loading && usedAssets.length === 0 && (
                 <div className="col-span-full text-sm text-gray-500">目前沒有「已使用」的照片</div>
               )}
-              {!loading && assets.filter((a) => !!a.used).map((asset) => {
+              {!loading && usedAssets.map((asset) => {
                 const isSelected = selected.has(asset.id);
                 const locationLabel = asset.location_folder_name
                   ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`

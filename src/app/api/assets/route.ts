@@ -317,8 +317,26 @@ export async function GET(request: NextRequest) {
         unassigned,
       });
       
-      // For D1, we need to manually join location folder and year data
+      // For D1, we need to manually join location folder, year data, and usage info
       const db = getD1Database();
+      const usageMap = new Map<string, number>();
+      if (db && baseAssets.length > 0) {
+        const ids = baseAssets.map((asset) => asset.id);
+        const placeholders = ids.map(() => '?').join(', ');
+        try {
+          const usageStmt = db.prepare(
+            `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`
+          ).bind(...ids);
+          const usageResult = await usageStmt.all<{ asset_id: string; count: number }>();
+          const rows = usageResult.results ?? [];
+          rows.forEach((row) => {
+            usageMap.set(row.asset_id, row.count ?? 0);
+          });
+        } catch (usageError) {
+          console.error('Failed to load asset usage counts', usageError);
+        }
+      }
+
       const result = [];
       
       for (const asset of baseAssets) {
@@ -330,7 +348,7 @@ export async function GET(request: NextRequest) {
         }
         
         obj.location_folder_id = asset.location_folder_id ?? null;
-        obj.used = false; // Default, would need to query collection_assets
+        obj.used = (usageMap.get(asset.id) ?? 0) > 0;
         
         // Get location folder info if exists
         if (asset.location_folder_id && db) {

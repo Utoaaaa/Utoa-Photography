@@ -15,6 +15,24 @@ export default function AccessibleDialog({ open, titleId, onClose, children, dat
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!open || typeof document === 'undefined') return;
+    const { style } = document.body;
+    const prevOverflow = style.overflow;
+    const prevPaddingRight = style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      style.overflow = prevOverflow;
+      style.paddingRight = prevPaddingRight;
+    };
+  }, [open]);
+
+  useEffect(() => {
     if (!open) return;
     const el = initialFocusRef?.current || containerRef.current?.querySelector('[data-autofocus]') || containerRef.current;
     if (el && 'focus' in el) (el as HTMLElement).focus();
