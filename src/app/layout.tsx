@@ -1,8 +1,55 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
-import LoaderClient from "./loader-client";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
+import { LoaderStateProvider } from "@/components/providers/LoaderStateProvider";
+import LoaderClient from "./loader-client";
+
+const utoaSerif = localFont({
+  src: [
+    {
+      path: "../../public/fonts/noto-serif-tc/NotoSerifTC-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/noto-serif-tc/NotoSerifTC-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/noto-serif-tc/NotoSerifTC-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/noto-serif-tc/NotoSerifTC-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  preload: true,
+  display: "swap",
+  variable: "--font-utoa-serif",
+  fallback: [
+    "Noto Serif TC",
+    "Source Han Serif TC",
+    "Songti TC",
+    "Songti SC",
+    "Hiragino Mincho ProN",
+    "Hiragino Mincho Pro",
+    "Yu Mincho",
+    "MS Mincho",
+    "PMingLiU",
+    "MingLiU",
+    "Georgia",
+    "Cambria",
+    "Times New Roman",
+    "Times",
+    "serif",
+  ],
+});
 
 const SITE_URL = "https://utoa.studio";
 const OG_IMAGE_PATH = "/assets/og-camera.svg";
@@ -41,41 +88,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant">
-      <head>
-        {/* Preload self-hosted CJK serif fonts for faster first paint */}
-        <link
-          rel="preload"
-          as="font"
-          href="/fonts/noto-serif-tc/NotoSerifTC-Regular.ttf"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          as="font"
-          href="/fonts/noto-serif-tc/NotoSerifTC-SemiBold.ttf"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          as="font"
-          href="/fonts/noto-serif-tc/NotoSerifTC-Bold.ttf"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
-      </head>
+      <head />
       <body
-        className={`antialiased`}
+        className={`${utoaSerif.variable} antialiased`}
         style={{ overscrollBehaviorX: 'auto' }}
       >
         <SmoothScrollProvider>
-          {/* 啟用平滑滾動（Lenis） */}
-          <SmoothScroll />
+          <LoaderStateProvider>
+            {/* 啟用平滑滾動（Lenis） */}
+            <SmoothScroll />
 
-          {/* 全螢幕前導 Loader - 只在首次載入顯示 */}
-          <LoaderClient />
-          {children}
+            {/* 全螢幕前導 Loader - 只在首次載入顯示 */}
+            <LoaderClient />
+            {children}
+          </LoaderStateProvider>
         </SmoothScrollProvider>
       </body>
     </html>

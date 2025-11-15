@@ -134,7 +134,6 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
                 priority={false}
                 className={imageClass}
                 sizes={getResponsiveSizes('medium')}
-                unoptimized
               />
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-[#01AFF6]/60 via-[#F20085]/45 to-[#FFD036]/65" />

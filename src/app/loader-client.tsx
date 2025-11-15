@@ -2,16 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import Loader from '@/components/Loader';
 import { gsap } from 'gsap';
+import Loader from '@/components/Loader';
+import { useLoaderState } from '@/components/providers/LoaderStateProvider';
 
 export default function LoaderClient() {
   const pathname = usePathname();
   const isAdminRoute = !!pathname && pathname.startsWith('/admin');
   const shouldSkipInitially = !!pathname && pathname !== '/' && !isAdminRoute;
+  const { setLoaderActive } = useLoaderState();
 
   const [skipLoader, setSkipLoader] = useState(() => isAdminRoute || shouldSkipInitially);
   const [show, setShow] = useState(() => !(isAdminRoute || shouldSkipInitially));
+
+  useEffect(() => {
+    setLoaderActive(!skipLoader && show);
+  }, [setLoaderActive, skipLoader, show]);
 
   useEffect(() => {
     const revealMainContent = () => {
@@ -38,6 +44,7 @@ export default function LoaderClient() {
     }
 
     if (skipLoader) {
+      setLoaderActive(false);
       revealMainContent();
       return;
     }
@@ -98,6 +105,7 @@ export default function LoaderClient() {
         }
       );
     }
+    setLoaderActive(false);
 
     // 延遲移除 loader 以確保動畫開始
     setTimeout(() => {

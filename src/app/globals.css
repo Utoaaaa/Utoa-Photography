@@ -3,43 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Self-hosted CJK serif family for consistent mobile rendering */
-@font-face {
-  font-family: "Utoa Noto Serif TC";
-  src: url("/fonts/noto-serif-tc/NotoSerifTC-Light.ttf") format("truetype");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Utoa Noto Serif TC";
-  src: url("/fonts/noto-serif-tc/NotoSerifTC-Regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Utoa Noto Serif TC";
-  src: url("/fonts/noto-serif-tc/NotoSerifTC-SemiBold.ttf") format("truetype");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Utoa Noto Serif TC";
-  src: url("/fonts/noto-serif-tc/NotoSerifTC-Bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   /* Default serif stack now prefers self-hosted CJK serif for consistency across devices */
-  --font-serif: "Utoa Noto Serif TC", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-serif: var(--font-utoa-serif), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -116,7 +86,7 @@
 /* Language-specific serif stack for Traditional Chinese to keep serif look on mobile */
 :root:lang(zh-Hant) {
   /* Prefer self-hosted CJK serif; then common system/installed families */
-  --font-serif: "Utoa Noto Serif TC", "Noto Serif TC", "Source Han Serif TC", "Source Han Serif", "Songti TC", "Songti SC",
+  --font-serif: var(--font-utoa-serif), "Noto Serif TC", "Source Han Serif TC", "Source Han Serif", "Songti TC", "Songti SC",
     "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", "MS Mincho", "PMingLiU", "MingLiU",
     Georgia, Cambria, "Times New Roman", Times, serif;
 }

@@ -41,6 +41,21 @@ export interface YearLocationPayload {
   years: YearEntry[];
 }
 
+export interface LocationNavEntry {
+  id: string;
+  slug: string;
+  name: string;
+  orderIndex: string;
+}
+
+export interface YearNavEntry {
+  id: string;
+  label: string;
+  orderIndex: string;
+  status: string;
+  locations: LocationNavEntry[];
+}
+
 type CollectionRecord = {
   id: string;
   slug: string;
@@ -310,6 +325,28 @@ async function fetchLocationsForYearD1(
   return locations;
 }
 
+async function fetchNavLocationsForYearD1(
+  db: D1Database,
+  yearId: string,
+): Promise<LocationNavEntry[]> {
+  const result = await db.prepare(
+    `
+      SELECT id, slug, name, order_index
+      FROM locations
+      WHERE year_id = ?1
+      ORDER BY order_index ASC
+    `,
+  ).bind(yearId).all();
+
+  const rows = (result.results ?? []) as D1LocationRow[];
+  return rows.map((row) => ({
+    id: String(row.id),
+    slug: String(row.slug),
+    name: String(row.name),
+    orderIndex: String(row.order_index),
+  }));
+}
+
 type D1Database = ReturnType<typeof getD1Database>;
 async function fetchYearsD1(): Promise<YearEntry[]> {
   const db = requireD1();
@@ -327,6 +364,34 @@ async function fetchYearsD1(): Promise<YearEntry[]> {
 
   for (const row of rows) {
     const locations = await fetchLocationsForYearD1(db, String(row.id));
+    entries.push({
+      id: String(row.id),
+      label: String(row.label),
+      orderIndex: String(row.order_index),
+      status: String(row.status),
+      locations,
+    });
+  }
+
+  return entries;
+}
+
+async function fetchYearsNavD1(): Promise<YearNavEntry[]> {
+  const db = requireD1();
+  const result = await db.prepare(
+    `
+      SELECT id, label, order_index, status
+      FROM years
+      WHERE status = 'published'
+      ORDER BY order_index ASC
+    `,
+  ).all();
+
+  const rows = (result.results ?? []) as D1YearRow[];
+  const entries: YearNavEntry[] = [];
+
+  for (const row of rows) {
+    const locations = await fetchNavLocationsForYearD1(db, String(row.id));
     entries.push({
       id: String(row.id),
       label: String(row.label),
@@ -434,4 +499,44 @@ export async function getLocationByYearAndSlug(
   }
 
   return { year: mappedYear, location };
+}
+
+export async function loadYearLocationNavData(): Promise<YearNavEntry[]> {
+  if (shouldUseD1Direct()) {
+    return fetchYearsNavD1();
+  }
+
+  const prisma = await getPrisma();
+  const years = await prisma.year.findMany({
+    where: { status: 'published' },
+    orderBy: { order_index: 'asc' },
+    select: {
+      id: true,
+      label: true,
+      order_index: true,
+      status: true,
+      locations: {
+        orderBy: { order_index: 'asc' },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          order_index: true,
+        },
+      },
+    },
+  });
+
+  return years.map((year) => ({
+    id: year.id,
+    label: year.label,
+    orderIndex: year.order_index,
+    status: year.status,
+    locations: (year.locations ?? []).map((location) => ({
+      id: location.id,
+      slug: location.slug,
+      name: location.name,
+      orderIndex: location.order_index,
+    })),
+  }));
 }

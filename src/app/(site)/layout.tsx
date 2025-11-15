@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import MenuWrapper from '@/components/ui/MenuWrapper';
 import type { StaggeredMenuItem } from '@/components/ui/StaggeredMenu';
-import { loadYearLocationData } from '@/lib/year-location';
+import { loadYearLocationNavData } from '@/lib/year-location';
 
 async function buildMenuItems(): Promise<StaggeredMenuItem[]> {
   const items: StaggeredMenuItem[] = [
@@ -14,8 +14,8 @@ async function buildMenuItems(): Promise<StaggeredMenuItem[]> {
   ];
 
   try {
-    const data = await loadYearLocationData();
-    const publishedYears = (data.years ?? [])
+    const data = await loadYearLocationNavData();
+    const publishedYears = (data ?? [])
       .filter((year) => year.status === 'published')
       .sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
 
@@ -28,7 +28,7 @@ async function buildMenuItems(): Promise<StaggeredMenuItem[]> {
         variant: 'year',
       });
 
-  const orderedLocations = [...(year.locations ?? [])].sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+      const orderedLocations = [...(year.locations ?? [])].sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
 
       orderedLocations.forEach((location, index) => {
         const encodedYear = encodeURIComponent(year.label);

@@ -10,13 +10,21 @@ const VARIANT_CONTENT_TYPE = VARIANT_EXT === 'jpg' ? 'image/jpeg'
 
 const ORIGINAL_EXTS = ['avif', 'webp', 'jpg', 'jpeg', 'png'] as const;
 
-const VARIANT_CONFIG = {
-  thumb: 'w=300,q=85,fit=cover,f=webp',
-  medium: 'w=1200,q=85,fit=contain,f=webp',
-  large: 'w=3840,q=85,fit=contain,f=webp',
-} as const;
+type VariantName = 'thumb' | 'medium' | 'large';
 
-type VariantName = keyof typeof VARIANT_CONFIG;
+type ImageResizeConfig = {
+  width: number;
+  fit: 'cover' | 'contain';
+  quality?: number;
+  format?: 'webp' | 'auto' | 'avif' | 'jpeg' | 'png';
+};
+
+const VARIANT_CONFIG: Record<VariantName, ImageResizeConfig> = {
+  thumb: { width: 300, fit: 'cover', quality: 85, format: 'webp' },
+  medium: { width: 1200, fit: 'contain', quality: 85, format: 'webp' },
+  large: { width: 3840, fit: 'contain', quality: 85, format: 'webp' },
+};
+
 type OriginalExt = typeof ORIGINAL_EXTS[number];
 
 type R2Bucket = {
@@ -63,11 +71,19 @@ async function fetchVariantFromResizing(imageId: string, originalExt: OriginalEx
   }
   const encodedId = encodeURIComponent(imageId);
   const sourcePath = `${OBJECT_PREFIX}/${encodedId}/original.${originalExt}`;
-  const resizeParams = VARIANT_CONFIG[variant];
-  const url = `${R2_PUBLIC_BASE}/cdn-cgi/image/${resizeParams}/${sourcePath}`;
+  const cfg = VARIANT_CONFIG[variant];
+  const url = `${R2_PUBLIC_BASE}/${sourcePath}`;
+  const cfImage = {
+    width: cfg.width,
+    fit: cfg.fit,
+    quality: cfg.quality,
+    format: cfg.format,
+  };
   const res = await fetch(url, {
     headers: { 'Cache-Control': 'no-cache' },
-  } as RequestInit & { cf?: Record<string, unknown> });
+    // Tell Cloudflare to resize the fetched image before returning it
+    cf: { image: cfImage },
+  } as RequestInit & { cf?: { image: ImageResizeConfig } });
   if (!res.ok) {
     throw new Error(`Failed to resize ${variant}: ${res.status}`);
   }
