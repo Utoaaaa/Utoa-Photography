@@ -633,7 +633,6 @@ export default function AdminUploadsPage() {
       for (let index = 0; index < filesToUpload.length; index += 1) {
   const currentFile = filesToUpload[index];
         const filename = currentFile?.name || (filesToUpload.length > 1 ? `admin-upload-${index + 1}.jpg` : 'admin-upload.jpg');
-        const contentType = currentFile?.type || 'image/jpeg';
 
         try {
           // Upload to R2 via same-origin API
@@ -647,39 +646,6 @@ export default function AdminUploadsPage() {
             const upJson = await safeJson<{ image_id?: string }>(up, {});
             if (upJson.image_id) imageId = upJson.image_id;
 
-            // 2) Generate and upload medium variant only
-            try {
-              const imgBitmap = await createImageBitmap(currentFile);
-              const tasks: Array<Promise<void>> = [];
-              const pushUpload = async (blob: Blob, variant: string) => {
-                const vfd = new FormData();
-                const fname = `${variant}.webp`;
-                vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
-                const res = await fetch(`/api/admin/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
-                if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
-              };
-
-              const scaleContain = async (targetW: number) => {
-                const ratio = imgBitmap.width / imgBitmap.height;
-                const w = Math.min(targetW, imgBitmap.width);
-                const h = Math.round(w / ratio);
-                const canvas = document.createElement('canvas');
-                canvas.width = w; canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return null;
-                ctx.drawImage(imgBitmap, 0, 0, w, h);
-                const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
-                return blob;
-              };
-
-              const t = await scaleContain(300); if (t) tasks.push(pushUpload(t, 'thumb'));
-              const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
-              const l = await scaleContain(3840); if (l) tasks.push(pushUpload(l, 'large'));
-
-              await Promise.allSettled(tasks);
-            } catch (e) {
-              console.warn('[admin/uploads] variant generation failed', e);
-            }
           }
           const assetId = imageId;
           const baseAlt = trimmedAlt || currentFile?.name || '上傳圖片';
@@ -744,41 +710,6 @@ export default function AdminUploadsPage() {
     }
   }
 
-  async function generateAndUploadVariants(imageId: string, file: Blob) {
-    try {
-      const imgBitmap = await createImageBitmap(file);
-      const tasks: Array<Promise<void>> = [];
-      const pushUpload = async (blob: Blob, variant: string) => {
-        const vfd = new FormData();
-        const fname = `${variant}.webp`;
-        vfd.append('file', new File([blob], fname, { type: 'image/webp' }), fname);
-        const res = await fetch(`/api/admin/uploads/r2?variant=${encodeURIComponent(variant)}&image_id=${encodeURIComponent(imageId)}`, { method: 'POST', body: vfd });
-        if (!res.ok) throw new Error(`Variant upload failed: ${variant}`);
-      };
-
-      const scaleContain = async (targetW: number) => {
-        const ratio = imgBitmap.width / imgBitmap.height;
-        const w = Math.min(targetW, imgBitmap.width);
-        const h = Math.round(w / ratio);
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return null;
-        ctx.drawImage(imgBitmap, 0, 0, w, h);
-        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), 'image/webp', 0.85));
-        return blob;
-      };
-
-      const t = await scaleContain(300); if (t) tasks.push(pushUpload(t, 'thumb'));
-      const m = await scaleContain(1200); if (m) tasks.push(pushUpload(m, 'medium'));
-      const l = await scaleContain(3840); if (l) tasks.push(pushUpload(l, 'large'));
-
-      await Promise.allSettled(tasks);
-    } catch (e) {
-      console.warn('[admin/uploads] generateAndUploadVariants failed', e);
-    }
-  }
-
   async function regenerateSelectedVariants() {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) {
@@ -789,13 +720,8 @@ export default function AdminUploadsPage() {
     try {
       for (const id of ids) {
         try {
-          let res = await fetch(`/images/${encodeURIComponent(id)}/original`, { cache: 'no-store' });
-          if (!res.ok) {
-            res = await fetch(`/images/${encodeURIComponent(id)}/large`, { cache: 'no-store' });
-          }
-          if (!res.ok) throw new Error('fetch original/large failed');
-          const blob = await res.blob();
-          await generateAndUploadVariants(id, blob);
+          const res = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { method: 'POST' });
+          if (!res.ok) throw new Error('variant regeneration failed');
         } catch (e) {
           console.warn('[admin/uploads] regenerate failed for', id, e);
         }

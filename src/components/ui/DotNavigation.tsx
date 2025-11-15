@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+
 interface DotNavigationProps {
   totalPhotos: number;
   activeIndex: number;
@@ -18,6 +21,14 @@ export function DotNavigation({
   singleScreen = false,
   visible = true,
 }: DotNavigationProps) {
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPortalTarget(document.body);
+    }
+  }, []);
+
   // T027: Handle large number of photos with scrollable container and grouping
   const maxVisibleDots = 40;
   const shouldGroup = totalPhotos > maxVisibleDots;
@@ -65,12 +76,13 @@ export function DotNavigation({
     ? 'pointer-events-auto opacity-100 translate-y-0'
     : 'pointer-events-none opacity-0 translate-y-4';
 
-  return (
+  const navContent = (
     <nav 
       className={`fixed right-6 top-1/2 z-50 transition-all duration-300 ease-out ${visibilityClasses}`}
       aria-label={`${collectionTitle} photo navigation`}
       data-testid="dot-navigation"
       aria-hidden={!visible}
+      data-lenis-prevent
     >
       <div className="-translate-y-1/2 transform flex flex-col items-center">
         <div
@@ -157,4 +169,10 @@ export function DotNavigation({
       </div>
     </nav>
   );
+
+  if (!portalTarget || singleScreen) {
+    return navContent;
+  }
+
+  return createPortal(navContent, portalTarget);
 }

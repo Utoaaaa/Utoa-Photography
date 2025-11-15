@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth';
 import { getR2Bucket } from '@/lib/cloudflare';
+import { regenerateR2Variants } from '@/lib/r2-variants';
 
 function randomId() {
   return Math.random().toString(36).slice(2, 8);
@@ -61,7 +62,13 @@ export async function POST(request: NextRequest) {
         contentType: file.type || 'application/octet-stream',
       },
     } as any);
-
+    if (!variant) {
+      try {
+        await regenerateR2Variants(imageId, { originalExtHint: ext });
+      } catch (error) {
+        console.error('[uploads/r2] variant regeneration failed', error);
+      }
+    }
     return NextResponse.json({ image_id: imageId });
   } catch (error) {
     console.error('[uploads/r2] failed to upload', error);
