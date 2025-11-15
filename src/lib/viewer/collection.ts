@@ -1,9 +1,17 @@
+import type { Prisma } from '@prisma/client';
+
 import { shouldUseD1Direct } from '@/lib/d1-queries';
 import { getD1Database } from '@/lib/cloudflare';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
 
-type PrismaCollectionWithRelations = Awaited<ReturnType<PrismaClient['collection']['findFirst']>>;
+type PrismaCollectionWithRelations = Prisma.CollectionGetPayload<{
+  include: {
+    year: true;
+    location: true;
+    collection_assets: { include: { asset: true } };
+  };
+}>;
 
 let prismaPromise: Promise<PrismaClient> | null = null;
 
