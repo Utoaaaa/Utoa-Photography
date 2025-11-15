@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import AdminPageLayout from '@/components/admin/AdminPageLayout';
-import { getImageUrl } from '@/lib/images';
+import { getR2VariantDirectUrl } from '@/lib/images';
 
 interface Asset {
   id: string;
@@ -1111,7 +1111,7 @@ export default function AdminUploadsPage() {
               const locationLabel = asset.location_folder_name
                 ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
                 : '未指派地點';
-              const previewSrc = getImageUrl(asset.id, 'thumb');
+              const previewSrc = getR2VariantDirectUrl(asset.id, 'thumb');
               const previewAlt = asset.alt || '素材預覽圖';
               const variantEntry = variantStatus[asset.id] || {};
               const hasVariants = asset.id in variantStatus;

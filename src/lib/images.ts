@@ -38,14 +38,11 @@ export function getImageUrl(imageId: string, variant: ImageVariant = 'medium'): 
 
   // 2) R2 public + (optional) Cloudflare Image Resizing
   if (IMAGE_ORIGIN === 'r2_resize' && R2_PUBLIC_BASE_ORIGIN) {
-    // If you already generate variants per id, link them directly with a fixed extension
-    // Example path: https://images.utoa.studio/images/<id>/<variant>.webp
-    const objectPath = `${R2_OBJECT_PREFIX}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}.${R2_VARIANT_EXT}`;
-    const resizingParams = getResizeParamsForVariant(variant);
-    if (resizingParams) {
-      return `${R2_PUBLIC_BASE_ORIGIN}/cdn-cgi/image/${resizingParams}/${objectPath}`;
+    if (variant !== 'original') {
+      return `${R2_PUBLIC_BASE_ORIGIN}/${R2_OBJECT_PREFIX}/${encodeURIComponent(imageId)}/${IMAGE_VARIANTS[variant]}.${R2_VARIANT_EXT}`;
     }
-    return `${R2_PUBLIC_BASE_ORIGIN}/${objectPath}`;
+    // Original files may keep arbitrary extensions; fall back to Worker proxy for negotiation
+    return `/images/${encodeURIComponent(imageId)}/original`;
   }
 
   // 3) Fallback to Worker proxy
