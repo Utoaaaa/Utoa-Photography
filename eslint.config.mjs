@@ -18,6 +18,7 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      ".open-next/**",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
@@ -30,6 +31,47 @@ const eslintConfig = [
         { selector: "CallExpression[optional=true]", message: "禁用可選呼叫 ?.()（會被轉成 .call()）" },
         { selector: "OptionalCallExpression", message: "禁用可選呼叫 ?.()" }
       ],
+    },
+  },
+  {
+    files: [
+      "jest.setup.js",
+      "jest.setup.pre-env.js",
+      "prisma/seed.js",
+      "scripts/**/*.js",
+    ],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-var-requires": "off",
+      "@typescript-eslint/no-unused-vars": ["off", { "argsIgnorePattern": "^_" }],
+    },
+  },
+  {
+    files: [
+      "next.config.ts",
+      "open-next.config.ts",
+      "open-next.config.mjs",
+      "playwright.config.ts",
+      "jest.setup.contract.ts",
+      "prisma/seed.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      "import/no-anonymous-default-export": "off",
+    },
+  },
+  {
+    files: ["next-env.d.ts"],
+    rules: {
+      "@typescript-eslint/triple-slash-reference": "off",
+    },
+  },
+  {
+    files: ["src/app/admin/**/*"],
+    rules: {
+      "no-restricted-syntax": "off",
     },
   },
 ];

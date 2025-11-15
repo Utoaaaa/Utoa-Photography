@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
-import Image from 'next/image';
-import { getImageUrl, getR2LargeUrl, prefetchImage, isCloudflareConfigured } from '@/lib/images';
+import { getR2VariantDirectUrl, isCloudflareConfigured } from '@/lib/images';
 import { DotNavigation } from './DotNavigation';
 
 type Asset = {
@@ -420,12 +419,12 @@ export function PhotoViewer({
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    // Preload adjacent images with direct R2 large URLs to avoid hitting Worker
+    // Preload adjacent images with medium variants to reduce upfront bandwidth
     preloadImages.forEach((photo) => {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = getR2LargeUrl(photo.id);
+      link.href = getR2VariantDirectUrl(photo.id, 'medium');
       document.head.appendChild(link);
     });
   }, [preloadImages]);
@@ -444,7 +443,8 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const imgSrc = cfConfigured ? getR2LargeUrl(currentPhoto.id) : '/placeholder.svg';
+    const largeSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, 'large') : '/placeholder.svg';
+    const mediumSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, 'medium') : '/placeholder.svg';
 
     return (
       <div 
@@ -460,11 +460,10 @@ export function PhotoViewer({
         <Head>
           {preloadImages.slice(0, 2).map((p) => (
             <link
-              // Use preload only when Cloudflare is configured
               key={p.id}
               rel="preload"
               as="image"
-              href={cfConfigured ? getR2LargeUrl(p.id) : undefined}
+              href={cfConfigured ? getR2VariantDirectUrl(p.id, 'medium') : undefined}
             />
           ))}
         </Head>
@@ -476,30 +475,19 @@ export function PhotoViewer({
           }`}
         >
           <div className="relative max-w-full max-h-full" data-testid="current-photo" id={`photo-${activePhotoIndex + 1}`}>
-            {cfConfigured ? (
-              <Image
-                src={imgSrc}
-                alt={currentPhoto.alt}
-                width={currentPhoto.width}
-                height={currentPhoto.height}
-                className="max-w-full max-h-screen object-contain"
-                sizes="100vw"
-                priority={activePhotoIndex === 0}
-                fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
-                unoptimized
-              />
-            ) : (
+            <picture>
+              <source media="(min-width: 1024px)" srcSet={largeSrc} />
               <img
-                src={imgSrc}
+                src={mediumSrc}
                 alt={currentPhoto.alt || 'placeholder image'}
                 width={currentPhoto.width}
                 height={currentPhoto.height}
                 className="max-w-full max-h-screen object-contain"
                 loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
                 decoding="async"
-                fetchPriority={activePhotoIndex === 0 ? 'high' as const : 'low' as const}
+                fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
               />
-            )}
+            </picture>
           </div>
         </div>
 
@@ -559,22 +547,10 @@ export function PhotoViewer({
             <div className="relative flex w-full flex-col items-center">
               {/* Photo */}
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
-                {cloudflareConfigured ? (
-                  <Image
-                    src={getR2LargeUrl(photo.id)}
-                    alt={photo.alt}
-                    width={photo.width}
-                    height={photo.height}
-                    className="mx-auto h-auto max-h-[92vh] w-auto max-w-[92vw] object-contain"
-                    sizes="100vw"
-                    priority={index === 0}
-                    fetchPriority={index === 0 ? 'high' : 'auto'}
-                    onLoadingComplete={() => handlePhotoLoad(index)}
-                    unoptimized
-                  />
-                ) : (
+                <picture>
+                  <source media="(min-width: 1024px)" srcSet={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, 'large') : '/placeholder.svg'} />
                   <img
-                    src={'/placeholder.svg'}
+                    src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, 'medium') : '/placeholder.svg'}
                     alt={photo.alt || 'placeholder image'}
                     width={photo.width}
                     height={photo.height}
@@ -584,7 +560,7 @@ export function PhotoViewer({
                     fetchPriority={index === 0 ? 'high' : 'low'}
                     onLoad={() => handlePhotoLoad(index)}
                   />
-                )}
+                </picture>
               </div>
               
               {/* Text content */}
@@ -628,7 +604,7 @@ export function PhotoViewer({
           <ul>
             {photos.map((p, i) => (
               <li key={p.id} className="mb-4">
-                <a href={getR2LargeUrl(p.id)}>
+                <a href={getR2VariantDirectUrl(p.id, 'large')}>
                   {collectionTitle} - Photo {i + 1}
                 </a>
               </li>
