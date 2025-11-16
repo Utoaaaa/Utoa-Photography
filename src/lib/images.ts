@@ -15,13 +15,19 @@ export type ImageVariant = keyof typeof IMAGE_VARIANTS;
 const FALLBACK_PLACEHOLDER = '/placeholder.svg';
 
 // Direct delivery configuration
-const IMAGE_ORIGIN = (process.env.NEXT_PUBLIC_IMAGE_ORIGIN || (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN ? 'r2_resize' : 'worker')) as 'worker' | 'cf_images' | 'r2_resize';
+const RESOLVED_R2_BASE = (() => {
+  if (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN) return process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
+  if (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST) return `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST}`;
+  return undefined;
+})();
+
+const IMAGE_ORIGIN = (process.env.NEXT_PUBLIC_IMAGE_ORIGIN || (RESOLVED_R2_BASE ? 'r2_resize' : 'worker')) as 'worker' | 'cf_images' | 'r2_resize';
 
 // Cloudflare Images account hash for imagedelivery.net
 const CF_IMAGES_ACCOUNT_HASH = process.env.NEXT_PUBLIC_CF_IMAGES_ACCOUNT_HASH;
 
 // R2 public base origin, e.g. https://images.utoa.studio
-const R2_PUBLIC_BASE_ORIGIN = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
+const R2_PUBLIC_BASE_ORIGIN = RESOLVED_R2_BASE;
 // Optional path prefix inside the bucket, default 'images'
 const R2_OBJECT_PREFIX = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
 // When linking R2 variants directly, choose a canonical extension to avoid probing
