@@ -32,7 +32,10 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [loadedLarge, setLoadedLarge] = useState<Record<string, boolean>>({});
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(min-width: 1024px)').matches;
+  });
   const photoRefs = useRef<(HTMLElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRootRef = useRef<HTMLDivElement | null>(null);
@@ -246,10 +249,6 @@ export function PhotoViewer({
     }
   }, [singleScreen, goToPhoto, scrollToPhoto, triggerDotNavVisibility]);
 
-  const handleLargeImageLoad = useCallback((id: string) => {
-    setLoadedLarge((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
-  }, []);
-
   const handlePhotoLoad = useCallback(
     (index: number) => {
       if (singleScreen) return;
@@ -318,6 +317,17 @@ export function PhotoViewer({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activePhotoIndex, photos.length, singleScreen, goToPhoto, scrollToPhoto, triggerDotNavVisibility]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const handleChange = (event: MediaQueryListEvent) => setIsDesktopViewport(event.matches);
+    setIsDesktopViewport(mq.matches);
+    mq.addEventListener('change', handleChange);
+    return () => mq.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     if (singleScreen || initialCenteringDone.current || photos.length === 0 || typeof window === 'undefined') {
@@ -460,9 +470,8 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const largeSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, 'large') : '/placeholder.svg';
-    const mediumSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, 'medium') : '/placeholder.svg';
-    const isLargeReady = !!loadedLarge[currentPhoto.id];
+    const preferredVariant = isDesktopViewport ? 'large' : 'medium';
+    const currentSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, preferredVariant) : '/placeholder.svg';
 
     return (
       <div 
@@ -482,7 +491,7 @@ export function PhotoViewer({
               key={p.id}
               rel="preload"
               as="image"
-              href={cfConfigured ? getR2VariantDirectUrl(p.id, 'medium') : undefined}
+              href={cfConfigured ? getR2VariantDirectUrl(p.id, preferredVariant) : undefined}
             />
           ))}
         </Head>
@@ -495,27 +504,14 @@ export function PhotoViewer({
         >
           <div className="relative max-w-full max-h-full" data-testid="current-photo" id={`photo-${activePhotoIndex + 1}`}>
             <img
-              src={mediumSrc}
+              src={currentSrc}
               alt={currentPhoto.alt || 'placeholder image'}
               width={currentPhoto.width}
               height={currentPhoto.height}
-              className={`absolute inset-0 m-auto max-h-screen max-w-full object-contain transition-opacity duration-500 ${isLargeReady ? 'opacity-0' : 'opacity-100'}`}
+              className="max-w-full max-h-screen object-contain"
               loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
               decoding="async"
               fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
-              aria-hidden={isLargeReady}
-            />
-            <img
-              src={largeSrc}
-              alt={currentPhoto.alt || 'placeholder image'}
-              width={currentPhoto.width}
-              height={currentPhoto.height}
-              className={`absolute inset-0 m-auto max-h-screen max-w-full object-contain transition-opacity duration-500 ${isLargeReady ? 'opacity-100' : 'opacity-0'}`}
-              onLoad={() => handleLargeImageLoad(currentPhoto.id)}
-              loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
-              decoding="async"
-              fetchPriority={activePhotoIndex === 0 ? 'high' : 'auto'}
-              aria-hidden={!isLargeReady}
             />
           </div>
         </div>
@@ -578,28 +574,15 @@ export function PhotoViewer({
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
                 <div className="relative mx-auto h-auto max-h-[92vh] w-auto max-w-[92vw]">
                   <img
-                    src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, 'medium') : '/placeholder.svg'}
+                    src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, isDesktopViewport ? 'large' : 'medium') : '/placeholder.svg'}
                     alt={photo.alt || 'placeholder image'}
                     width={photo.width}
                     height={photo.height}
-                    className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${loadedLarge[photo.id] ? 'opacity-0' : 'opacity-100'}`}
+                    className="h-full w-full object-contain"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding="async"
                     fetchPriority={index === 0 ? 'high' : 'low'}
                     onLoad={() => handlePhotoLoad(index)}
-                    aria-hidden={!!loadedLarge[photo.id]}
-                  />
-                  <img
-                    src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, 'large') : '/placeholder.svg'}
-                    alt={photo.alt || 'placeholder image'}
-                    width={photo.width}
-                    height={photo.height}
-                    className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${loadedLarge[photo.id] ? 'opacity-100' : 'opacity-0'}`}
-                    onLoad={() => handleLargeImageLoad(photo.id)}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    fetchPriority={index === 0 ? 'high' : 'auto'}
-                    aria-hidden={!loadedLarge[photo.id]}
                   />
                 </div>
               </div>
