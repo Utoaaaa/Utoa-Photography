@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useLoaderState } from '@/components/providers/LoaderStateProvider';
 
 interface FadeInTextProps {
   children: React.ReactNode;
@@ -9,50 +10,16 @@ interface FadeInTextProps {
 
 export function FadeInText({ children, className = '' }: FadeInTextProps) {
   const [mounted, setMounted] = useState(false);
-  const [loaderDone, setLoaderDone] = useState(false);
+  const { loaderActive } = useLoaderState();
   const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 偵測 Loader 是否完成
-  useEffect(() => {
-    if (!mounted) return;
-
-    const checkLoader = () => {
-      const loaderElement = document.querySelector('[data-loader-active]');
-      if (!loaderElement) {
-        setLoaderDone(true);
-      }
-    };
-
-    // 初始檢查
-    checkLoader();
-
-    // 監聽 DOM 變化
-    const observer = new MutationObserver(checkLoader);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['data-loader-active']
-    });
-
-    // 5 秒後強制顯示(防止 loader 檢測失敗)
-    const timeout = setTimeout(() => {
-      setLoaderDone(true);
-    }, 5000);
-
-    return () => {
-      observer.disconnect();
-      clearTimeout(timeout);
-    };
-  }, [mounted]);
-
   // 淡入動畫
   useEffect(() => {
-    if (!mounted || !loaderDone || typeof window === 'undefined') return;
+    if (!mounted || loaderActive || typeof window === 'undefined') return;
 
     const loadAnimation = async () => {
       try {
@@ -78,13 +45,13 @@ export function FadeInText({ children, className = '' }: FadeInTextProps) {
     };
 
     loadAnimation();
-  }, [mounted, loaderDone]);
+  }, [mounted, loaderActive]);
 
   return (
     <div 
       ref={textRef}
       className={className}
-      style={{ opacity: loaderDone ? undefined : 0 }}
+      style={{ opacity: loaderActive ? 0 : undefined }}
     >
       {children}
     </div>

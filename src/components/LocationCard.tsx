@@ -1,12 +1,11 @@
 "use client";
 
-import Image from 'next/image';
 import Link from 'next/link';
 import clsx from 'clsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationEntry } from '@/lib/year-location';
-import { getR2VariantDirectUrl, getResponsiveSizes } from '@/lib/images';
+import { getR2VariantDirectUrl } from '@/lib/images';
 
 interface LocationCardProps {
   yearLabel: string;
@@ -83,13 +82,12 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem]">
             {posterImage ? (
               <>
-                <Image
+                <img
                   src={posterImage}
                   alt={`${location.name} 封面視覺`}
-                  fill
-                  priority={false}
-                  className="object-cover object-center"
-                  sizes={getResponsiveSizes('medium')}
+                  className="h-full w-full object-cover object-center"
+                  loading="lazy"
+                  decoding="async"
                 />
               </>
             ) : (

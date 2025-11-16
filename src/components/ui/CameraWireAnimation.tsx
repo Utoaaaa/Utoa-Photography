@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { useLoaderState } from '@/components/providers/LoaderStateProvider';
 
 interface CameraWireAnimationProps {
   className?: string;
@@ -8,7 +9,7 @@ interface CameraWireAnimationProps {
 
 export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps) {
   const [mounted, setMounted] = useState(false);
-  const [loaderDone, setLoaderDone] = useState(false);
+  const { loaderActive } = useLoaderState();
   const svgRef = useRef<SVGSVGElement>(null);
   const lensOuterRef = useRef<SVGPathElement>(null);
   const lensMidRef = useRef<SVGPathElement>(null);
@@ -26,42 +27,8 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
     setMounted(true);
   }, []);
 
-  // 偵測 Loader 是否完成
   useEffect(() => {
-    if (!mounted) return;
-
-    const checkLoader = () => {
-      const loaderElement = document.querySelector('[data-loader-active]');
-      if (!loaderElement) {
-        setLoaderDone(true);
-      }
-    };
-
-    // 初始檢查
-    checkLoader();
-
-    // 監聽 DOM 變化
-    const observer = new MutationObserver(checkLoader);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['data-loader-active']
-    });
-
-    // 5 秒後強制開始動畫(防止 loader 檢測失敗)
-    const timeout = setTimeout(() => {
-      setLoaderDone(true);
-    }, 5000);
-
-    return () => {
-      observer.disconnect();
-      clearTimeout(timeout);
-    };
-  }, [mounted]);
-
-  useEffect(() => {
-    if (!mounted || !loaderDone || typeof window === 'undefined') return;
+    if (!mounted || loaderActive || typeof window === 'undefined') return;
 
     // 動態載入 GSAP
     let cleanup: (() => void) | undefined;
@@ -197,7 +164,9 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
     return () => {
       if (cleanup) cleanup();
     };
-  }, [mounted, loaderDone]);
+  }, [mounted, loaderActive]);
+
+  const shouldShow = useMemo(() => mounted && !loaderActive, [mounted, loaderActive]);
 
   return (
     <div className={`relative w-full h-full flex items-center justify-center ${className}`}>
@@ -210,7 +179,7 @@ export function CameraWireAnimation({ className = '' }: CameraWireAnimationProps
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-auto max-w-2xl"
         style={{ 
-          opacity: loaderDone ? 1 : 0,
+          opacity: shouldShow ? 1 : 0,
           transition: 'opacity 0.1s ease-in'
         }}
       >

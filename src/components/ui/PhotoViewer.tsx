@@ -34,6 +34,7 @@ export function PhotoViewer({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const photoRefs = useRef<(HTMLElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRootRef = useRef<HTMLDivElement | null>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const initialCenteringDone = useRef(false);
@@ -119,6 +120,8 @@ export function PhotoViewer({
   // T027: Mouse wheel navigation in single-screen mode
   useEffect(() => {
     if (!singleScreen) return;
+    const node = viewerRootRef.current;
+    if (!node) return;
     let cooldown = false;
     let wheelTimeout: ReturnType<typeof setTimeout> | null = null;
     const onWheel = (e: WheelEvent) => {
@@ -126,10 +129,9 @@ export function PhotoViewer({
       if (target && target.closest && target.closest('.staggered-menu-panel')) {
         return;
       }
-      // Prevent default page scroll; use threshold to avoid multi-triggers
       if (cooldown) return;
       const delta = e.deltaY || 0;
-      if (Math.abs(delta) < 20) return; // small nudges ignored
+      if (Math.abs(delta) < 20) return;
       e.preventDefault();
       cooldown = true;
       if (delta > 0) {
@@ -137,17 +139,15 @@ export function PhotoViewer({
       } else {
         goToPhoto(activePhotoIndex - 1);
       }
-      // Cooldown to avoid rapid multi-advances
       wheelTimeout = setTimeout(() => {
         cooldown = false;
         wheelTimeout = null;
       }, prefersReducedMotion ? 150 : 350);
     };
 
-    // Use passive: false to be able to call preventDefault
-    window.addEventListener('wheel', onWheel, { passive: false });
+    node.addEventListener('wheel', onWheel as EventListener, { passive: false });
     return () => {
-      window.removeEventListener('wheel', onWheel as EventListener);
+      node.removeEventListener('wheel', onWheel as EventListener);
       if (wheelTimeout) clearTimeout(wheelTimeout);
     };
   }, [singleScreen, activePhotoIndex, goToPhoto, prefersReducedMotion]);
@@ -419,15 +419,27 @@ export function PhotoViewer({
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    // Preload adjacent images with medium variants to reduce upfront bandwidth
-    preloadImages.forEach((photo) => {
+    if (singleScreen || !cloudflareConfigured || preloadImages.length === 0 || typeof document === 'undefined') {
+      return undefined;
+    }
+    const head = document.head;
+    const links = preloadImages.map((photo) => {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
       link.href = getR2VariantDirectUrl(photo.id, 'medium');
-      document.head.appendChild(link);
+      head.appendChild(link);
+      return link;
     });
-  }, [preloadImages]);
+
+    return () => {
+      links.forEach((link) => {
+        if (link.parentNode === head) {
+          head.removeChild(link);
+        }
+      });
+    };
+  }, [preloadImages, singleScreen, cloudflareConfigured]);
 
   photoRefs.current.length = photos.length;
 
@@ -448,6 +460,7 @@ export function PhotoViewer({
 
     return (
       <div 
+        ref={viewerRootRef}
         className="h-screen w-full relative overflow-hidden bg-background"
         data-testid="photo-viewer"
         onTouchStart={handleTouchStart}
@@ -529,7 +542,7 @@ export function PhotoViewer({
 
   // Traditional scroll-based viewer render
   return (
-    <div className="relative" data-testid="photo-viewer">
+    <div className="relative" data-testid="photo-viewer" ref={viewerRootRef}>
       {/* Photo container */}
       <div 
         ref={containerRef}

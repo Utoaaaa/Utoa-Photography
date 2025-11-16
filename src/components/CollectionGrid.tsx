@@ -2,11 +2,10 @@
 
 import clsx from 'clsx';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
-import { getR2VariantDirectUrl, getResponsiveSizes } from '@/lib/images';
+import { getR2VariantDirectUrl } from '@/lib/images';
 
 interface CollectionGridProps {
   yearLabel: string;
@@ -127,13 +126,12 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
         <div className="relative m-5 overflow-hidden rounded-[2rem]">
           <div className={imageWrapperClass}>
             {coverImageSrc ? (
-              <Image
+              <img
                 src={coverImageSrc}
                 alt={`${collection.title} 封面視覺`}
-                fill
-                priority={false}
-                className={imageClass}
-                sizes={getResponsiveSizes('medium')}
+                className={`h-full w-full ${imageClass}`}
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-[#01AFF6]/60 via-[#F20085]/45 to-[#FFD036]/65" />

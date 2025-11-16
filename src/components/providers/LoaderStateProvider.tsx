@@ -15,7 +15,7 @@ interface LoaderStateContextValue {
 }
 
 const LoaderStateContext = createContext<LoaderStateContextValue>({
-  loaderActive: true,
+  loaderActive: false,
   setLoaderActive: () => {
     // noop for SSR/default usage
   },
