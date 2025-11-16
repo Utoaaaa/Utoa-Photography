@@ -65,7 +65,12 @@ async function objectExists(bucket: R2Bucket, imageId: string, ext: OriginalExt)
   }
 }
 
-async function fetchVariantFromResizing(imageId: string, originalExt: OriginalExt, variant: VariantName): Promise<ArrayBuffer> {
+type ResizeFetchResult = {
+  body: ReadableStream;
+  contentType: string | null;
+};
+
+async function fetchVariantFromResizing(imageId: string, originalExt: OriginalExt, variant: VariantName): Promise<ResizeFetchResult> {
   if (!R2_PUBLIC_BASE) {
     throw new Error('R2 public origin is not configured for resizing');
   }
@@ -81,13 +86,19 @@ async function fetchVariantFromResizing(imageId: string, originalExt: OriginalEx
   };
   const res = await fetch(url, {
     headers: { 'Cache-Control': 'no-cache' },
-    // Tell Cloudflare to resize the fetched image before returning it
     cf: { image: cfImage },
   } as RequestInit & { cf?: { image: ImageResizeConfig } });
   if (!res.ok) {
     throw new Error(`Failed to resize ${variant}: ${res.status}`);
   }
-  return res.arrayBuffer();
+  const body = res.body;
+  if (!body) {
+    throw new Error('No body returned from resizing worker');
+  }
+  return {
+    body,
+    contentType: res.headers.get('content-type'),
+  };
 }
 
 export async function regenerateR2Variants(imageId: string, options?: { originalExtHint?: string | null }): Promise<{ errors: string[] }> {
@@ -100,18 +111,23 @@ export async function regenerateR2Variants(imageId: string, options?: { original
     throw new Error('Original image not found');
   }
   const errors: string[] = [];
-  for (const variant of Object.keys(VARIANT_CONFIG) as VariantName[]) {
-    try {
-      const buffer = await fetchVariantFromResizing(imageId, originalExt, variant);
-      const key = `images/${imageId}/${variant}.${VARIANT_EXT}`;
-      await bucket.put(key, buffer, {
-        httpMetadata: { contentType: VARIANT_CONTENT_TYPE },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error('[r2-variants] failed to generate variant', { imageId, variant, message });
-      errors.push(`${variant}:${message}`);
-    }
-  }
+  const variants = Object.keys(VARIANT_CONFIG) as VariantName[];
+
+  await Promise.allSettled(
+    variants.map(async (variant) => {
+      try {
+        const { body, contentType } = await fetchVariantFromResizing(imageId, originalExt, variant);
+        const key = `images/${imageId}/${variant}.${VARIANT_EXT}`;
+        await bucket.put(key, body, {
+          httpMetadata: { contentType: contentType || VARIANT_CONTENT_TYPE },
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('[r2-variants] failed to generate variant', { imageId, variant, message });
+        errors.push(`${variant}:${message}`);
+      }
+    }),
+  );
+
   return { errors };
 }

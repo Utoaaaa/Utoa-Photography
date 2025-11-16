@@ -499,7 +499,7 @@ export function PhotoViewer({
               alt={currentPhoto.alt || 'placeholder image'}
               width={currentPhoto.width}
               height={currentPhoto.height}
-              className={`max-w-full max-h-screen object-contain transition-opacity duration-500 ${isLargeReady ? 'opacity-0' : 'opacity-100'}`}
+              className={`absolute inset-0 m-auto max-h-screen max-w-full object-contain transition-opacity duration-500 ${isLargeReady ? 'opacity-0' : 'opacity-100'}`}
               loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
               decoding="async"
               fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
@@ -582,7 +582,7 @@ export function PhotoViewer({
                     alt={photo.alt || 'placeholder image'}
                     width={photo.width}
                     height={photo.height}
-                    className={`h-full w-full object-contain transition-opacity duration-500 ${loadedLarge[photo.id] ? 'opacity-0' : 'opacity-100'}`}
+                    className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${loadedLarge[photo.id] ? 'opacity-0' : 'opacity-100'}`}
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding="async"
                     fetchPriority={index === 0 ? 'high' : 'low'}

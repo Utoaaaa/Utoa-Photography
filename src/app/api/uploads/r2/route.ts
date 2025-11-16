@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'image_id required for variant upload' }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const body = new Uint8Array(arrayBuffer);
+    const supportsStream = typeof (file as { stream?: () => ReadableStream })?.stream === 'function';
+    const body = supportsStream ? (file as { stream: () => ReadableStream }).stream() : new Uint8Array(await file.arrayBuffer());
 
     const key = variant
       ? `images/${imageId}/${variant}.${ext}`
