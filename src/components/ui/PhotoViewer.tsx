@@ -32,6 +32,7 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loadedLarge, setLoadedLarge] = useState<Record<string, boolean>>({});
   const photoRefs = useRef<(HTMLElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRootRef = useRef<HTMLDivElement | null>(null);
@@ -245,6 +246,10 @@ export function PhotoViewer({
     }
   }, [singleScreen, goToPhoto, scrollToPhoto, triggerDotNavVisibility]);
 
+  const handleLargeImageLoad = useCallback((id: string) => {
+    setLoadedLarge((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
+  }, []);
+
   const handlePhotoLoad = useCallback(
     (index: number) => {
       if (singleScreen) return;
@@ -457,6 +462,7 @@ export function PhotoViewer({
     const cfConfigured = cloudflareConfigured;
     const largeSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, 'large') : '/placeholder.svg';
     const mediumSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, 'medium') : '/placeholder.svg';
+    const isLargeReady = !!loadedLarge[currentPhoto.id];
 
     return (
       <div 
@@ -488,19 +494,29 @@ export function PhotoViewer({
           }`}
         >
           <div className="relative max-w-full max-h-full" data-testid="current-photo" id={`photo-${activePhotoIndex + 1}`}>
-            <picture>
-              <source media="(min-width: 1024px)" srcSet={largeSrc} />
-              <img
-                src={mediumSrc}
-                alt={currentPhoto.alt || 'placeholder image'}
-                width={currentPhoto.width}
-                height={currentPhoto.height}
-                className="max-w-full max-h-screen object-contain"
-                loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-                fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
-              />
-            </picture>
+            <img
+              src={mediumSrc}
+              alt={currentPhoto.alt || 'placeholder image'}
+              width={currentPhoto.width}
+              height={currentPhoto.height}
+              className={`max-w-full max-h-screen object-contain transition-opacity duration-500 ${isLargeReady ? 'opacity-0' : 'opacity-100'}`}
+              loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
+              aria-hidden={isLargeReady}
+            />
+            <img
+              src={largeSrc}
+              alt={currentPhoto.alt || 'placeholder image'}
+              width={currentPhoto.width}
+              height={currentPhoto.height}
+              className={`absolute inset-0 m-auto max-h-screen max-w-full object-contain transition-opacity duration-500 ${isLargeReady ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => handleLargeImageLoad(currentPhoto.id)}
+              loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={activePhotoIndex === 0 ? 'high' : 'auto'}
+              aria-hidden={!isLargeReady}
+            />
           </div>
         </div>
 
@@ -560,20 +576,32 @@ export function PhotoViewer({
             <div className="relative flex w-full flex-col items-center">
               {/* Photo */}
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
-                <picture>
-                  <source media="(min-width: 1024px)" srcSet={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, 'large') : '/placeholder.svg'} />
+                <div className="relative mx-auto h-auto max-h-[92vh] w-auto max-w-[92vw]">
                   <img
                     src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, 'medium') : '/placeholder.svg'}
                     alt={photo.alt || 'placeholder image'}
                     width={photo.width}
                     height={photo.height}
-                    className="mx-auto h-auto max-h-[92vh] w-auto max-w-[92vw] object-contain"
+                    className={`h-full w-full object-contain transition-opacity duration-500 ${loadedLarge[photo.id] ? 'opacity-0' : 'opacity-100'}`}
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding="async"
                     fetchPriority={index === 0 ? 'high' : 'low'}
                     onLoad={() => handlePhotoLoad(index)}
+                    aria-hidden={!!loadedLarge[photo.id]}
                   />
-                </picture>
+                  <img
+                    src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, 'large') : '/placeholder.svg'}
+                    alt={photo.alt || 'placeholder image'}
+                    width={photo.width}
+                    height={photo.height}
+                    className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${loadedLarge[photo.id] ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={() => handleLargeImageLoad(photo.id)}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                    aria-hidden={!loadedLarge[photo.id]}
+                  />
+                </div>
               </div>
               
               {/* Text content */}

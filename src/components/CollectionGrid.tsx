@@ -110,7 +110,7 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
 
   const formattedDate = useMemo(() => formatCollectionDate(collection), [collection]);
 
-  const summary = collection.summary ?? '敬請期待更多來自這個地點的作品故事。';
+  const summary = collection.summary ?? '';
 
   return (
     <Link
