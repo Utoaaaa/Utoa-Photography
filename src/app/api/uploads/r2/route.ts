@@ -63,9 +63,14 @@ export async function POST(request: NextRequest) {
       },
     } as any);
     if (!variant) {
-      regenerateR2Variants(imageId, { originalExtHint: ext }).catch((error) => {
+      const variantPromise = regenerateR2Variants(imageId, { originalExtHint: ext }).catch((error) => {
         console.error('[uploads/r2] variant regeneration failed', error);
       });
+
+      const waitUntil = (request as NextRequest & { waitUntil?: (promise: Promise<unknown>) => void }).waitUntil;
+      if (typeof waitUntil === 'function') {
+        waitUntil(variantPromise);
+      }
     }
     return NextResponse.json({ image_id: imageId });
   } catch (error) {
