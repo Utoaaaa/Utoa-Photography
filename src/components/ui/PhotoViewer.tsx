@@ -214,7 +214,7 @@ export function PhotoViewer({
         suppressNav?: boolean;
       },
     ) => {
-      if (index < 0 || index >= photos.length) return;
+      if (index < 0 || index >= photos.length || !isDesktopViewport) return;
       const suppressNav = options?.suppressNav ?? false;
       if (!singleScreen && !suppressNav) {
         triggerDotNavVisibility();
@@ -237,7 +237,7 @@ export function PhotoViewer({
         }, prefersReducedMotion ? 60 : 160);
       }
     },
-    [centerPhoto, photos.length, prefersReducedMotion, singleScreen, triggerDotNavVisibility],
+    [centerPhoto, photos.length, prefersReducedMotion, singleScreen, triggerDotNavVisibility, isDesktopViewport],
   );
   
   const handleDotClick = useCallback((index: number) => {
