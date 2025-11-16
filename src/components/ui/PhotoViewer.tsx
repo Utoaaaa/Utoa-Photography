@@ -251,13 +251,18 @@ export function PhotoViewer({
 
   const handlePhotoLoad = useCallback(
     (index: number) => {
-      if (singleScreen) return;
-      if (index === 0 && !hasCenteredAfterLoadRef.current) {
+      if (singleScreen || !isDesktopViewport) return;
+      if (index === 0 && !hasCenteredAfterLoadRef.current && typeof document !== 'undefined') {
         hasCenteredAfterLoadRef.current = true;
-        scrollToPhoto(0, { immediate: true, suppressNav: true });
+        const el = photoRefs.current[0];
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const offset = rect.top + window.scrollY - (window.innerHeight - rect.height) / 2;
+          window.scrollTo({ top: Math.max(offset, 0), behavior: 'instant' as ScrollBehavior });
+        }
       }
     },
-    [scrollToPhoto, singleScreen],
+    [singleScreen, isDesktopViewport],
   );
 
   // T027: Enhanced keyboard navigation with ARIA support
