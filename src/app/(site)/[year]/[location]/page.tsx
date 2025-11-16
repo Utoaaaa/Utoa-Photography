@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { CollectionGrid } from '@/components/CollectionGrid';
-import { getLocationByYearAndSlug } from '@/lib/year-location';
+import { getLocationByYearAndSlugCached } from '@/lib/year-location';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: LocationPageParams): Promise<
   const resolvedParams = await params;
   const yearLabel = decodeURIComponent(resolvedParams.year);
   const locationSlug = decodeURIComponent(resolvedParams.location);
-  const result = await getLocationByYearAndSlug(yearLabel, locationSlug);
+  const result = await getLocationByYearAndSlugCached(yearLabel, locationSlug);
 
   if (!result) {
     return {
@@ -47,7 +47,7 @@ export default async function LocationPage({ params }: LocationPageParams) {
   const resolvedParams = await params;
   const yearLabel = decodeURIComponent(resolvedParams.year);
   const locationSlug = decodeURIComponent(resolvedParams.location);
-  const result = await getLocationByYearAndSlug(yearLabel, locationSlug);
+  const result = await getLocationByYearAndSlugCached(yearLabel, locationSlug);
 
   if (!result) {
     notFound();

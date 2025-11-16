@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from './d1-queries';
@@ -500,6 +501,8 @@ export async function getLocationByYearAndSlug(
 
   return { year: mappedYear, location };
 }
+
+export const getLocationByYearAndSlugCached = cache(getLocationByYearAndSlug);
 
 export async function loadYearLocationNavData(): Promise<YearNavEntry[]> {
   if (shouldUseD1Direct()) {
