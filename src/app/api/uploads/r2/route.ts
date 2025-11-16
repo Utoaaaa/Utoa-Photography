@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth';
 import { getR2Bucket } from '@/lib/cloudflare';
 import { regenerateR2Variants } from '@/lib/r2-variants';
@@ -63,14 +63,13 @@ export async function POST(request: NextRequest) {
       },
     } as any);
     if (!variant) {
-      const variantPromise = regenerateR2Variants(imageId, { originalExtHint: ext }).catch((error) => {
-        console.error('[uploads/r2] variant regeneration failed', error);
+      after(async () => {
+        try {
+          await regenerateR2Variants(imageId, { originalExtHint: ext });
+        } catch (error) {
+          console.error('[uploads/r2] variant regeneration failed', error);
+        }
       });
-
-      const waitUntil = (request as NextRequest & { waitUntil?: (promise: Promise<unknown>) => void }).waitUntil;
-      if (typeof waitUntil === 'function') {
-        waitUntil(variantPromise);
-      }
     }
     return NextResponse.json({ image_id: imageId });
   } catch (error) {
