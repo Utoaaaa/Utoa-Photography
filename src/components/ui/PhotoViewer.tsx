@@ -558,7 +558,7 @@ export function PhotoViewer({
       {/* Photo container */}
       <div 
         ref={containerRef}
-        className="mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-10 lg:px-16"
+        className="mx-auto w-full max-w-[84rem] px-6 md:px-10 lg:px-16"
       >
         {photos.map((photo, index) => (
           <article
@@ -572,7 +572,7 @@ export function PhotoViewer({
             <div className="relative flex w-full flex-col items-center">
               {/* Photo */}
               <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
-                <div className="relative mx-auto h-auto max-h-[92vh] w-auto max-w-[92vw]">
+                <div className="relative mx-auto h-auto max-h-[90vh] w-full max-w-[84rem] px-4">
                   <img
                     src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, isDesktopViewport ? 'large' : 'medium') : '/placeholder.svg'}
                     alt={photo.alt || 'placeholder image'}
