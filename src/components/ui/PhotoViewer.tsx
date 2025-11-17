@@ -543,7 +543,7 @@ export function PhotoViewer({
         </div>
 
         {/* Dot navigation */}
-        {photos.length > 1 && (
+        {photos.length > 1 && isDesktopViewport && (
           <DotNavigation
             totalPhotos={photos.length}
             activeIndex={activePhotoIndex}
@@ -616,7 +616,7 @@ export function PhotoViewer({
       </div>
       
       {/* Dot navigation */}
-      {photos.length > 1 && (
+      {photos.length > 1 && isDesktopViewport && (
         <DotNavigation
           totalPhotos={photos.length}
           activeIndex={activePhotoIndex}
