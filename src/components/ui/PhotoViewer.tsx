@@ -214,30 +214,15 @@ export function PhotoViewer({
         suppressNav?: boolean;
       },
     ) => {
-      if (index < 0 || index >= photos.length || !isDesktopViewport) return;
+      if (index < 0 || index >= photos.length) return;
       const suppressNav = options?.suppressNav ?? false;
       if (!singleScreen && !suppressNav) {
         triggerDotNavVisibility();
       }
-      if (suppressNav) {
-        autoScrollingRef.current = true;
-        if (autoScrollReleaseRef.current !== null) {
-          window.clearTimeout(autoScrollReleaseRef.current);
-        }
-      }
-
-      const desiredBehavior = options?.behavior ?? (options?.immediate || prefersReducedMotion ? 'auto' : 'smooth');
       lastSnappedIndexRef.current = index;
-      centerPhoto(index, desiredBehavior);
-
-      if (suppressNav) {
-        autoScrollReleaseRef.current = window.setTimeout(() => {
-          autoScrollingRef.current = false;
-          autoScrollReleaseRef.current = null;
-        }, prefersReducedMotion ? 60 : 160);
-      }
+      // No automatic scrolling; rely on natural user scroll on all devices.
     },
-    [centerPhoto, photos.length, prefersReducedMotion, singleScreen, triggerDotNavVisibility, isDesktopViewport],
+    [photos.length, singleScreen, triggerDotNavVisibility],
   );
   
   const handleDotClick = useCallback((index: number) => {
@@ -249,21 +234,9 @@ export function PhotoViewer({
     }
   }, [singleScreen, goToPhoto, scrollToPhoto, triggerDotNavVisibility]);
 
-  const handlePhotoLoad = useCallback(
-    (index: number) => {
-      if (singleScreen || !isDesktopViewport) return;
-      if (index === 0 && !hasCenteredAfterLoadRef.current && typeof document !== 'undefined') {
-        hasCenteredAfterLoadRef.current = true;
-        const el = photoRefs.current[0];
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          const offset = rect.top + window.scrollY - (window.innerHeight - rect.height) / 2;
-          window.scrollTo({ top: Math.max(offset, 0), behavior: 'instant' as ScrollBehavior });
-        }
-      }
-    },
-    [singleScreen, isDesktopViewport],
-  );
+  const handlePhotoLoad = useCallback(() => {
+    // no-op; keep natural scroll behavior
+  }, []);
 
   // T027: Enhanced keyboard navigation with ARIA support
   useEffect(() => {
