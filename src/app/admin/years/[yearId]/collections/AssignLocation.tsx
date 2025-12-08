@@ -308,7 +308,7 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
                           </div>
                           <div className="text-xs text-gray-500">
                             指派於 {activeLocation.name}
-                            {collection.updatedAt ? ` · 更新於 ${new Date(collection.updatedAt).toLocaleDateString('zh-TW')}` : ''}
+                            {collection.updatedAt ? ` · 拍攝於 ${new Date(collection.updatedAt).toLocaleDateString('zh-TW')}` : ''}
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 sm:min-w-[180px]">
@@ -359,7 +359,7 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
                           </div>
                           <div className="text-xs text-gray-500">
                             尚未指派地點
-                            {collection.updatedAt ? ` · 更新於 ${new Date(collection.updatedAt).toLocaleDateString('zh-TW')}` : ''}
+                            {collection.updatedAt ? ` · 拍攝於 ${new Date(collection.updatedAt).toLocaleDateString('zh-TW')}` : ''}
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 sm:min-w-[220px]">

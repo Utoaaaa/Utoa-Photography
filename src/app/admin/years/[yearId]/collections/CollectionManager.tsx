@@ -660,7 +660,7 @@ export default function CollectionManager({
                   {shouldShowLocation && locationName && <div className="text-xs text-gray-500">目前地點：{locationName}</div>}
                   {collection.updatedAt && (
                     <div className="text-xs text-gray-500">
-                      更新於 {new Date(collection.updatedAt).toLocaleDateString('zh-TW', {
+                      拍攝於 {new Date(collection.updatedAt).toLocaleDateString('zh-TW', {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit',
