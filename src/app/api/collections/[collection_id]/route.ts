@@ -350,7 +350,6 @@ export async function PUT(
 
       const updates: string[] = [];
       const bindings: unknown[] = [];
-      let updatedAtOverridden = false;
 
       const setField = (column: string, value: unknown, key: string) => {
         updates.push(`${column} = ?`);
@@ -400,13 +399,7 @@ export async function PUT(
         if (!Number.isNaN(parsed.getTime())) {
           updates.push('updated_at = ?');
           bindings.push(parsed.toISOString());
-          updatedAtOverridden = true;
         }
-      }
-
-      if (!updatedAtOverridden) {
-        updates.push('updated_at = ?');
-        bindings.push(new Date().toISOString());
       }
 
       if (updates.length > 0) {

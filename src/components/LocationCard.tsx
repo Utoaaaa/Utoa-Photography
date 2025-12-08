@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationEntry } from '@/lib/year-location';
 import { getR2VariantDirectUrl } from '@/lib/images';
+import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
 interface LocationCardProps {
   yearLabel: string;
@@ -17,6 +18,7 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
 
   const [revealed, setRevealed] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
     const node = cardRef.current;
@@ -44,13 +46,13 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
   }, [location.coverAssetId]);
 
   const lastUpdated = useMemo(() => {
-    return location.collections.reduce<string | null>((latest, collection) => {
+    return location.collections.reduce<string | null>((oldest, collection) => {
       const candidate = collection.updatedAt ?? collection.publishedAt;
-      if (!candidate) return latest;
-      if (!latest || new Date(candidate).getTime() > new Date(latest).getTime()) {
+      if (!candidate) return oldest;
+      if (!oldest || new Date(candidate).getTime() < new Date(oldest).getTime()) {
         return candidate;
       }
-      return latest;
+      return oldest;
     }, null);
   }, [location.collections]);
 
@@ -64,7 +66,8 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
     return `${year}/${month}/${day}`;
   }, [lastUpdated]);
 
-  const summary = location.summary ?? 'Stay tuned—new stories from this location are coming soon.';
+  const summary = location.summary ?? '';
+  useAutoShrinkText(titleRef, { minFontSize: 34 }, [location.name]);
 
   return (
     <Link
@@ -109,6 +112,7 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
               </span>
 
               <h3
+                ref={titleRef}
                 className={clsx(
                   'font-serif text-[2.8rem] font-semibold uppercase leading-[0.92] tracking-tight drop-shadow-md sm:text-[3.4rem] md:text-[3.75rem]',
                   'transition-all duration-700 ease-out',

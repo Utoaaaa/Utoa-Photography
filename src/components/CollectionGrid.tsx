@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
 import { getR2VariantDirectUrl } from '@/lib/images';
+import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
 interface CollectionGridProps {
   yearLabel: string;
@@ -60,6 +61,7 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
   const href = buildCollectionHref(yearLabel, locationSlug, collection.slug);
   const [revealed, setRevealed] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
     const node = cardRef.current;
@@ -112,6 +114,8 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
 
   const summary = collection.summary ?? '';
 
+  useAutoShrinkText(titleRef, { minFontSize: 28 }, [collection.title]);
+
   return (
     <Link
       href={href}
@@ -152,6 +156,7 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
               </span>
 
               <h3
+                ref={titleRef}
                 className={clsx(
                   'font-serif text-[2.4rem] font-semibold uppercase leading-[0.94] tracking-tight drop-shadow-md sm:text-[2.9rem] md:text-[3.1rem]',
                   'transition-all duration-700 ease-out',

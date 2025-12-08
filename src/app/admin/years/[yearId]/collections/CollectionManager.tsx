@@ -588,7 +588,7 @@ export default function CollectionManager({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm" htmlFor="collection-updated-at-input">更新日期（選填）</label>
+              <label className="mb-1 block text-sm" htmlFor="collection-updated-at-input">拍攝日期（選填）</label>
               <input
                 type="date"
                 id="collection-updated-at-input"
