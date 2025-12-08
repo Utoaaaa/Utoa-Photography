@@ -53,6 +53,13 @@ type CleanupOptions = {
   dryRun: boolean;
 };
 
+type R2ReconcileRequestBody = {
+  limit?: number;
+  maxIterations?: number;
+  cursor?: string;
+  dryRun?: boolean;
+};
+
 async function runCleanupJob(options: CleanupOptions) {
   try {
     const useD1 = shouldUseD1Direct();
@@ -101,7 +108,7 @@ async function runCleanupJob(options: CleanupOptions) {
 export async function POST(request: NextRequest) {
   try {
     requireAdminAuth(request);
-    const body = await request.json().catch(() => ({}));
+    const body = (await request.json().catch(() => ({}))) as R2ReconcileRequestBody;
     const rawLimit = Number(body?.limit ?? 500);
     const rawIterations = Number(body?.maxIterations ?? 5);
     const limit = Number.isFinite(rawLimit)

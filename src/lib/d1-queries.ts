@@ -136,7 +136,7 @@ export async function d1GetAssets(params: {
   const countStmt = filterBindings.length > 0
     ? db.prepare(countQuery).bind(...filterBindings)
     : db.prepare(countQuery);
-  const countResult = await countStmt.first<{ count: number | string | null } | null>();
+  const countResult = (await countStmt.first()) as { count: number | string | null } | null;
   const total =
     typeof countResult?.count === 'string'
       ? Number.parseInt(countResult.count, 10)
