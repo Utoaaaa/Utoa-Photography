@@ -80,7 +80,8 @@ export function useAutoShrinkText(
     };
 
     const resizeObserver = new ResizeObserver(scheduleShrink);
-    resizeObserver.observe(target);
+    const container = target.parentElement ?? target;
+    resizeObserver.observe(container);
 
     scheduleShrink();
 
