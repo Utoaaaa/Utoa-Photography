@@ -26,7 +26,7 @@ export function useAutoShrinkText(
   options: AutoShrinkOptions,
   deps: DependencyList = [],
 ) {
-  const { minFontSize, step = 0.5, tolerance = 0.5 } = options;
+  const { minFontSize, step = 0.5, tolerance = 0 } = options;
 
   useEffect(() => {
     const target = targetRef.current;
@@ -39,33 +39,35 @@ export function useAutoShrinkText(
 
       target.style.fontSize = '';
 
-      let computedStyle = window.getComputedStyle(target);
+      const computedStyle = window.getComputedStyle(target);
       let currentFontSize = parseFloat(computedStyle.fontSize);
 
       if (!Number.isFinite(currentFontSize) || Number.isNaN(currentFontSize)) {
         return;
       }
 
-      const calcHeights = () => {
-        computedStyle = window.getComputedStyle(target);
-        const lineHeight = parseFloat(computedStyle.lineHeight) || currentFontSize;
-        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-        const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-        const contentHeight = target.scrollHeight - paddingTop - paddingBottom;
-        return { lineHeight, contentHeight };
+      const measureWidth = () => {
+        const previousWhiteSpace = target.style.whiteSpace;
+        target.style.whiteSpace = 'nowrap';
+        const width = target.scrollWidth;
+        target.style.whiteSpace = previousWhiteSpace;
+        return width;
       };
 
-      let { lineHeight, contentHeight } = calcHeights();
+      const availableWidth = target.clientWidth;
+      if (availableWidth === 0) return;
+
+      let contentWidth = measureWidth();
       let guard = 0;
 
-      while (
-        contentHeight > lineHeight + tolerance &&
-        currentFontSize > minFontSize &&
-        guard < 120
-      ) {
+      if (contentWidth <= availableWidth + tolerance) {
+        return;
+      }
+
+      while (contentWidth > availableWidth + tolerance && currentFontSize > minFontSize && guard < 120) {
         currentFontSize = Math.max(currentFontSize - step, minFontSize);
         target.style.fontSize = `${currentFontSize}px`;
-        ({ lineHeight, contentHeight } = calcHeights());
+        contentWidth = measureWidth();
         guard += 1;
       }
     };
