@@ -18,7 +18,7 @@ describe('CoverAssetPicker', () => {
   test('loads location assets and selects cover image', async () => {
     const mockFetch = jest.fn().mockResolvedValue({
       ok: true,
-      text: async () => JSON.stringify([{ id: 'asset-1', alt: 'Asset One' }]),
+      text: async () => JSON.stringify({ data: [{ id: 'asset-1', alt: 'Asset One' }], total: 1 }),
     });
     global.fetch = mockFetch as unknown as typeof global.fetch;
 

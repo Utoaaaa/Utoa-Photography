@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
-import { getD1Database, getR2Bucket } from '@/lib/cloudflare';
+import { getD1Database } from '@/lib/cloudflare';
 import { writeAudit } from '@/lib/utils';
+import { deleteR2ObjectsForAsset } from '@/lib/r2-assets';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
 type LogAuditFn = typeof import('@/lib/db').logAudit;
@@ -59,41 +60,6 @@ async function recordAudit(useD1: boolean, assetId: string) {
 }
 
 type FailedItem = { id: string; reason: 'not_found' | 'referenced' | 'error'; details?: any };
-
-const R2_VARIANTS = ['thumb', 'medium', 'large', 'original'] as const;
-const R2_EXTS = ['webp', 'avif', 'jpg', 'jpeg', 'png'] as const;
-
-async function deleteR2ObjectsForAsset(assetId: string): Promise<void> {
-  try {
-    const bucket = getR2Bucket() as undefined | { delete?: (key: string) => Promise<void> };
-    const deleteFn = bucket?.delete?.bind(bucket);
-    if (!deleteFn) {
-      return;
-    }
-
-    const keys: string[] = [];
-    for (const ext of R2_EXTS) {
-      keys.push(`images/${assetId}/original.${ext}`);
-    }
-    for (const variant of R2_VARIANTS) {
-      for (const ext of R2_EXTS) {
-        keys.push(`images/${assetId}/${variant}.${ext}`);
-      }
-    }
-
-    await Promise.allSettled(
-      keys.map(async (key) => {
-        try {
-          await deleteFn(key);
-        } catch (error) {
-          console.warn('[asset-batch-delete] failed to delete R2 object', { key, error });
-        }
-      }),
-    );
-  } catch (error) {
-    console.warn('[asset-batch-delete] R2 cleanup skipped', error);
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {

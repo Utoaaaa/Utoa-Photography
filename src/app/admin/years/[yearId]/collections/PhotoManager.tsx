@@ -27,6 +27,7 @@ type CollectionWithAssets = {
 };
 
 type ApiError = { message?: string; error?: string };
+type AssetListResponse = { data: Asset[]; total: number };
 
 const isAssetArray = (value: unknown): value is Asset[] =>
   Array.isArray(value) &&
@@ -46,6 +47,13 @@ const isAssetArray = (value: unknown): value is Asset[] =>
       (locationFolderYearLabel === undefined || locationFolderYearLabel === null || typeof locationFolderYearLabel === 'string')
     );
   });
+
+const isAssetListResponse = (value: unknown): value is AssetListResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Partial<AssetListResponse> & { data?: unknown };
+  if (typeof obj.total !== 'number') return false;
+  return Array.isArray(obj.data) && isAssetArray(obj.data);
+};
 
 const isCollectionWithAssets = (value: unknown): value is CollectionWithAssets => {
   if (!value || typeof value !== 'object') return false;
@@ -164,14 +172,14 @@ export default function PhotoManager({ collectionId, collectionTitle, onClose, o
           assetParams.set('location_folder_id', collectionLocationId);
         }
         const assetUrl = assetParams.toString() ? `/api/admin/assets?${assetParams.toString()}` : '/api/admin/assets';
-        const { ok: assetsOk, data: assetsData } = await fetchJsonWithRetry<Asset[]>(
+        const { ok: assetsOk, data: assetPayload } = await fetchJsonWithRetry<AssetListResponse>(
           assetUrl,
           { cache: 'no-store' },
-          [],
-          isAssetArray,
+          { data: [], total: 0 },
+          isAssetListResponse,
         );
         if (!assetsOk) throw new Error('Failed to load assets');
-        setAssets(Array.isArray(assetsData) ? assetsData : []);
+        setAssets(Array.isArray(assetPayload.data) ? assetPayload.data : []);
 
         const { ok: collectionOk, data: colData } = await fetchJsonWithRetry<CollectionWithAssets>(
           `/api/admin/collections/${collectionId}?include_assets=true`,

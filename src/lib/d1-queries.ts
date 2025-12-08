@@ -114,30 +114,40 @@ export async function d1GetAssets(params: {
   offset?: number;
   location_folder_id?: string | null;
   unassigned?: boolean;
-}): Promise<Asset[]> {
+}): Promise<{ data: Asset[]; total: number }> {
   const db = getD1Database();
   if (!db) {
     throw new Error('D1 database not available');
   }
 
   const { limit = 50, offset = 0, location_folder_id, unassigned } = params;
-  
-  let query = 'SELECT * FROM assets';
-  const bindings: any[] = [];
-  
+
+  let whereClause = '';
+  const filterBindings: any[] = [];
+
   if (location_folder_id) {
-    query += ' WHERE location_folder_id = ?';
-    bindings.push(location_folder_id);
+    whereClause = ' WHERE location_folder_id = ?';
+    filterBindings.push(location_folder_id);
   } else if (unassigned) {
-    query += ' WHERE location_folder_id IS NULL';
+    whereClause = ' WHERE location_folder_id IS NULL';
   }
-  
-  query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-  bindings.push(limit, offset);
-  
-  const stmt = db.prepare(query).bind(...bindings);
-  const result = await stmt.all();
-  return (result.results || []) as Asset[];
+
+  const countQuery = `SELECT COUNT(*) as count FROM assets${whereClause}`;
+  const countStmt = filterBindings.length > 0
+    ? db.prepare(countQuery).bind(...filterBindings)
+    : db.prepare(countQuery);
+  const countResult = await countStmt.first<{ count: number | string | null } | null>();
+  const total =
+    typeof countResult?.count === 'string'
+      ? Number.parseInt(countResult.count, 10)
+      : countResult?.count ?? 0;
+
+  const rowsQuery = `SELECT * FROM assets${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  const rowsStmt = db.prepare(rowsQuery).bind(...filterBindings, limit, offset);
+  const rowsResult = await rowsStmt.all();
+  const data = (rowsResult.results || []) as Asset[];
+
+  return { data, total };
 }
 
 /**

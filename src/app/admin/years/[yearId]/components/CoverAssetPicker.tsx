@@ -155,8 +155,10 @@ async function parseResponse(
   try {
     const payload = JSON.parse(text) as unknown;
     if (type === 'location') {
-      if (!Array.isArray(payload)) return [];
-      return payload.filter(isLocationAsset).map((asset) => ({ ...asset }));
+      if (!payload || typeof payload !== 'object') return [];
+      const data = (payload as { data?: unknown }).data;
+      if (!Array.isArray(data)) return [];
+      return data.filter(isLocationAsset).map((asset) => ({ ...asset }));
     }
     if (!payload || typeof payload !== 'object') return [];
     const assets = (payload as { assets?: unknown }).assets;

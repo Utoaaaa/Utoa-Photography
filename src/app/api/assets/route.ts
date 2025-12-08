@@ -306,29 +306,39 @@ export async function GET(request: NextRequest) {
     const locationFilter = searchParams.get('location_id') ?? searchParams.get('location_folder_id');
     const unassigned = searchParams.get('unassigned') === 'true';
 
-    let assets;
-    
+    let assets: Array<Record<string, any>> = [];
+    let total = 0;
+
     if (shouldUseD1Direct()) {
       // Use D1 direct queries in production
-      const baseAssets = await d1GetAssets({
+      const { data: baseAssets, total: d1Total } = await d1GetAssets({
         limit: Number.isNaN(limit) ? 50 : limit,
         offset: Number.isNaN(offset) ? 0 : offset,
         location_folder_id: locationFilter || undefined,
         unassigned,
       });
-      
-      // For D1, we need to manually join location folder, year data, and usage info
       const db = getD1Database();
       const usageMap = new Map<string, number>();
+      const locationMap = new Map<
+        string,
+        { id: string; name: string | null; year_id: string | null }
+      >();
+      const yearLabelMap = new Map<string, string>();
+
       if (db && baseAssets.length > 0) {
         const ids = baseAssets.map((asset) => asset.id);
         const placeholders = ids.map(() => '?').join(', ');
         try {
-          const usageStmt = db.prepare(
-            `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`
-          ).bind(...ids);
+          const usageStmt = db
+            .prepare(
+              `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`,
+            )
+            .bind(...ids);
           const usageResult = await usageStmt.all();
-          const rows = (usageResult.results ?? []) as Array<{ asset_id: string; count: number | string | null }>;
+          const rows = (usageResult.results ?? []) as Array<{
+            asset_id: string;
+            count: number | string | null;
+          }>;
           rows.forEach((row) => {
             const count = typeof row.count === 'string' ? Number(row.count) : row.count ?? 0;
             usageMap.set(row.asset_id, count);
@@ -336,47 +346,95 @@ export async function GET(request: NextRequest) {
         } catch (usageError) {
           console.error('Failed to load asset usage counts', usageError);
         }
+
+        const locationIds = Array.from(
+          new Set(
+            baseAssets
+              .map((asset) => asset.location_folder_id)
+              .filter((value): value is string => typeof value === 'string' && value.length > 0),
+          ),
+        );
+
+        if (locationIds.length > 0) {
+          const locationPlaceholders = locationIds.map(() => '?').join(', ');
+          try {
+            const locationsStmt = db
+              .prepare(
+                `SELECT id, name, year_id FROM locations WHERE id IN (${locationPlaceholders})`,
+              )
+              .bind(...locationIds);
+            const locationsResult = await locationsStmt.all();
+            const locationRows = (locationsResult.results ?? []) as Array<{
+              id: string;
+              name: string | null;
+              year_id: string | null;
+            }>;
+            locationRows.forEach((row) => {
+              locationMap.set(row.id, row);
+            });
+
+            const yearIds = Array.from(
+              new Set(
+                locationRows
+                  .map((row) => row.year_id)
+                  .filter((value): value is string => typeof value === 'string' && value.length > 0),
+              ),
+            );
+            if (yearIds.length > 0) {
+              const yearPlaceholders = yearIds.map(() => '?').join(', ');
+              try {
+                const yearsStmt = db
+                  .prepare(`SELECT id, label FROM years WHERE id IN (${yearPlaceholders})`)
+                  .bind(...yearIds);
+                const yearsResult = await yearsStmt.all();
+                const yearRows = (yearsResult.results ?? []) as Array<{ id: string; label: string | null }>;
+                yearRows.forEach((row) => {
+                  if (typeof row.label === 'string') {
+                    yearLabelMap.set(row.id, row.label);
+                  }
+                });
+              } catch (yearError) {
+                console.error('Failed to load year labels for locations', yearError);
+              }
+            }
+          } catch (locationError) {
+            console.error('Failed to load asset location folders', locationError);
+          }
+        }
       }
 
       const result = [];
-      
+
       for (const asset of baseAssets) {
         const obj: Record<string, any> = { ...asset };
-        
-        // Parse metadata_json
+
         if (obj.metadata_json && typeof obj.metadata_json === 'string') {
-          try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
+          try {
+            obj.metadata_json = JSON.parse(obj.metadata_json);
+          } catch {
+            /* ignore parse errors */
+          }
         }
-        
+
         obj.location_folder_id = asset.location_folder_id ?? null;
         obj.used = (usageMap.get(asset.id) ?? 0) > 0;
-        
-        // Get location folder info if exists
-        if (asset.location_folder_id && db) {
-          const folder = await db.prepare(
-            'SELECT id, name, year_id FROM locations WHERE id = ?'
-          ).bind(asset.location_folder_id).first() as any;
-          
+
+        if (obj.location_folder_id) {
+          const folder = locationMap.get(obj.location_folder_id);
           if (folder) {
-            obj.location_folder_name = folder.name;
-            obj.location_folder_year_id = folder.year_id;
-            
+            obj.location_folder_name = folder.name ?? null;
+            obj.location_folder_year_id = folder.year_id ?? null;
             if (folder.year_id) {
-              const year = await db.prepare(
-                'SELECT label FROM years WHERE id = ?'
-              ).bind(folder.year_id).first() as any;
-              
-              if (year) {
-                obj.location_folder_year_label = year.label;
-              }
+              obj.location_folder_year_label = yearLabelMap.get(folder.year_id) ?? null;
             }
           }
         }
-        
+
         result.push(obj);
       }
-      
+
       assets = result;
+      total = d1Total;
     } else {
       // Use Prisma in development
       const { prisma } = await getNodeDb();
@@ -415,9 +473,11 @@ export async function GET(request: NextRequest) {
         }
         return obj;
       });
+
+      total = await prisma.asset.count({ where });
     }
 
-    return NextResponse.json(assets);
+    return NextResponse.json({ data: assets, total });
   } catch (error) {
     console.error('Error listing assets:', error);
     return NextResponse.json(

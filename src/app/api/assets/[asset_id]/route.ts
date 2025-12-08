@@ -7,6 +7,7 @@ import { LOCATION_UUID_REGEX } from '@/lib/location-service-shared';
 import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
 import { d1FindLocationById } from '@/lib/d1/location-service';
 import { getD1Database } from '@/lib/cloudflare';
+import { deleteR2ObjectsForAsset } from '@/lib/r2-assets';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
 type LogAuditFn = typeof import('@/lib/db').logAudit;
@@ -26,6 +27,14 @@ function requireD1() {
     throw new Error('D1 database not available');
   }
   return db;
+}
+
+async function cleanupAssetFiles(assetId: string) {
+  try {
+    await deleteR2ObjectsForAsset(assetId);
+  } catch (error) {
+    console.warn('[asset] failed to cleanup R2 objects', { assetId, error });
+  }
 }
 
 async function recordAudit(
@@ -263,6 +272,7 @@ export async function DELETE(
       }
 
       await db.prepare('DELETE FROM assets WHERE id = ?1').bind(asset_id).run();
+      await cleanupAssetFiles(asset_id);
 
       try {
         await invalidateCache([CACHE_TAGS.ASSETS, `${CACHE_TAGS.ASSETS}:${asset_id}`]);
@@ -307,6 +317,7 @@ export async function DELETE(
     }
 
     await prisma.asset.delete({ where: { id: asset_id } });
+    await cleanupAssetFiles(asset_id);
     try {
       await invalidateCache([CACHE_TAGS.ASSETS, `${CACHE_TAGS.ASSETS}:${asset_id}`]);
     } catch {}

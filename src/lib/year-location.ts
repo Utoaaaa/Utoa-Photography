@@ -254,6 +254,20 @@ type D1CollectionRow = {
   updated_at: string | null;
 };
 
+type D1LocationWithYearRow = {
+  year_id: string;
+  year_label: string;
+  year_order_index: string;
+  year_status: string;
+  location_id: string;
+  location_year_id: string;
+  location_slug: string;
+  location_name: string;
+  location_summary: string | null;
+  location_cover_asset_id: string | null;
+  location_order_index: string;
+};
+
 async function fetchCollectionsForLocationD1(
   db: D1Database,
   locationId: string,
@@ -434,15 +448,53 @@ async function fetchLocationBySlugD1(
   label: string,
   slug: string,
 ): Promise<{ year: YearEntry; location: LocationEntry } | null> {
-  const year = await fetchYearByLabelD1(label);
-  if (!year) {
+  const db = requireD1();
+  const row = (await db.prepare(
+    `
+      SELECT
+        y.id AS year_id,
+        y.label AS year_label,
+        y.order_index AS year_order_index,
+        y.status AS year_status,
+        l.id AS location_id,
+        l.year_id AS location_year_id,
+        l.slug AS location_slug,
+        l.name AS location_name,
+        l.summary AS location_summary,
+        l.cover_asset_id AS location_cover_asset_id,
+        l.order_index AS location_order_index
+      FROM years y
+      INNER JOIN locations l ON l.year_id = y.id
+      WHERE y.label = ?1 AND y.status = 'published' AND l.slug = ?2
+      LIMIT 1
+    `,
+  ).bind(label, slug).first()) as D1LocationWithYearRow | null;
+
+  if (!row) {
     return null;
   }
 
-  const location = year.locations.find((loc) => loc.slug === slug);
-  if (!location) {
-    return null;
-  }
+  const collections = await fetchCollectionsForLocationD1(db, String(row.location_id));
+
+  const location: LocationEntry = {
+    id: String(row.location_id),
+    yearId: String(row.location_year_id),
+    slug: String(row.location_slug),
+    name: String(row.location_name),
+    summary: row.location_summary ?? null,
+    coverAssetId: row.location_cover_asset_id ?? null,
+    orderIndex: String(row.location_order_index),
+    collectionCount: collections.length,
+    collections,
+  };
+
+  const year: YearEntry = {
+    id: String(row.year_id),
+    label: String(row.year_label),
+    orderIndex: String(row.year_order_index),
+    status: String(row.year_status),
+    locations: [location],
+  };
 
   return { year, location };
 }

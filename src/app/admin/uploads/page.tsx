@@ -42,6 +42,14 @@ type BatchDeleteResponse = {
 
 type Feedback = { type: 'success' | 'error' | 'info'; text: string } | null;
 
+type R2CleanupResponse = {
+  status: string;
+  limit: number;
+  maxIterations: number;
+  cursor: string | null;
+  dryRun: boolean;
+};
+
 type VariantKey = 'thumb' | 'medium' | 'large';
 type VariantStatusEntry = Partial<Record<VariantKey, boolean>>;
 type VariantStatusState = Record<string, VariantStatusEntry>;
@@ -52,6 +60,13 @@ type GroupedLocationFolder = {
   options: LocationFolderOption[];
   yearOrderIndex: string;
 };
+
+type AssetListResponse = {
+  data: Asset[];
+  total: number;
+};
+
+const ASSET_PAGE_LIMIT = 50;
 
 const isAssetArray = (value: unknown): value is Asset[] =>
   Array.isArray(value) &&
@@ -74,6 +89,13 @@ const isAssetArray = (value: unknown): value is Asset[] =>
       (locationFolderYearLabel === undefined || locationFolderYearLabel === null || typeof locationFolderYearLabel === 'string')
     );
   });
+
+const isAssetListResponse = (value: unknown): value is AssetListResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Partial<AssetListResponse> & { data?: unknown };
+  if (typeof obj.total !== 'number') return false;
+  return Array.isArray(obj.data) && isAssetArray(obj.data);
+};
 
 const isYearArray = (value: unknown): value is YearOption[] =>
   Array.isArray(value) &&
@@ -142,6 +164,19 @@ const isBatchDeleteResponse = (value: unknown): value is BatchDeleteResponse => 
           typeof entry.id === 'string' &&
           (entry.reason === 'not_found' || entry.reason === 'referenced' || entry.reason === 'error'),
       ))
+  );
+};
+
+const isR2CleanupResponse = (value: unknown): value is R2CleanupResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as R2CleanupResponse;
+  const cursor = (obj as { cursor?: unknown }).cursor;
+  return (
+    typeof obj.status === 'string' &&
+    typeof obj.limit === 'number' &&
+    typeof obj.maxIterations === 'number' &&
+    (cursor === null || typeof cursor === 'string') &&
+    typeof obj.dryRun === 'boolean'
   );
 };
 
@@ -411,13 +446,18 @@ function AssetCard({
 
 export default function AdminUploadsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [assetsTotal, setAssetsTotal] = useState(0);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [isLoadingMoreAssets, setIsLoadingMoreAssets] = useState(false);
   const [alt, setAlt] = useState('圖片');
   const [caption, setCaption] = useState('');
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDone, setBulkDone] = useState(false);
+  const [isReconciling, setIsReconciling] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -473,9 +513,12 @@ export default function AdminUploadsPage() {
       });
   }, [locationFolders]);
 
-  const loadAssets = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({ limit: '50', offset: '0' });
+  const loadAssets = useCallback(
+    async ({ offset = 0, append = false }: { offset?: number; append?: boolean } = {}) => {
+      const params = new URLSearchParams({
+        limit: String(ASSET_PAGE_LIMIT),
+        offset: String(offset),
+      });
       if (assetFilterLocationId === 'unassigned') {
         params.set('unassigned', 'true');
       } else if (assetFilterLocationId !== 'all') {
@@ -483,17 +526,44 @@ export default function AdminUploadsPage() {
       }
       const query = params.toString();
       const url = query ? `/api/admin/assets?${query}` : '/api/admin/assets';
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) {
-        setAssets([]);
-        return;
+
+      const setLoading = append ? setIsLoadingMoreAssets : setIsLoadingAssets;
+      setLoading(true);
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) {
+          if (!append) {
+            setAssets([]);
+            setAssetsTotal(0);
+          }
+          return;
+        }
+        const payload = await safeJson<AssetListResponse>(
+          res,
+          { data: [], total: 0 },
+          isAssetListResponse,
+        );
+        const normalized = Array.isArray(payload.data) ? payload.data : [];
+        setAssets((prev) => {
+          if (append) {
+            const seen = new Set(prev.map((item) => item.id));
+            const additions = normalized.filter((item) => !seen.has(item.id));
+            return additions.length > 0 ? [...prev, ...additions] : prev;
+          }
+          return normalized;
+        });
+        setAssetsTotal(typeof payload.total === 'number' ? payload.total : normalized.length);
+      } catch {
+        if (!append) {
+          setAssets([]);
+          setAssetsTotal(0);
+        }
+      } finally {
+        setLoading(false);
       }
-      const list = await safeJson<Asset[]>(res, [], isAssetArray);
-      setAssets(Array.isArray(list) ? list : []);
-    } catch {
-      setAssets([]);
-    }
-  }, [assetFilterLocationId]);
+    },
+    [assetFilterLocationId],
+  );
 
   async function loadYearsAndCollectionsForAssign(yearId?: string) {
     try {
@@ -610,7 +680,7 @@ export default function AdminUploadsPage() {
     [],
   );
 
-  useEffect(() => { void loadAssets(); }, [loadAssets]);
+  useEffect(() => { void loadAssets({ offset: 0, append: false }); }, [loadAssets]);
   useEffect(() => { void loadLocationFolders(); }, [loadLocationFolders]);
   useEffect(() => { setSelectedIds(new Set()); }, [assetFilterLocationId]);
 
@@ -694,7 +764,7 @@ export default function AdminUploadsPage() {
     }
 
     if (successCount > 0) {
-      await loadAssets();
+      await loadAssets({ offset: 0, append: false });
     }
 
     if (failedFiles.length === 0) {
@@ -785,7 +855,7 @@ export default function AdminUploadsPage() {
         }
       }
       setSelectedIds(new Set());
-      await loadAssets();
+      await loadAssets({ offset: 0, append: false });
     } catch {
       setFeedback({ type: 'error', text: '批次刪除失敗，請稍後再試。' });
     } finally {
@@ -797,6 +867,33 @@ export default function AdminUploadsPage() {
       if (progress) progress.classList.remove('hidden');
       const complete = document.getElementById('bulk-complete');
       if (complete) complete.classList.remove('hidden');
+    }
+  }
+
+  async function startOrphanCleanup() {
+    if (isReconciling) return;
+    setIsReconciling(true);
+    try {
+      const res = await fetch('/api/admin/assets/r2-reconcile', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ limit: 400, maxIterations: 5, dryRun: false }),
+      });
+      if (!res.ok) {
+        throw new Error('failed to schedule cleanup');
+      }
+      const payload = await safeJson<R2CleanupResponse | null>(
+        res,
+        null,
+        (value): value is R2CleanupResponse | null => value === null || isR2CleanupResponse(value),
+      );
+      const detail = payload ? `（每批 ${payload.limit} 筆，最多 ${payload.maxIterations} 回合）` : '';
+      setFeedback({ type: 'success', text: `孤兒檔清理已排程${detail}。` });
+    } catch {
+      setFeedback({ type: 'error', text: '啟動孤兒檔清理失敗，請稍後再試。' });
+    } finally {
+      setIsReconciling(false);
+      setShowCleanupConfirm(false);
     }
   }
 
@@ -876,13 +973,15 @@ export default function AdminUploadsPage() {
       });
       if (!res.ok) throw new Error('Failed');
       setFeedback({ type: 'success', text: '已儲存。' });
-      await loadAssets();
+      await loadAssets({ offset: 0, append: false });
     } catch {
       setFeedback({ type: 'error', text: '儲存失敗，請稍後再試。' });
     }
   }
 
-  const totalAssets = assets.length;
+  const displayedAssets = assets.length;
+  const totalAssets = assetsTotal;
+  const hasMoreAssets = displayedAssets < totalAssets;
   const feedbackTestId = feedback
     ? feedback.type === 'success'
       ? 'upload-success'
@@ -901,7 +1000,7 @@ export default function AdminUploadsPage() {
         actions={(
           <button
             type="button"
-            onClick={() => void loadAssets()}
+            onClick={() => void loadAssets({ offset: 0, append: false })}
             className="inline-flex items-center rounded-md border border-blue-200 bg-white/90 px-3 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isUploading}
           >
@@ -1083,7 +1182,14 @@ export default function AdminUploadsPage() {
           <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-gray-700">素材列表</h2>
-              <p className="text-xs text-gray-500">共 {totalAssets} 張照片</p>
+              <p className="text-xs text-gray-500">
+                共 {totalAssets} 張照片
+                {totalAssets > 0 && (
+                  <span>
+                    （已載入 {Math.min(displayedAssets, totalAssets)} 張）
+                  </span>
+                )}
+              </p>
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <span>篩選地點：</span>
@@ -1107,6 +1213,15 @@ export default function AdminUploadsPage() {
           </div>
 
           <div data-testid="asset-list" className="grid gap-4 px-5 py-5 md:grid-cols-2 xl:grid-cols-3">
+            {assets.length === 0 ? (
+              <div
+                className={`col-span-full rounded-lg border border-dashed px-4 py-6 text-center text-sm ${
+                  isLoadingAssets ? 'border-blue-200 bg-blue-50/70 text-blue-700' : 'border-gray-200 bg-gray-50 text-gray-600'
+                }`}
+              >
+                {isLoadingAssets ? '列表載入中…' : '目前沒有符合條件的素材。'}
+              </div>
+            ) : null}
             {assets.map((asset) => {
               const locationLabel = asset.location_folder_name
                 ? `${asset.location_folder_year_label ? `${asset.location_folder_year_label} · ` : ''}${asset.location_folder_name}`
@@ -1141,6 +1256,28 @@ export default function AdminUploadsPage() {
             })}
           </div>
 
+          <div className="border-t border-gray-100 px-5 pb-4">
+            {hasMoreAssets ? (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  data-testid="load-more-assets-btn"
+                  className="inline-flex items-center rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void loadAssets({ offset: displayedAssets, append: true })}
+                  disabled={isLoadingAssets || isLoadingMoreAssets}
+                >
+                  {isLoadingMoreAssets ? '載入中…' : `載入更多（已載入 ${Math.min(displayedAssets, totalAssets)} / ${totalAssets}）`}
+                </button>
+              </div>
+            ) : (
+              totalAssets > 0 && (
+                <p className="text-center text-xs text-gray-500">
+                  已顯示全部 {totalAssets} 張照片
+                </p>
+              )
+            )}
+          </div>
+
           <div
             data-testid="bulk-actions"
             className="flex flex-col gap-3 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
@@ -1155,6 +1292,16 @@ export default function AdminUploadsPage() {
                 title={hasSelection ? '刪除所選素材' : '請先選擇素材'}
               >
                 批次刪除
+              </button>
+              <button
+                data-testid="orphan-cleanup-btn"
+                className="inline-flex items-center rounded-md border border-amber-200 bg-white px-3 py-2 text-sm font-medium text-amber-700 shadow-sm transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => setShowCleanupConfirm(true)}
+                aria-disabled={isReconciling}
+                disabled={isReconciling}
+                title="清理 R2 孤兒檔案"
+              >
+                清理孤兒檔
               </button>
               <button
                 data-testid="bulk-add-to-collection-btn"
@@ -1196,6 +1343,39 @@ export default function AdminUploadsPage() {
           </div>
         </section>
       </AdminPageLayout>
+
+      <AccessibleDialog
+        open={showCleanupConfirm}
+        titleId="orphan-cleanup-title"
+        onClose={() => !isReconciling && setShowCleanupConfirm(false)}
+        dataTestId="orphan-cleanup-dialog"
+      >
+        <div className="space-y-3">
+          <p id="orphan-cleanup-title" className="text-sm text-gray-800">
+            清理 R2 中的孤兒檔案？
+          </p>
+          <p className="text-sm text-gray-600">
+            系統會掃描 R2 物件，刪除資料庫已不存在的素材檔案。執行過程在背景進行，無需保持此頁開啟。
+          </p>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            data-testid="confirm-orphan-cleanup-btn"
+            className="inline-flex items-center rounded-md border border-amber-300 bg-amber-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => void startOrphanCleanup()}
+            disabled={isReconciling}
+          >
+            {isReconciling ? '啟動中…' : '開始清理'}
+          </button>
+          <button
+            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => setShowCleanupConfirm(false)}
+            disabled={isReconciling}
+          >
+            取消
+          </button>
+        </div>
+      </AccessibleDialog>
 
       <AccessibleDialog
         open={showConfirm}
