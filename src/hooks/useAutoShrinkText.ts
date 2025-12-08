@@ -40,9 +40,9 @@ export function useAutoShrinkText(
       target.style.fontSize = '';
 
       const computedStyle = window.getComputedStyle(target);
-      let currentFontSize = parseFloat(computedStyle.fontSize);
+      const defaultFontSize = parseFloat(computedStyle.fontSize);
 
-      if (!Number.isFinite(currentFontSize) || Number.isNaN(currentFontSize)) {
+      if (!Number.isFinite(defaultFontSize) || Number.isNaN(defaultFontSize)) {
         return;
       }
 
@@ -58,17 +58,46 @@ export function useAutoShrinkText(
       if (availableWidth === 0) return;
 
       let contentWidth = measureWidth();
-      let guard = 0;
 
       if (contentWidth <= availableWidth + tolerance) {
         return;
       }
 
-      while (contentWidth > availableWidth + tolerance && currentFontSize > minFontSize && guard < 120) {
-        currentFontSize = Math.max(currentFontSize - step, minFontSize);
-        target.style.fontSize = `${currentFontSize}px`;
+      const scale = availableWidth / contentWidth;
+      let nextFontSize = Math.max(Math.min(defaultFontSize * scale, defaultFontSize), minFontSize);
+      target.style.fontSize = `${nextFontSize}px`;
+      contentWidth = measureWidth();
+
+      if (nextFontSize === minFontSize || contentWidth <= availableWidth + tolerance) {
+        return;
+      }
+
+      let guard = 0;
+      while (contentWidth > availableWidth + tolerance && nextFontSize > minFontSize && guard < 120) {
+        nextFontSize = Math.max(nextFontSize - step, minFontSize);
+        target.style.fontSize = `${nextFontSize}px`;
         contentWidth = measureWidth();
         guard += 1;
+      }
+
+      if (contentWidth < availableWidth - tolerance && nextFontSize < defaultFontSize) {
+        let growGuard = 0;
+        while (nextFontSize < defaultFontSize && growGuard < 60) {
+          const candidate = Math.min(nextFontSize + step, defaultFontSize);
+          target.style.fontSize = `${candidate}px`;
+          const candidateWidth = measureWidth();
+
+          if (candidateWidth > availableWidth + tolerance) {
+            target.style.fontSize = `${nextFontSize}px`;
+            break;
+          }
+
+          nextFontSize = candidate;
+          if (candidateWidth >= availableWidth - tolerance) {
+            break;
+          }
+          growGuard += 1;
+        }
       }
     };
 
