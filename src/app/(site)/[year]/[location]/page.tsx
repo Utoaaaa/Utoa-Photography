@@ -85,7 +85,7 @@ export default async function LocationPage({ params }: LocationPageParams) {
             </p>
           ) : (
             <p className="max-w-3xl text-base leading-relaxed text-gray-500">
-              這個地點的故事即將揭曉，敬請期待後續作品。
+              
             </p>
           )}
           <div>

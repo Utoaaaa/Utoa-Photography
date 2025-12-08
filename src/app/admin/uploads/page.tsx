@@ -68,27 +68,28 @@ type AssetListResponse = {
 
 const ASSET_PAGE_LIMIT = 50;
 
+const isAsset = (value: unknown): value is Asset => {
+  if (!value || typeof value !== 'object') return false;
+  const { id, alt, caption, width, height } = value as Asset;
+  const locationFolderId = (value as Asset).location_folder_id;
+  const locationFolderName = (value as Asset).location_folder_name;
+  const locationFolderYearId = (value as Asset).location_folder_year_id;
+  const locationFolderYearLabel = (value as Asset).location_folder_year_label;
+  return (
+    typeof id === 'string' &&
+    typeof alt === 'string' &&
+    (typeof caption === 'string' || caption === null || typeof caption === 'undefined') &&
+    typeof width === 'number' &&
+    typeof height === 'number' &&
+    (locationFolderId === undefined || locationFolderId === null || typeof locationFolderId === 'string') &&
+    (locationFolderName === undefined || locationFolderName === null || typeof locationFolderName === 'string') &&
+    (locationFolderYearId === undefined || locationFolderYearId === null || typeof locationFolderYearId === 'string') &&
+    (locationFolderYearLabel === undefined || locationFolderYearLabel === null || typeof locationFolderYearLabel === 'string')
+  );
+};
+
 const isAssetArray = (value: unknown): value is Asset[] =>
-  Array.isArray(value) &&
-  value.every((item) => {
-    if (!item || typeof item !== 'object') return false;
-    const { id, alt, caption, width, height } = item as Asset;
-    const locationFolderId = (item as Asset).location_folder_id;
-    const locationFolderName = (item as Asset).location_folder_name;
-    const locationFolderYearId = (item as Asset).location_folder_year_id;
-    const locationFolderYearLabel = (item as Asset).location_folder_year_label;
-    return (
-      typeof id === 'string' &&
-      typeof alt === 'string' &&
-      (typeof caption === 'string' || caption === null || typeof caption === 'undefined') &&
-      typeof width === 'number' &&
-      typeof height === 'number' &&
-      (locationFolderId === undefined || locationFolderId === null || typeof locationFolderId === 'string') &&
-      (locationFolderName === undefined || locationFolderName === null || typeof locationFolderName === 'string') &&
-      (locationFolderYearId === undefined || locationFolderYearId === null || typeof locationFolderYearId === 'string') &&
-      (locationFolderYearLabel === undefined || locationFolderYearLabel === null || typeof locationFolderYearLabel === 'string')
-    );
-  });
+  Array.isArray(value) && value.every(isAsset);
 
 const isAssetListResponse = (value: unknown): value is AssetListResponse => {
   if (!value || typeof value !== 'object') return false;
@@ -512,6 +513,30 @@ export default function AdminUploadsPage() {
         return a.yearLabel.localeCompare(b.yearLabel, 'zh-TW');
       });
   }, [locationFolders]);
+
+  const assetMatchesCurrentFilter = useCallback(
+    (asset: Asset) => {
+      if (assetFilterLocationId === 'all') return true;
+      if (assetFilterLocationId === 'unassigned') {
+        return !asset.location_folder_id;
+      }
+      return asset.location_folder_id === assetFilterLocationId;
+    },
+    [assetFilterLocationId],
+  );
+
+  const updateAssetById = useCallback((assetId: string, updater: (current: Asset) => Asset) => {
+    setAssets((prev) => {
+      const index = prev.findIndex((item) => item.id === assetId);
+      if (index === -1) return prev;
+      const current = prev[index];
+      const nextValue = updater(current);
+      if (nextValue === current) return prev;
+      const next = prev.slice();
+      next[index] = nextValue;
+      return next;
+    });
+  }, [setAssets]);
 
   const loadAssets = useCallback(
     async ({ offset = 0, append = false }: { offset?: number; append?: boolean } = {}) => {
@@ -972,8 +997,33 @@ export default function AdminUploadsPage() {
         })
       });
       if (!res.ok) throw new Error('Failed');
+      const updatedFromServer = await safeJson<Asset>(res, { ...a }, isAsset);
+
+      let removedByFilter = false;
+      setAssets((prev) => {
+        const index = prev.findIndex((item) => item.id === updatedFromServer.id);
+        if (index === -1) return prev;
+        const nextMatches = assetMatchesCurrentFilter(updatedFromServer);
+        const nextList = prev.slice();
+        if (!nextMatches) {
+          removedByFilter = true;
+          nextList.splice(index, 1);
+          return nextList;
+        }
+        const mergedAsset = { ...prev[index], ...updatedFromServer };
+        nextList[index] = mergedAsset;
+        return nextList;
+      });
+      if (removedByFilter) {
+        setAssetsTotal((prev) => Math.max(prev - 1, 0));
+        setSelectedIds((prev) => {
+          if (!prev.has(updatedFromServer.id)) return prev;
+          const next = new Set(prev);
+          next.delete(updatedFromServer.id);
+          return next;
+        });
+      }
       setFeedback({ type: 'success', text: '已儲存。' });
-      await loadAssets({ offset: 0, append: false });
     } catch {
       setFeedback({ type: 'error', text: '儲存失敗，請稍後再試。' });
     }
@@ -1230,10 +1280,6 @@ export default function AdminUploadsPage() {
               const previewAlt = asset.alt || '素材預覽圖';
               const variantEntry = variantStatus[asset.id] || {};
               const hasVariants = asset.id in variantStatus;
-              const updateAsset = (updater: (current: Asset) => Asset) => {
-                setAssets((prev) => prev.map((item) => (item.id === asset.id ? updater(item) : item)));
-              };
-
               return (
                 <AssetCard
                   key={asset.id}
@@ -1247,7 +1293,7 @@ export default function AdminUploadsPage() {
                   groupedLocationFolders={groupedLocationFolders}
                   formatLocationOptionLabel={formatLocationOptionLabel}
                   locationFolderMap={locationFolderMap}
-                  onAssetChange={updateAsset}
+                  onAssetChange={(updater) => updateAssetById(asset.id, updater)}
                   onSaveInline={saveInlineAsset}
                   selected={selectedIds.has(asset.id)}
                   onToggleSelected={() => toggleSelected(asset.id)}
