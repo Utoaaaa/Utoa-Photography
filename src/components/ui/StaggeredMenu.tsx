@@ -284,6 +284,8 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
       ease: 'power3.in',
       overwrite: 'auto',
       onComplete: () => {
+        if (openRef.current) return;
+
         const itemEls = Array.from(panel.querySelectorAll('.sm-panel-itemLabel')) as HTMLElement[];
         if (itemEls.length) gsap.set(itemEls, { yPercent: 140, rotate: 10 });
 
@@ -411,22 +413,52 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     setOpen(target);
 
     if (target) {
-      setShouldRender(true);
       if (onMenuOpen) {
         onMenuOpen();
       }
-      playOpen();
     } else {
       if (onMenuClose) {
         onMenuClose();
       }
-      playClose();
     }
 
     animateIcon(target);
     animateColor(target);
     animateText(target);
-  }, [playOpen, playClose, animateIcon, animateColor, animateText, onMenuOpen, onMenuClose]);
+  }, [animateIcon, animateColor, animateText, onMenuOpen, onMenuClose]);
+
+  React.useEffect(() => {
+    if (open) {
+      setShouldRender(true);
+    } else {
+      if (shouldRender) {
+        playClose();
+      }
+    }
+  }, [open, shouldRender, playClose]);
+
+  useLayoutEffect(() => {
+    if (shouldRender && open) {
+      const gsap = gsapRef.current;
+      const panel = panelRef.current;
+      const preContainer = preLayersRef.current;
+
+      if (preContainer) {
+        preLayerElsRef.current = Array.from(
+          preContainer.querySelectorAll('.sm-prelayer')
+        ) as HTMLElement[];
+      }
+
+      if (gsap && panel) {
+        const layers = preLayerElsRef.current;
+        const offscreen = position === 'left' ? -100 : 100;
+        gsap.set([panel, ...layers], { xPercent: offscreen });
+        gsap.set(layers, { visibility: 'visible' });
+
+        playOpen();
+      }
+    }
+  }, [shouldRender, open, position, playOpen]);
 
   React.useEffect(() => {
     if (!open || typeof window === 'undefined') {
