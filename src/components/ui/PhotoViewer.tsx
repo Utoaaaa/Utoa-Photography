@@ -24,11 +24,11 @@ interface PhotoViewerProps {
   slideTexts?: (string | null)[];
 }
 
-export function PhotoViewer({ 
-  photos, 
-  collectionTitle, 
+export function PhotoViewer({
+  photos,
+  collectionTitle,
   singleScreen = false,
-  slideTexts = []
+  slideTexts = [],
 }: PhotoViewerProps) {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -49,7 +49,7 @@ export function PhotoViewer({
   const autoScrollReleaseRef = useRef<number | null>(null);
   const hideNavTimeoutRef = useRef<number | null>(null);
   const [showDotNav, setShowDotNav] = useState(singleScreen);
-  
+
   // T027: Check for reduced motion preference
   const prefersReducedMotion = useMemo(() => {
     if (typeof window !== 'undefined') {
@@ -72,54 +72,63 @@ export function PhotoViewer({
         hideNavTimeoutRef.current = null;
       }, duration);
     },
-    [singleScreen],
+    [singleScreen]
   );
 
   // T027: Single-screen mode logic
-  const goToPhoto = useCallback((index: number) => {
-    if (index < 0 || index >= photos.length) return;
-    
-    triggerDotNavVisibility();
-    setIsTransitioning(true);
-    setActivePhotoIndex(index);
-    
-    if (!prefersReducedMotion) {
-      setTimeout(() => setIsTransitioning(false), 300);
-    } else {
-      setIsTransitioning(false);
-    }
-  }, [photos.length, prefersReducedMotion]);
+  const goToPhoto = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= photos.length) return;
+
+      triggerDotNavVisibility();
+      setIsTransitioning(true);
+      setActivePhotoIndex(index);
+
+      if (!prefersReducedMotion) {
+        setTimeout(() => setIsTransitioning(false), 300);
+      } else {
+        setIsTransitioning(false);
+      }
+    },
+    [photos.length, prefersReducedMotion]
+  );
 
   // T027: Touch/swipe support
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!singleScreen) return;
-    
-    const touch = e.touches[0];
-    touchStartX.current = touch.clientX;
-    touchStartY.current = touch.clientY;
-  }, [singleScreen]);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (!singleScreen) return;
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!singleScreen || touchStartX.current === null || touchStartY.current === null) return;
-    
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - touchStartX.current;
-    const deltaY = touch.clientY - touchStartY.current;
-    
-    // Only trigger if horizontal swipe is more significant than vertical
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        // Swipe right - previous photo
-        goToPhoto(activePhotoIndex - 1);
-      } else {
-        // Swipe left - next photo
-        goToPhoto(activePhotoIndex + 1);
+      const touch = e.touches[0];
+      touchStartX.current = touch.clientX;
+      touchStartY.current = touch.clientY;
+    },
+    [singleScreen]
+  );
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!singleScreen || touchStartX.current === null || touchStartY.current === null) return;
+
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX.current;
+      const deltaY = touch.clientY - touchStartY.current;
+
+      // Only trigger if horizontal swipe is more significant than vertical
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+          // Swipe right - previous photo
+          goToPhoto(activePhotoIndex - 1);
+        } else {
+          // Swipe left - next photo
+          goToPhoto(activePhotoIndex + 1);
+        }
       }
-    }
-    
-    touchStartX.current = null;
-    touchStartY.current = null;
-  }, [singleScreen, activePhotoIndex, goToPhoto]);
+
+      touchStartX.current = null;
+      touchStartY.current = null;
+    },
+    [singleScreen, activePhotoIndex, goToPhoto]
+  );
 
   // T027: Mouse wheel navigation in single-screen mode
   useEffect(() => {
@@ -143,10 +152,13 @@ export function PhotoViewer({
       } else {
         goToPhoto(activePhotoIndex - 1);
       }
-      wheelTimeout = setTimeout(() => {
-        cooldown = false;
-        wheelTimeout = null;
-      }, prefersReducedMotion ? 150 : 350);
+      wheelTimeout = setTimeout(
+        () => {
+          cooldown = false;
+          wheelTimeout = null;
+        },
+        prefersReducedMotion ? 150 : 350
+      );
     };
 
     node.addEventListener('wheel', onWheel as EventListener, { passive: false });
@@ -159,7 +171,7 @@ export function PhotoViewer({
   // Intersection Observer for scroll sync (traditional mode)
   useEffect(() => {
     if (singleScreen) return;
-    
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -171,9 +183,9 @@ export function PhotoViewer({
           }
         });
       },
-      { 
+      {
         threshold: [0.1, 0.5, 0.9],
-        rootMargin: '-10% 0px -10% 0px'
+        rootMargin: '-10% 0px -10% 0px',
       }
     );
 
@@ -183,27 +195,24 @@ export function PhotoViewer({
 
     return () => observer.disconnect();
   }, [photos, singleScreen]);
-  
-  const centerPhoto = useCallback(
-    (index: number, behavior: ScrollBehavior) => {
-      if (typeof window === 'undefined') return;
-      const photoElement = photoRefs.current[index];
-      if (!photoElement) return;
 
-      const rect = photoElement.getBoundingClientRect();
-      const elementHeight = rect.height || photoElement.offsetHeight;
-      const topOffset = rect.top + window.scrollY - (window.innerHeight - elementHeight) / 2;
-  const viewportHeight = window.innerHeight || 0;
-  const preferredOffset = viewportHeight * 0.5;
-  const offset = Math.min(Math.max(preferredOffset, 0), 20);
+  const centerPhoto = useCallback((index: number, behavior: ScrollBehavior) => {
+    if (typeof window === 'undefined') return;
+    const photoElement = photoRefs.current[index];
+    if (!photoElement) return;
 
-      window.scrollTo({
-        top: Math.max(topOffset - offset, 0),
-        behavior,
-      });
-    },
-    [],
-  );
+    const rect = photoElement.getBoundingClientRect();
+    const elementHeight = rect.height || photoElement.offsetHeight;
+    const topOffset = rect.top + window.scrollY - (window.innerHeight - elementHeight) / 2;
+    const viewportHeight = window.innerHeight || 0;
+    const preferredOffset = viewportHeight * 0.5;
+    const offset = Math.min(Math.max(preferredOffset, 0), 20);
+
+    window.scrollTo({
+      top: Math.max(topOffset - offset, 0),
+      behavior,
+    });
+  }, []);
 
   const scrollToPhoto = useCallback(
     (
@@ -212,7 +221,7 @@ export function PhotoViewer({
         immediate?: boolean;
         behavior?: ScrollBehavior;
         suppressNav?: boolean;
-      },
+      }
     ) => {
       if (index < 0 || index >= photos.length) return;
       const suppressNav = options?.suppressNav ?? false;
@@ -222,17 +231,20 @@ export function PhotoViewer({
       lastSnappedIndexRef.current = index;
       // No automatic scrolling; rely on natural user scroll on all devices.
     },
-    [photos.length, singleScreen, triggerDotNavVisibility],
+    [photos.length, singleScreen, triggerDotNavVisibility]
   );
-  
-  const handleDotClick = useCallback((index: number) => {
-    if (singleScreen) {
-      goToPhoto(index);
-    } else {
-      triggerDotNavVisibility();
-      scrollToPhoto(index);
-    }
-  }, [singleScreen, goToPhoto, scrollToPhoto, triggerDotNavVisibility]);
+
+  const handleDotClick = useCallback(
+    (index: number) => {
+      if (singleScreen) {
+        goToPhoto(index);
+      } else {
+        triggerDotNavVisibility();
+        scrollToPhoto(index);
+      }
+    },
+    [singleScreen, goToPhoto, scrollToPhoto, triggerDotNavVisibility]
+  );
 
   const handlePhotoLoad = useCallback(() => {
     // no-op; keep natural scroll behavior
@@ -294,7 +306,14 @@ export function PhotoViewer({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activePhotoIndex, photos.length, singleScreen, goToPhoto, scrollToPhoto, triggerDotNavVisibility]);
+  }, [
+    activePhotoIndex,
+    photos.length,
+    singleScreen,
+    goToPhoto,
+    scrollToPhoto,
+    triggerDotNavVisibility,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -308,7 +327,12 @@ export function PhotoViewer({
   }, []);
 
   useEffect(() => {
-    if (singleScreen || initialCenteringDone.current || photos.length === 0 || typeof window === 'undefined') {
+    if (
+      singleScreen ||
+      initialCenteringDone.current ||
+      photos.length === 0 ||
+      typeof window === 'undefined'
+    ) {
       return undefined;
     }
 
@@ -330,14 +354,17 @@ export function PhotoViewer({
     }
   }, [singleScreen]);
 
-  useEffect(() => () => {
-    if (hideNavTimeoutRef.current !== null) {
-      window.clearTimeout(hideNavTimeoutRef.current);
-    }
-    if (autoScrollReleaseRef.current !== null) {
-      window.clearTimeout(autoScrollReleaseRef.current);
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (hideNavTimeoutRef.current !== null) {
+        window.clearTimeout(hideNavTimeoutRef.current);
+      }
+      if (autoScrollReleaseRef.current !== null) {
+        window.clearTimeout(autoScrollReleaseRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (singleScreen || typeof window === 'undefined') {
@@ -353,35 +380,38 @@ export function PhotoViewer({
         triggerDotNavVisibility();
       }
 
-      snapTimeoutRef.current = window.setTimeout(() => {
-        const viewportCenter = window.innerHeight / 2;
-        let closestIndex = activePhotoIndex;
-        let bestDistance = Number.POSITIVE_INFINITY;
+      snapTimeoutRef.current = window.setTimeout(
+        () => {
+          const viewportCenter = window.innerHeight / 2;
+          let closestIndex = activePhotoIndex;
+          let bestDistance = Number.POSITIVE_INFINITY;
 
-        photoRefs.current.forEach((element, index) => {
-          if (!element) return;
-          const rect = element.getBoundingClientRect();
-          const elementCenter = rect.top + rect.height / 2;
-          const distance = Math.abs(elementCenter - viewportCenter);
+          photoRefs.current.forEach((element, index) => {
+            if (!element) return;
+            const rect = element.getBoundingClientRect();
+            const elementCenter = rect.top + rect.height / 2;
+            const distance = Math.abs(elementCenter - viewportCenter);
 
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            closestIndex = index;
-          }
-        });
-
-        const isAutoScroll = autoScrollingRef.current;
-        if (!isAutoScroll) {
-          triggerDotNavVisibility();
-        }
-
-        if (closestIndex !== lastSnappedIndexRef.current) {
-          scrollToPhoto(closestIndex, {
-            behavior: prefersReducedMotion ? 'auto' : 'smooth',
-            suppressNav: true,
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              closestIndex = index;
+            }
           });
-        }
-      }, prefersReducedMotion ? 80 : 140);
+
+          const isAutoScroll = autoScrollingRef.current;
+          if (!isAutoScroll) {
+            triggerDotNavVisibility();
+          }
+
+          if (closestIndex !== lastSnappedIndexRef.current) {
+            scrollToPhoto(closestIndex, {
+              behavior: prefersReducedMotion ? 'auto' : 'smooth',
+              suppressNav: true,
+            });
+          }
+        },
+        prefersReducedMotion ? 80 : 140
+      );
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -393,13 +423,19 @@ export function PhotoViewer({
       }
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [activePhotoIndex, singleScreen, prefersReducedMotion, scrollToPhoto, triggerDotNavVisibility]);
+  }, [
+    activePhotoIndex,
+    singleScreen,
+    prefersReducedMotion,
+    scrollToPhoto,
+    triggerDotNavVisibility,
+  ]);
 
   // T027: Preload adjacent images (reduced count and size)
   const preloadImages = useMemo(() => {
     const toPreload = [];
     const currentIndex = activePhotoIndex;
-    
+
     // Preload only previous and next 1 image to limit concurrent fetches
     for (let i = -1; i <= 1; i++) {
       const index = currentIndex + i;
@@ -407,12 +443,17 @@ export function PhotoViewer({
         toPreload.push(photos[index]);
       }
     }
-    
+
     return toPreload;
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    if (singleScreen || !cloudflareConfigured || preloadImages.length === 0 || typeof document === 'undefined') {
+    if (
+      singleScreen ||
+      !cloudflareConfigured ||
+      preloadImages.length === 0 ||
+      typeof document === 'undefined'
+    ) {
       return undefined;
     }
     const head = document.head;
@@ -444,15 +485,17 @@ export function PhotoViewer({
 
   const currentPhoto = photos[activePhotoIndex];
   const currentText = slideTexts[activePhotoIndex];
-  
+
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
     const preferredVariant = isDesktopViewport ? 'large' : 'medium';
-    const currentSrc = cfConfigured ? getR2VariantDirectUrl(currentPhoto.id, preferredVariant) : '/placeholder.svg';
+    const currentSrc = cfConfigured
+      ? getR2VariantDirectUrl(currentPhoto.id, preferredVariant)
+      : '/placeholder.svg';
 
     return (
-      <div 
+      <div
         ref={viewerRootRef}
         className="h-screen w-full relative overflow-hidden bg-background"
         data-testid="photo-viewer"
@@ -475,21 +518,31 @@ export function PhotoViewer({
         </Head>
         <div data-testid="photo-viewer-single-screen" className="hidden" />
         {/* Main photo container */}
-        <div 
+        <div
           className={`h-full w-full flex items-center justify-center transition-opacity duration-300 ${
             isTransitioning && !prefersReducedMotion ? 'opacity-60' : 'opacity-100'
           }`}
         >
-          <div className="relative max-w-full max-h-full" data-testid="current-photo" id={`photo-${activePhotoIndex + 1}`}>
+          <div
+            className="relative max-w-full max-h-full"
+            data-testid="current-photo"
+            id={`photo-${activePhotoIndex + 1}`}
+          >
             <img
               src={currentSrc}
+              srcSet={
+                cfConfigured
+                  ? `${getR2VariantDirectUrl(currentPhoto.id, 'medium')} 1200w, ${getR2VariantDirectUrl(currentPhoto.id, 'large')} 3840w`
+                  : undefined
+              }
+              sizes="100vw"
               alt={currentPhoto.alt || 'placeholder image'}
               width={currentPhoto.width}
               height={currentPhoto.height}
               className="max-w-full max-h-screen object-contain"
-              loading={activePhotoIndex === 0 ? 'eager' : 'lazy'}
-              decoding="async"
-              fetchPriority={activePhotoIndex === 0 ? 'high' : 'low'}
+              loading="eager"
+              decoding="auto"
+              fetchPriority="high"
             />
           </div>
         </div>
@@ -498,7 +551,9 @@ export function PhotoViewer({
         {(currentText || currentPhoto.caption) && (
           <div className="absolute bottom-16 left-0 right-0 px-6">
             <div className="max-w-3xl mx-auto text-center rounded-md border border-gray-200 bg-white/80 backdrop-blur px-4 py-3 shadow-sm">
-              <p className={`text-base md:text-lg ${currentText ? 'text-gray-900' : 'text-gray-700 italic'}`}>
+              <p
+                className={`text-base md:text-lg ${currentText ? 'text-gray-900' : 'text-gray-700 italic'}`}
+              >
                 {currentText || currentPhoto.caption}
               </p>
             </div>
@@ -534,60 +589,78 @@ export function PhotoViewer({
   return (
     <div className="relative" data-testid="photo-viewer" ref={viewerRootRef}>
       {/* Photo container */}
-      <div 
+      <div
         ref={containerRef}
         className="mx-auto w-full max-w-[140rem] px-2 sm:px-4 md:px-8 lg:px-12"
       >
-        {photos.map((photo, index) => (
-          <article
-            key={photo.id}
-            ref={(el) => {
-              photoRefs.current[index] = el;
-            }}
-            className="snap-always snap-center flex min-h-[88vh] w-full flex-col items-center justify-center py-20 md:py-24 first:pt-16 first:-mt-25"
-            data-testid="photo-container"
-          >
-            <div className="relative flex w-full flex-col items-center">
-              {/* Photo */}
-              <div className="relative flex w-full justify-center" data-testid="current-photo" id={`photo-${index + 1}`}>
-                <div className="relative mx-auto h-auto max-h-[92vh] w-full max-w-[140rem] px-2 sm:px-4">
-                  <img
-                    src={cloudflareConfigured ? getR2VariantDirectUrl(photo.id, isDesktopViewport ? 'large' : 'medium') : '/placeholder.svg'}
-                    alt={photo.alt || 'placeholder image'}
-                    width={photo.width}
-                    height={photo.height}
-                    className="h-full w-full object-contain"
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    fetchPriority={index === 0 ? 'high' : 'low'}
-                    onLoad={handlePhotoLoad}
-                  />
+        {photos.map((photo, index) => {
+          const isActive = index === activePhotoIndex;
+          const isNearActive = Math.abs(index - activePhotoIndex) <= 1;
+          const isFirst = index === 0;
+          return (
+            <article
+              key={photo.id}
+              ref={(el) => {
+                photoRefs.current[index] = el;
+              }}
+              className="snap-always snap-center flex min-h-[88vh] w-full flex-col items-center justify-center py-20 md:py-24 first:pt-16 first:-mt-25"
+              data-testid="photo-container"
+            >
+              <div className="relative flex w-full flex-col items-center">
+                <div
+                  className="relative flex w-full justify-center"
+                  data-testid="current-photo"
+                  id={`photo-${index + 1}`}
+                >
+                  <div className="relative mx-auto h-auto max-h-[92vh] w-full max-w-[140rem] px-2 sm:px-4">
+                    <img
+                      src={
+                        cloudflareConfigured
+                          ? getR2VariantDirectUrl(photo.id, isDesktopViewport ? 'large' : 'medium')
+                          : '/placeholder.svg'
+                      }
+                      srcSet={
+                        cloudflareConfigured
+                          ? `${getR2VariantDirectUrl(photo.id, 'medium')} 1200w, ${getR2VariantDirectUrl(photo.id, 'large')} 3840w`
+                          : undefined
+                      }
+                      sizes="100vw"
+                      alt={photo.alt || 'placeholder image'}
+                      width={photo.width}
+                      height={photo.height}
+                      className="h-full w-full object-contain"
+                      loading={isFirst || isActive ? 'eager' : 'lazy'}
+                      decoding={isFirst || isActive ? 'auto' : 'async'}
+                      fetchPriority={isFirst ? 'high' : isNearActive ? 'auto' : 'low'}
+                      onLoad={handlePhotoLoad}
+                    />
+                  </div>
+                </div>
+
+                {slideTexts[index] && (
+                  <div className="mx-auto mt-6 max-w-4xl text-gray-900">
+                    <p className="text-lg leading-relaxed md:text-xl">{slideTexts[index]}</p>
+                  </div>
+                )}
+
+                {photo.caption && !slideTexts[index] && (
+                  <figcaption
+                    className="mx-auto mt-6 max-w-3xl text-center text-sm italic text-gray-600 md:text-base"
+                    data-testid="photo-caption"
+                  >
+                    {photo.caption}
+                  </figcaption>
+                )}
+
+                <div className="mt-4 text-center text-xs uppercase tracking-[0.25em] text-gray-400">
+                  Photo {index + 1} of {photos.length}
                 </div>
               </div>
-              
-              {/* Text content */}
-              {slideTexts[index] && (
-                <div className="mx-auto mt-6 max-w-4xl text-gray-900">
-                  <p className="text-lg leading-relaxed md:text-xl">{slideTexts[index]}</p>
-                </div>
-              )}
-              
-              {/* Caption */}
-              {photo.caption && !slideTexts[index] && (
-                <figcaption className="mx-auto mt-6 max-w-3xl text-center text-sm italic text-gray-600 md:text-base" data-testid="photo-caption">
-                  {photo.caption}
-                </figcaption>
-              )}
-              
-              {/* Photo metadata */}
-              <div className="mt-4 text-center text-xs uppercase tracking-[0.25em] text-gray-400">
-                Photo {index + 1} of {photos.length}
-              </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
-      
+
       {/* Dot navigation */}
       {photos.length > 1 && isDesktopViewport && (
         <DotNavigation

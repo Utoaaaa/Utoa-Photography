@@ -270,10 +270,11 @@ type D1LocationWithYearRow = {
 
 async function fetchCollectionsForLocationD1(
   db: D1Database,
-  locationId: string,
+  locationId: string
 ): Promise<LocationCollectionSummary[]> {
-  const result = await db.prepare(
-    `
+  const result = await db
+    .prepare(
+      `
       SELECT
         c.id,
         c.slug,
@@ -289,8 +290,10 @@ async function fetchCollectionsForLocationD1(
       LEFT JOIN assets a ON a.id = c.cover_asset_id
       WHERE c.location_id = ?1 AND c.status = 'published'
       ORDER BY order_index ASC
-    `,
-  ).bind(locationId).all();
+    `
+    )
+    .bind(locationId)
+    .all();
 
   const rows = (result.results ?? []) as D1CollectionRow[];
   return rows.map((row) => ({
@@ -307,51 +310,55 @@ async function fetchCollectionsForLocationD1(
   }));
 }
 
-async function fetchLocationsForYearD1(
-  db: D1Database,
-  yearId: string,
-): Promise<LocationEntry[]> {
-  const result = await db.prepare(
-    `
+async function fetchLocationsForYearD1(db: D1Database, yearId: string): Promise<LocationEntry[]> {
+  const result = await db
+    .prepare(
+      `
       SELECT id, year_id, slug, name, summary, cover_asset_id, order_index
       FROM locations
       WHERE year_id = ?1
       ORDER BY order_index ASC
-    `,
-  ).bind(yearId).all();
+    `
+    )
+    .bind(yearId)
+    .all();
 
   const rows = (result.results ?? []) as D1LocationRow[];
 
-  const locations: LocationEntry[] = [];
-  for (const row of rows) {
-    const collections = await fetchCollectionsForLocationD1(db, String(row.id));
-    locations.push({
-      id: String(row.id),
-      yearId: String(row.year_id),
-      slug: String(row.slug),
-      name: String(row.name),
-      summary: row.summary ?? null,
-      coverAssetId: row.cover_asset_id ?? null,
-      orderIndex: String(row.order_index),
-      collectionCount: collections.length,
-      collections,
-    });
-  }
+  const locations = await Promise.all(
+    rows.map(async (row) => {
+      const collections = await fetchCollectionsForLocationD1(db, String(row.id));
+      return {
+        id: String(row.id),
+        yearId: String(row.year_id),
+        slug: String(row.slug),
+        name: String(row.name),
+        summary: row.summary ?? null,
+        coverAssetId: row.cover_asset_id ?? null,
+        orderIndex: String(row.order_index),
+        collectionCount: collections.length,
+        collections,
+      };
+    })
+  );
   return locations;
 }
 
 async function fetchNavLocationsForYearD1(
   db: D1Database,
-  yearId: string,
+  yearId: string
 ): Promise<LocationNavEntry[]> {
-  const result = await db.prepare(
-    `
+  const result = await db
+    .prepare(
+      `
       SELECT id, slug, name, order_index
       FROM locations
       WHERE year_id = ?1
       ORDER BY order_index ASC
-    `,
-  ).bind(yearId).all();
+    `
+    )
+    .bind(yearId)
+    .all();
 
   const rows = (result.results ?? []) as D1LocationRow[];
   return rows.map((row) => ({
@@ -365,70 +372,79 @@ async function fetchNavLocationsForYearD1(
 type D1Database = ReturnType<typeof getD1Database>;
 async function fetchYearsD1(): Promise<YearEntry[]> {
   const db = requireD1();
-  const result = await db.prepare(
-    `
+  const result = await db
+    .prepare(
+      `
       SELECT id, label, order_index, status
       FROM years
       WHERE status = 'published'
       ORDER BY order_index ASC
-    `,
-  ).all();
+    `
+    )
+    .all();
 
   const rows = (result.results ?? []) as D1YearRow[];
-  const entries: YearEntry[] = [];
 
-  for (const row of rows) {
-    const locations = await fetchLocationsForYearD1(db, String(row.id));
-    entries.push({
-      id: String(row.id),
-      label: String(row.label),
-      orderIndex: String(row.order_index),
-      status: String(row.status),
-      locations,
-    });
-  }
+  const entries = await Promise.all(
+    rows.map(async (row) => {
+      const locations = await fetchLocationsForYearD1(db, String(row.id));
+      return {
+        id: String(row.id),
+        label: String(row.label),
+        orderIndex: String(row.order_index),
+        status: String(row.status),
+        locations,
+      };
+    })
+  );
 
   return entries;
 }
 
 async function fetchYearsNavD1(): Promise<YearNavEntry[]> {
   const db = requireD1();
-  const result = await db.prepare(
-    `
+  const result = await db
+    .prepare(
+      `
       SELECT id, label, order_index, status
       FROM years
       WHERE status = 'published'
       ORDER BY order_index ASC
-    `,
-  ).all();
+    `
+    )
+    .all();
 
   const rows = (result.results ?? []) as D1YearRow[];
-  const entries: YearNavEntry[] = [];
 
-  for (const row of rows) {
-    const locations = await fetchNavLocationsForYearD1(db, String(row.id));
-    entries.push({
-      id: String(row.id),
-      label: String(row.label),
-      orderIndex: String(row.order_index),
-      status: String(row.status),
-      locations,
-    });
-  }
+  const entries = await Promise.all(
+    rows.map(async (row) => {
+      const locations = await fetchNavLocationsForYearD1(db, String(row.id));
+      return {
+        id: String(row.id),
+        label: String(row.label),
+        orderIndex: String(row.order_index),
+        status: String(row.status),
+        locations,
+      };
+    })
+  );
 
   return entries;
 }
 
 async function fetchYearByLabelD1(label: string): Promise<YearEntry | null> {
   const db = requireD1();
-  const year = await db.prepare(
-    `
+  const year = (await db
+    .prepare(
+      `
       SELECT id, label, order_index, status
       FROM years
       WHERE label = ?1 AND status = 'published'
       LIMIT 1
-    `,
-  ).bind(label).first() as D1YearRow | null;
+    `
+    )
+    .bind(label)
+    .first()) as D1YearRow | null;
 
   if (!year) {
     return null;
@@ -446,11 +462,12 @@ async function fetchYearByLabelD1(label: string): Promise<YearEntry | null> {
 
 async function fetchLocationBySlugD1(
   label: string,
-  slug: string,
+  slug: string
 ): Promise<{ year: YearEntry; location: LocationEntry } | null> {
   const db = requireD1();
-  const row = (await db.prepare(
-    `
+  const row = (await db
+    .prepare(
+      `
       SELECT
         y.id AS year_id,
         y.label AS year_label,
@@ -467,8 +484,10 @@ async function fetchLocationBySlugD1(
       INNER JOIN locations l ON l.year_id = y.id
       WHERE y.label = ?1 AND y.status = 'published' AND l.slug = ?2
       LIMIT 1
-    `,
-  ).bind(label, slug).first()) as D1LocationWithYearRow | null;
+    `
+    )
+    .bind(label, slug)
+    .first()) as D1LocationWithYearRow | null;
 
   if (!row) {
     return null;
@@ -530,7 +549,7 @@ export async function getYearByLabel(label: string): Promise<YearEntry | null> {
 
 export async function getLocationByYearAndSlug(
   label: string,
-  slug: string,
+  slug: string
 ): Promise<{ year: YearEntry; location: LocationEntry } | null> {
   if (!label || !slug) {
     return null;

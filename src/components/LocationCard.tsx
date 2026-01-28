@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import clsx from 'clsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationEntry } from '@/lib/year-location';
-import { getR2VariantDirectUrl } from '@/lib/images';
+import { getR2VariantDirectUrl, generateSrcSet } from '@/lib/images';
 import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
 interface LocationCardProps {
@@ -45,6 +45,11 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
     return getR2VariantDirectUrl(location.coverAssetId, 'medium');
   }, [location.coverAssetId]);
 
+  const posterSrcSet = useMemo(() => {
+    if (!location.coverAssetId) return '';
+    return generateSrcSet(location.coverAssetId);
+  }, [location.coverAssetId]);
+
   const lastUpdated = useMemo(() => {
     return location.collections.reduce<string | null>((oldest, collection) => {
       const candidate = collection.updatedAt ?? collection.publishedAt;
@@ -60,9 +65,10 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
     if (!lastUpdated) return null;
     const date = new Date(lastUpdated);
     if (Number.isNaN(date.getTime())) return null;
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    // Use UTC getters to ensure deterministic SSR/CSR rendering.
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}/${month}/${day}`;
   }, [lastUpdated]);
 
@@ -87,6 +93,8 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
               <>
                 <img
                   src={posterImage}
+                  srcSet={posterSrcSet}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   alt={`${location.name} 封面視覺`}
                   className="h-full w-full object-cover object-center"
                   loading="lazy"

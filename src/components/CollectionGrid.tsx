@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 import clsx from 'clsx';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
-import { getR2VariantDirectUrl } from '@/lib/images';
+import { getR2VariantDirectUrl, generateSrcSet } from '@/lib/images';
 import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
 interface CollectionGridProps {
@@ -27,7 +27,10 @@ export function CollectionGrid({ yearLabel, locationSlug, collections }: Collect
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3" data-testid="collection-grid">
+    <div
+      className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3"
+      data-testid="collection-grid"
+    >
       {collections.map((collection) => (
         <CollectionCard
           key={collection.id}
@@ -51,9 +54,10 @@ function formatCollectionDate(collection: LocationCollectionSummary): string | n
   if (!timestamp) return null;
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return null;
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  // Use UTC getters to ensure deterministic SSR/CSR rendering.
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
   return `${year}/${month}/${day}`;
 }
 
@@ -88,6 +92,11 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
     return getR2VariantDirectUrl(collection.coverAssetId, 'medium');
   }, [collection.coverAssetId]);
 
+  const coverSrcSet = useMemo(() => {
+    if (!collection.coverAssetId) return '';
+    return generateSrcSet(collection.coverAssetId);
+  }, [collection.coverAssetId]);
+
   const coverOrientation = useMemo<'portrait' | 'landscape'>(() => {
     const width = collection.coverAssetWidth ?? null;
     const height = collection.coverAssetHeight ?? null;
@@ -100,11 +109,9 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
       clsx(
         // Revert to original container ratio while keeping object-cover behavior for consistent cropping
         'relative aspect-[3/4] overflow-hidden rounded-[2rem]',
-        coverOrientation === 'portrait'
-          ? 'bg-white/80 dark:bg-gray-900/50'
-          : undefined,
+        coverOrientation === 'portrait' ? 'bg-white/80 dark:bg-gray-900/50' : undefined
       ),
-    [coverOrientation],
+    [coverOrientation]
   );
 
   // Always cover: portrait fills width (crop top/bottom), landscape fills height (crop sides), centered.
@@ -132,6 +139,8 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
             {coverImageSrc ? (
               <img
                 src={coverImageSrc}
+                srcSet={coverSrcSet}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 alt={`${collection.title} 封面視覺`}
                 className={`h-full w-full ${imageClass}`}
                 loading="lazy"

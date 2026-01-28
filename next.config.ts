@@ -68,7 +68,10 @@ const baseConfig: NextConfig = {
       "font-src 'self' data:",
       "media-src 'self'",
       // Scripts: allow inline bootstrap for Next; disallow eval in prod
-      isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+      // Dev note: react-scan loads from unpkg.com for local profiling.
+      isDev
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com"
+        : "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
       // Workers (Next/OpenNext on CF)
       "worker-src 'self' blob:",
       // API/XHR + HMR in dev (ws)

@@ -1,6 +1,13 @@
+import dynamic from 'next/dynamic';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import type { CollectionViewerPayload } from '@/lib/viewer/collection';
+
+const PhotoViewer = dynamic(
+  () => import('@/components/ui/PhotoViewer').then((mod) => ({ default: mod.PhotoViewer })),
+  {
+    ssr: true,
+  }
+);
 
 import { BackToTopButton } from './BackToTopButton';
 
@@ -40,10 +47,14 @@ export default function CollectionViewer({ data, fallbackLocationSlug }: Props) 
           </div>
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Collection</p>
-            <h1 className="font-serif text-4xl font-semibold tracking-tight text-gray-900 md:text-5xl">{collection.title}</h1>
+            <h1 className="font-serif text-4xl font-semibold tracking-tight text-gray-900 md:text-5xl">
+              {collection.title}
+            </h1>
           </div>
           {collection.summary ? (
-            <p className="max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">{collection.summary}</p>
+            <p className="max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">
+              {collection.summary}
+            </p>
           ) : null}
           <div className="text-sm text-gray-500">
             {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
@@ -55,7 +66,10 @@ export default function CollectionViewer({ data, fallbackLocationSlug }: Props) 
         {photos.length > 0 ? (
           <PhotoViewer photos={photos} collectionTitle={collection.title} singleScreen={false} />
         ) : (
-          <div className="mx-auto max-w-6xl px-8 py-24 md:px-12 lg:px-16" data-testid="empty-photos">
+          <div
+            className="mx-auto max-w-6xl px-8 py-24 md:px-12 lg:px-16"
+            data-testid="empty-photos"
+          >
             <div className="text-center">
               <h2 className="mb-2 text-xl font-medium text-gray-900">No photos yet</h2>
               <p className="text-gray-500">Photos will appear after upload.</p>
