@@ -384,39 +384,6 @@ export function PhotoViewer({
       if (!autoScrollingRef.current) {
         triggerDotNavVisibility();
       }
-
-      snapTimeoutRef.current = window.setTimeout(
-        () => {
-          const viewportCenter = window.innerHeight / 2;
-          let closestIndex = activePhotoIndex;
-          let bestDistance = Number.POSITIVE_INFINITY;
-
-          photoRefs.current.forEach((element, index) => {
-            if (!element) return;
-            const rect = element.getBoundingClientRect();
-            const elementCenter = rect.top + rect.height / 2;
-            const distance = Math.abs(elementCenter - viewportCenter);
-
-            if (distance < bestDistance) {
-              bestDistance = distance;
-              closestIndex = index;
-            }
-          });
-
-          const isAutoScroll = autoScrollingRef.current;
-          if (!isAutoScroll) {
-            triggerDotNavVisibility();
-          }
-
-          if (closestIndex !== lastSnappedIndexRef.current) {
-            scrollToPhoto(closestIndex, {
-              behavior: prefersReducedMotion ? 'auto' : 'smooth',
-              suppressNav: true,
-            });
-          }
-        },
-        prefersReducedMotion ? 80 : 140
-      );
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -608,7 +575,7 @@ export function PhotoViewer({
               ref={(el) => {
                 photoRefs.current[index] = el;
               }}
-              className="snap-always snap-center flex min-h-[88vh] w-full flex-col items-center justify-center py-20 md:py-24 first:pt-16 first:-mt-25"
+              className="flex min-h-[88vh] w-full flex-col items-center justify-center py-20 md:py-24 first:pt-16 first:-mt-25"
               data-testid="photo-container"
             >
               <div className="relative flex w-full flex-col items-center">
