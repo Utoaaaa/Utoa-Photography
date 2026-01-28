@@ -201,15 +201,16 @@ export function PhotoViewer({
     const photoElement = photoRefs.current[index];
     if (!photoElement) return;
 
-    const rect = photoElement.getBoundingClientRect();
-    const elementHeight = rect.height || photoElement.offsetHeight;
-    const topOffset = rect.top + window.scrollY - (window.innerHeight - elementHeight) / 2;
-    const viewportHeight = window.innerHeight || 0;
-    const preferredOffset = viewportHeight * 0.5;
-    const offset = Math.min(Math.max(preferredOffset, 0), 20);
+    // Use offsetTop for stable positioning (not affected by scroll position)
+    const elementTop = photoElement.offsetTop;
+    const elementHeight = photoElement.offsetHeight;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate scroll position to center the element in viewport
+    const targetScrollTop = elementTop - (viewportHeight - elementHeight) / 2;
 
     window.scrollTo({
-      top: Math.max(topOffset - offset, 0),
+      top: Math.max(targetScrollTop, 0),
       behavior,
     });
   }, []);
@@ -229,9 +230,13 @@ export function PhotoViewer({
         triggerDotNavVisibility();
       }
       lastSnappedIndexRef.current = index;
-      // No automatic scrolling; rely on natural user scroll on all devices.
+
+      if (!singleScreen) {
+        const behavior = options?.behavior ?? (prefersReducedMotion ? 'auto' : 'smooth');
+        centerPhoto(index, behavior);
+      }
     },
-    [photos.length, singleScreen, triggerDotNavVisibility]
+    [photos.length, singleScreen, triggerDotNavVisibility, prefersReducedMotion, centerPhoto]
   );
 
   const handleDotClick = useCallback(
