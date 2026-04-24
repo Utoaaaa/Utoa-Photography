@@ -38,7 +38,10 @@ async function resolveLocationFolder(locationId: unknown) {
   const useD1 = shouldUseD1Direct();
 
   if (locationId === undefined) {
-    return { locationFolderId: undefined as string | null | undefined, error: null as NextResponse | null };
+    return {
+      locationFolderId: undefined as string | null | undefined,
+      error: null as NextResponse | null,
+    };
   }
   if (locationId === null || locationId === '') {
     return { locationFolderId: null, error: null };
@@ -48,7 +51,7 @@ async function resolveLocationFolder(locationId: unknown) {
       locationFolderId: null,
       error: NextResponse.json(
         { error: 'invalid location', message: 'location_id must be a string or null' },
-        { status: 400 },
+        { status: 400 }
       ),
     };
   }
@@ -57,7 +60,7 @@ async function resolveLocationFolder(locationId: unknown) {
       locationFolderId: null,
       error: NextResponse.json(
         { error: 'invalid location', message: 'location_id must be a valid UUID' },
-        { status: 400 },
+        { status: 400 }
       ),
     };
   }
@@ -69,7 +72,7 @@ async function resolveLocationFolder(locationId: unknown) {
         locationFolderId: null,
         error: NextResponse.json(
           { error: 'invalid location', message: 'Location not found' },
-          { status: 400 },
+          { status: 400 }
         ),
       };
     }
@@ -77,13 +80,16 @@ async function resolveLocationFolder(locationId: unknown) {
   }
 
   const { prisma } = await getNodeDb();
-  const location = await prisma.location.findUnique({ where: { id: locationId }, select: { id: true } });
+  const location = await prisma.location.findUnique({
+    where: { id: locationId },
+    select: { id: true },
+  });
   if (!location) {
     return {
       locationFolderId: null,
       error: NextResponse.json(
         { error: 'invalid location', message: 'Location not found' },
-        { status: 400 },
+        { status: 400 }
       ),
     };
   }
@@ -110,6 +116,11 @@ export async function POST(request: NextRequest) {
       id,
       alt,
       caption,
+      description,
+      title,
+      photographer,
+      location,
+      tags,
       width,
       height,
       metadata_json,
@@ -142,8 +153,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate dimensions with reasonable bounds (used by E2E tests)
-    const minW = 200; const minH = 200; // minimum dimensions
-    const maxW = 12000; const maxH = 12000; // maximum dimensions (allow larger originals)
+    const minW = 200;
+    const minH = 200; // minimum dimensions
+    const maxW = 12000;
+    const maxH = 12000; // maximum dimensions (allow larger originals)
     if (width <= 0 || height <= 0) {
       return NextResponse.json(
         { error: 'invalid dimensions', message: 'width and height must be positive numbers' },
@@ -174,13 +187,18 @@ export async function POST(request: NextRequest) {
 
     if (existingAsset) {
       return NextResponse.json(
-        { error: 'Conflict', message: 'Asset with this ID already exists; please verify direct upload status before retrying', id },
+        {
+          error: 'Conflict',
+          message:
+            'Asset with this ID already exists; please verify direct upload status before retrying',
+          id,
+        },
         { status: 409 }
       );
     }
 
     const { locationFolderId, error: locationError } = await resolveLocationFolder(
-      requestedLocationId ?? requestedLocationFolderId,
+      requestedLocationId ?? requestedLocationFolderId
     );
     if (locationError) {
       return locationError;
@@ -212,6 +230,11 @@ export async function POST(request: NextRequest) {
         id,
         alt,
         caption,
+        description: typeof description === 'string' ? description : null,
+        title: typeof title === 'string' ? title : null,
+        photographer: typeof photographer === 'string' ? photographer : null,
+        location: typeof location === 'string' ? location : null,
+        tags: typeof tags === 'string' ? tags : null,
         width: parseInt(width.toString()),
         height: parseInt(height.toString()),
         metadata_json: serializedMetadata,
@@ -243,6 +266,11 @@ export async function POST(request: NextRequest) {
         id,
         alt,
         caption,
+        description: typeof description === 'string' ? description : null,
+        title: typeof title === 'string' ? title : null,
+        photographer: typeof photographer === 'string' ? photographer : null,
+        location: typeof location === 'string' ? location : null,
+        tags: typeof tags === 'string' ? tags : null,
         width: parseInt(width.toString()),
         height: parseInt(height.toString()),
         metadata_json: serializedMetadata,
@@ -253,13 +281,20 @@ export async function POST(request: NextRequest) {
       asset = await prisma.asset.create({
         data: createData as any,
       });
-      await logAudit({ who: 'system', action: 'create', entity: `asset/${asset.id}`, payload: { id: asset.id } });
+      await logAudit({
+        who: 'system',
+        action: 'create',
+        entity: `asset/${asset.id}`,
+        payload: { id: asset.id },
+      });
     }
 
     // Return metadata_json parsed back to object if possible
     const response: Record<string, any> = { ...asset };
     if (response.metadata_json && typeof response.metadata_json === 'string') {
-      try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
+      try {
+        response.metadata_json = JSON.parse(response.metadata_json);
+      } catch {}
     }
     const assetWithFolder = asset as Record<string, any>;
     response.location_folder_id = assetWithFolder.location_folder_id ?? null;
@@ -283,7 +318,11 @@ export async function POST(request: NextRequest) {
     // Handle unique constraint violation
     if (error instanceof Error && error.message.includes('Unique constraint')) {
       return NextResponse.json(
-        { error: 'Conflict', message: 'Asset with this ID already exists; please verify direct upload status before retrying' },
+        {
+          error: 'Conflict',
+          message:
+            'Asset with this ID already exists; please verify direct upload status before retrying',
+        },
         { status: 409 }
       );
     }
@@ -303,7 +342,8 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
-    const locationFilter = searchParams.get('location_id') ?? searchParams.get('location_folder_id');
+    const locationFilter =
+      searchParams.get('location_id') ?? searchParams.get('location_folder_id');
     const unassigned = searchParams.get('unassigned') === 'true';
 
     let assets: Array<Record<string, any>> = [];
@@ -331,7 +371,7 @@ export async function GET(request: NextRequest) {
         try {
           const usageStmt = db
             .prepare(
-              `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`,
+              `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`
             )
             .bind(...ids);
           const usageResult = await usageStmt.all();
@@ -340,7 +380,7 @@ export async function GET(request: NextRequest) {
             count: number | string | null;
           }>;
           rows.forEach((row) => {
-            const count = typeof row.count === 'string' ? Number(row.count) : row.count ?? 0;
+            const count = typeof row.count === 'string' ? Number(row.count) : (row.count ?? 0);
             usageMap.set(row.asset_id, count);
           });
         } catch (usageError) {
@@ -351,8 +391,8 @@ export async function GET(request: NextRequest) {
           new Set(
             baseAssets
               .map((asset) => asset.location_folder_id)
-              .filter((value): value is string => typeof value === 'string' && value.length > 0),
-          ),
+              .filter((value): value is string => typeof value === 'string' && value.length > 0)
+          )
         );
 
         if (locationIds.length > 0) {
@@ -360,7 +400,7 @@ export async function GET(request: NextRequest) {
           try {
             const locationsStmt = db
               .prepare(
-                `SELECT id, name, year_id FROM locations WHERE id IN (${locationPlaceholders})`,
+                `SELECT id, name, year_id FROM locations WHERE id IN (${locationPlaceholders})`
               )
               .bind(...locationIds);
             const locationsResult = await locationsStmt.all();
@@ -377,8 +417,8 @@ export async function GET(request: NextRequest) {
               new Set(
                 locationRows
                   .map((row) => row.year_id)
-                  .filter((value): value is string => typeof value === 'string' && value.length > 0),
-              ),
+                  .filter((value): value is string => typeof value === 'string' && value.length > 0)
+              )
             );
             if (yearIds.length > 0) {
               const yearPlaceholders = yearIds.map(() => '?').join(', ');
@@ -387,7 +427,10 @@ export async function GET(request: NextRequest) {
                   .prepare(`SELECT id, label FROM years WHERE id IN (${yearPlaceholders})`)
                   .bind(...yearIds);
                 const yearsResult = await yearsStmt.all();
-                const yearRows = (yearsResult.results ?? []) as Array<{ id: string; label: string | null }>;
+                const yearRows = (yearsResult.results ?? []) as Array<{
+                  id: string;
+                  label: string | null;
+                }>;
                 yearRows.forEach((row) => {
                   if (typeof row.label === 'string') {
                     yearLabelMap.set(row.id, row.label);
@@ -461,7 +504,11 @@ export async function GET(request: NextRequest) {
         const { _count, locationFolder, ...rest } = a;
         const obj: Record<string, any> = { ...rest, used: (_count?.collection_assets ?? 0) > 0 };
         if (obj.metadata_json && typeof obj.metadata_json === 'string') {
-          try { obj.metadata_json = JSON.parse(obj.metadata_json); } catch { /* ignore */ }
+          try {
+            obj.metadata_json = JSON.parse(obj.metadata_json);
+          } catch {
+            /* ignore */
+          }
         }
         obj.location_folder_id = rest.location_folder_id ?? null;
         if (locationFolder) {

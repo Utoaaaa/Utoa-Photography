@@ -39,7 +39,11 @@ async function cleanupAssetFiles(assetId: string) {
 
 async function recordAudit(
   useD1: boolean,
-  params: { action: 'create' | 'edit' | 'delete'; assetId: string; payload?: Record<string, unknown> },
+  params: {
+    action: 'create' | 'edit' | 'delete';
+    assetId: string;
+    payload?: Record<string, unknown>;
+  }
 ) {
   const { action, assetId, payload } = params;
   if (useD1) {
@@ -83,7 +87,10 @@ async function resolveLocationFolder(locationId: unknown) {
   const useD1 = shouldUseD1Direct();
 
   if (locationId === undefined) {
-    return { locationFolderId: undefined as string | null | undefined, error: null as NextResponse | null };
+    return {
+      locationFolderId: undefined as string | null | undefined,
+      error: null as NextResponse | null,
+    };
   }
   if (locationId === null || locationId === '') {
     return { locationFolderId: null, error: null };
@@ -93,7 +100,7 @@ async function resolveLocationFolder(locationId: unknown) {
       locationFolderId: null,
       error: NextResponse.json(
         { error: 'invalid location', message: 'location_id must be a string or null' },
-        { status: 400 },
+        { status: 400 }
       ),
     };
   }
@@ -102,7 +109,7 @@ async function resolveLocationFolder(locationId: unknown) {
       locationFolderId: null,
       error: NextResponse.json(
         { error: 'invalid location', message: 'location_id must be a valid UUID' },
-        { status: 400 },
+        { status: 400 }
       ),
     };
   }
@@ -113,7 +120,7 @@ async function resolveLocationFolder(locationId: unknown) {
         locationFolderId: null,
         error: NextResponse.json(
           { error: 'invalid location', message: 'Location not found' },
-          { status: 400 },
+          { status: 400 }
         ),
       };
     }
@@ -127,7 +134,7 @@ async function resolveLocationFolder(locationId: unknown) {
       locationFolderId: null,
       error: NextResponse.json(
         { error: 'invalid location', message: 'Location not found' },
-        { status: 400 },
+        { status: 400 }
       ),
     };
   }
@@ -145,8 +152,9 @@ export async function GET(
 
     if (useD1) {
       const db = requireD1();
-      const row = await db.prepare(
-        `
+      const row = (await db
+        .prepare(
+          `
           SELECT
             a.*,
             l.name AS location_name,
@@ -157,11 +165,16 @@ export async function GET(
           LEFT JOIN years y ON y.id = l.year_id
           WHERE a.id = ?1
           LIMIT 1
-        `,
-      ).bind(asset_id).first() as Record<string, unknown> | null;
+        `
+        )
+        .bind(asset_id)
+        .first()) as Record<string, unknown> | null;
 
       if (!row) {
-        return NextResponse.json({ error: 'Not found', message: 'Asset not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Not found', message: 'Asset not found' },
+          { status: 404 }
+        );
       }
 
       const response: Record<string, any> = {
@@ -182,7 +195,9 @@ export async function GET(
       };
 
       if (typeof response.metadata_json === 'string') {
-        try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
+        try {
+          response.metadata_json = JSON.parse(response.metadata_json);
+        } catch {}
       }
 
       if (row.location_name) {
@@ -209,7 +224,9 @@ export async function GET(
 
     const response: Record<string, any> = { ...asset };
     if (response.metadata_json && typeof response.metadata_json === 'string') {
-      try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
+      try {
+        response.metadata_json = JSON.parse(response.metadata_json);
+      } catch {}
     }
     const assetWithFolder = asset as Record<string, any>;
     response.location_folder_id = assetWithFolder.location_folder_id ?? null;
@@ -239,35 +256,42 @@ export async function DELETE(
     if (useD1) {
       const db = requireD1();
 
-      const existing = await db.prepare(
-        'SELECT id FROM assets WHERE id = ?1 LIMIT 1',
-      ).bind(asset_id).first();
+      const existing = await db
+        .prepare('SELECT id FROM assets WHERE id = ?1 LIMIT 1')
+        .bind(asset_id)
+        .first();
 
       if (!existing) {
-        return NextResponse.json({ error: 'Not found', message: 'Asset not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Not found', message: 'Asset not found' },
+          { status: 404 }
+        );
       }
 
       try {
-        const links = await db.prepare(
-          'SELECT collection_id FROM collection_assets WHERE asset_id = ?1 LIMIT 50',
-        ).bind(asset_id).all();
+        const links = await db
+          .prepare('SELECT collection_id FROM collection_assets WHERE asset_id = ?1 LIMIT 50')
+          .bind(asset_id)
+          .all();
         const linkRows = links.results ?? [];
         if (linkRows.length > 0) {
           return NextResponse.json(
             {
               error: 'Conflict',
               message: 'Asset is referenced by collections and cannot be deleted',
-              referenced_by: linkRows.map((row: Record<string, unknown>) => String(row.collection_id)),
+              referenced_by: linkRows.map((row: Record<string, unknown>) =>
+                String(row.collection_id)
+              ),
               count: linkRows.length,
             },
-            { status: 409 },
+            { status: 409 }
           );
         }
       } catch (error) {
         console.error('Error checking asset references before delete (D1):', error);
         return NextResponse.json(
           { error: 'Precondition Failed', message: 'Unable to verify references' },
-          { status: 412 },
+          { status: 412 }
         );
       }
 
@@ -305,14 +329,14 @@ export async function DELETE(
             referenced_by: links.map((l) => l.collection_id),
             count: links.length,
           },
-          { status: 409 },
+          { status: 409 }
         );
       }
     } catch (e) {
       console.error('Error checking asset references before delete:', e);
       return NextResponse.json(
         { error: 'Precondition Failed', message: 'Unable to verify references' },
-        { status: 412 },
+        { status: 412 }
       );
     }
 
@@ -343,15 +367,23 @@ export async function PUT(
     const data: Record<string, unknown> = {};
     if (body.alt !== undefined) data.alt = body.alt;
     if (body.caption !== undefined) data.caption = body.caption;
+    if (body.description !== undefined) data.description = body.description;
+    if (body.title !== undefined) data.title = body.title;
+    if (body.photographer !== undefined) data.photographer = body.photographer;
+    if (body.location !== undefined) data.location = body.location;
+    if (body.tags !== undefined) data.tags = body.tags;
     if (body.width !== undefined) data.width = parseInt(body.width.toString());
     if (body.height !== undefined) data.height = parseInt(body.height.toString());
     if (body.metadata_json !== undefined) {
-      data.metadata_json = typeof body.metadata_json === 'string'
-        ? body.metadata_json
-        : JSON.stringify(body.metadata_json);
+      data.metadata_json =
+        typeof body.metadata_json === 'string'
+          ? body.metadata_json
+          : JSON.stringify(body.metadata_json);
     }
     if (body.location_id !== undefined || body.location_folder_id !== undefined) {
-      const { locationFolderId, error } = await resolveLocationFolder(body.location_id ?? body.location_folder_id);
+      const { locationFolderId, error } = await resolveLocationFolder(
+        body.location_id ?? body.location_folder_id
+      );
       if (error) return error;
       data.location_folder_id = locationFolderId ?? null;
     }
@@ -359,12 +391,16 @@ export async function PUT(
     if (useD1) {
       const db = requireD1();
 
-      const existing = await db.prepare(
-        'SELECT * FROM assets WHERE id = ?1 LIMIT 1',
-      ).bind(asset_id).first();
+      const existing = await db
+        .prepare('SELECT * FROM assets WHERE id = ?1 LIMIT 1')
+        .bind(asset_id)
+        .first();
 
       if (!existing) {
-        return NextResponse.json({ error: 'Not found', message: 'Asset not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Not found', message: 'Asset not found' },
+          { status: 404 }
+        );
       }
 
       const updates: string[] = [];
@@ -377,6 +413,26 @@ export async function PUT(
       if (data.caption !== undefined) {
         updates.push('caption = ?');
         bindings.push(data.caption ?? null);
+      }
+      if (data.description !== undefined) {
+        updates.push('description = ?');
+        bindings.push(data.description ?? null);
+      }
+      if (data.title !== undefined) {
+        updates.push('title = ?');
+        bindings.push(data.title ?? null);
+      }
+      if (data.photographer !== undefined) {
+        updates.push('photographer = ?');
+        bindings.push(data.photographer ?? null);
+      }
+      if (data.location !== undefined) {
+        updates.push('location = ?');
+        bindings.push(data.location ?? null);
+      }
+      if (data.tags !== undefined) {
+        updates.push('tags = ?');
+        bindings.push(data.tags ?? null);
       }
       if (data.width !== undefined) {
         updates.push('width = ?');
@@ -406,12 +462,14 @@ export async function PUT(
 
       bindings.push(asset_id);
 
-      await db.prepare(
-        `UPDATE assets SET ${updates.join(', ')} WHERE id = ?`,
-      ).bind(...bindings).run();
+      await db
+        .prepare(`UPDATE assets SET ${updates.join(', ')} WHERE id = ?`)
+        .bind(...bindings)
+        .run();
 
-      const updatedRow = await db.prepare(
-        `
+      const updatedRow = (await db
+        .prepare(
+          `
           SELECT
             a.*,
             l.name AS location_name,
@@ -422,11 +480,16 @@ export async function PUT(
           LEFT JOIN years y ON y.id = l.year_id
           WHERE a.id = ?1
           LIMIT 1
-        `,
-      ).bind(asset_id).first() as Record<string, unknown> | null;
+        `
+        )
+        .bind(asset_id)
+        .first()) as Record<string, unknown> | null;
 
       if (!updatedRow) {
-        return NextResponse.json({ error: 'Not found', message: 'Asset not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: 'Not found', message: 'Asset not found' },
+          { status: 404 }
+        );
       }
 
       try {
@@ -455,7 +518,9 @@ export async function PUT(
       };
 
       if (typeof response.metadata_json === 'string') {
-        try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
+        try {
+          response.metadata_json = JSON.parse(response.metadata_json);
+        } catch {}
       }
       if (updatedRow.location_name) {
         response.location_folder_name = updatedRow.location_name;
@@ -484,7 +549,9 @@ export async function PUT(
 
     const response: Record<string, any> = { ...updated };
     if (response.metadata_json && typeof response.metadata_json === 'string') {
-      try { response.metadata_json = JSON.parse(response.metadata_json); } catch {}
+      try {
+        response.metadata_json = JSON.parse(response.metadata_json);
+      } catch {}
     }
     response.location_folder_id = (updated as Record<string, any>).location_folder_id ?? null;
     const updatedWithFolder = updated as Record<string, any>;
