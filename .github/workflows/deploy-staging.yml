@@ -31,11 +31,11 @@ jobs:
         run: npm ci
 
       - name: Build (OpenNext for Cloudflare)
-        run: npx @opennextjs/cloudflare@latest build
+        run: npm run opennext
 
       # Optional: apply D1 migrations for staging
       # - name: Apply D1 migrations (staging)
       #   run: npx wrangler@4 d1 migrations apply utoa-photography-db --env staging
 
       - name: Deploy to staging (workers.dev)
-        run: npx @opennextjs/cloudflare@latest deploy -e staging
+        run: npx wrangler deploy --env staging

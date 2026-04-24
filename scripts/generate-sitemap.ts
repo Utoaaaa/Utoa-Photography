@@ -100,6 +100,17 @@ async function readYearLocationPayload(): Promise<YearLocationPayload> {
       throw new Error('Invalid year-location payload: generatedAt must be ISO string');
     }
 
+    if (parsed.years.length > 0) {
+      return parsed;
+    }
+
+    console.warn('[generate-sitemap] year-location.json is empty, checking live data before using it.');
+    const livePayload = await loadYearLocationData();
+    if (livePayload.years.length > 0) {
+      console.warn('[generate-sitemap] Using live year-location data instead of empty snapshot.');
+      return livePayload;
+    }
+
     return parsed;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;

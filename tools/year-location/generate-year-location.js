@@ -126,11 +126,9 @@ async function writeOutputFile(data) {
 
 async function main() {
   try {
-    // If DATABASE_URL is not provided (eg. CI preview), fall back to empty payload
     if (!process.env.DATABASE_URL) {
-      console.warn('[generate-year-location] DATABASE_URL not set; writing empty payload for CI');
-      const outputPath = await writeOutputFile([]);
-      console.log(`✅ year-location.json (empty) generated at ${outputPath}`);
+      console.error('[generate-year-location] DATABASE_URL not set; refusing to write an empty year-location snapshot.');
+      process.exitCode = 1;
       return;
     }
 
@@ -138,14 +136,8 @@ async function main() {
     const outputPath = await writeOutputFile(data);
     console.log(`✅ year-location.json generated at ${outputPath}`);
   } catch (error) {
-    console.error('⚠️ Failed to generate year-location data; writing empty payload instead. Error:', error);
-    try {
-      const outputPath = await writeOutputFile([]);
-      console.log(`✅ year-location.json (empty) generated at ${outputPath}`);
-    } catch (err2) {
-      console.error('❌ Fallback write failed:', err2);
-      process.exitCode = 1;
-    }
+    console.error('❌ Failed to generate year-location data; snapshot was not updated. Error:', error);
+    process.exitCode = 1;
   } finally {
     await prisma.$disconnect();
   }

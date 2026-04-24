@@ -22,4 +22,11 @@ TypeScript 5.x, React 19, Next.js 15 App Router: Follow standard conventions
 - 004-: Added TypeScript 5.x, React 19, Next.js 15 App Router + Prisma 6.16、Next.js App Router、Tailwind、GSAP/Lenis（需評估是否影響首頁）
 
 <!-- MANUAL ADDITIONS START -->
+
+## Git Commit Rules
+- Do not add AI collaboration attribution to commits.
+- Do not add `Co-authored-by` trailers for AI agents, including Sisyphus.
+- Do not add commit body/footer lines such as `Ultraworked with ...`.
+- Use only the repository's normal commit message style unless the user explicitly asks otherwise.
+
 <!-- MANUAL ADDITIONS END -->
