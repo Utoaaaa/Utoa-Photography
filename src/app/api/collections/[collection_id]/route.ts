@@ -34,7 +34,7 @@ async function recordAudit(
   useD1: boolean,
   action: AuditAction,
   collectionId: string,
-  payload?: Record<string, unknown>,
+  payload?: Record<string, unknown>
 ) {
   if (useD1) {
     try {
@@ -86,6 +86,7 @@ function mapCollectionRow(row: D1CollectionRow, assetCount: number) {
     slug: String(row.slug),
     title: String(row.title),
     summary: (row.summary ?? null) as string | null,
+    captured_at: row.captured_at ?? null,
     cover_asset_id: (row.cover_asset_id ?? null) as string | null,
     template_id: (row.template_id ?? null) as string | null,
     status: String(row.status),
@@ -115,7 +116,7 @@ function mapCollectionRow(row: D1CollectionRow, assetCount: number) {
 
 async function fetchCollectionD1(
   identifier: string,
-  options: { allowSlug?: boolean; includeAssets?: boolean } = {},
+  options: { allowSlug?: boolean; includeAssets?: boolean } = {}
 ) {
   const { allowSlug = false, includeAssets = false } = options;
   const db = requireD1();
@@ -134,18 +135,24 @@ async function fetchCollectionD1(
   `;
 
   if (!allowSlug || isUUID(identifier)) {
-    row = await db.prepare(
-      `${baseSelect}
+    row = (await db
+      .prepare(
+        `${baseSelect}
        WHERE c.id = ?1
-       LIMIT 1`,
-    ).bind(identifier).first() as D1CollectionRow | null;
+       LIMIT 1`
+      )
+      .bind(identifier)
+      .first()) as D1CollectionRow | null;
   } else {
-    row = await db.prepare(
-      `${baseSelect}
+    row = (await db
+      .prepare(
+        `${baseSelect}
        WHERE c.slug = ?1
        ORDER BY c.created_at DESC
-       LIMIT 1`,
-    ).bind(identifier).first() as D1CollectionRow | null;
+       LIMIT 1`
+      )
+      .bind(identifier)
+      .first()) as D1CollectionRow | null;
   }
 
   if (!row) {
@@ -154,9 +161,10 @@ async function fetchCollectionD1(
 
   const collectionId = String(row.id);
 
-  const countRow = await db.prepare(
-    'SELECT COUNT(*) AS count FROM collection_assets WHERE collection_id = ?1',
-  ).bind(collectionId).first() as { count?: number } | null;
+  const countRow = (await db
+    .prepare('SELECT COUNT(*) AS count FROM collection_assets WHERE collection_id = ?1')
+    .bind(collectionId)
+    .first()) as { count?: number } | null;
 
   const assetCount = Number(countRow?.count ?? 0);
   const base = mapCollectionRow(row, assetCount);
@@ -165,8 +173,9 @@ async function fetchCollectionD1(
     return base;
   }
 
-  const assetsResult = await db.prepare(
-    `
+  const assetsResult = await db
+    .prepare(
+      `
       SELECT
         ca.collection_id,
         ca.asset_id,
@@ -179,8 +188,10 @@ async function fetchCollectionD1(
       JOIN assets a ON a.id = ca.asset_id
       WHERE ca.collection_id = ?1
       ORDER BY CAST(ca.order_index AS REAL) ASC, ca.order_index ASC, ca.created_at ASC
-    `,
-  ).bind(collectionId).all();
+    `
+    )
+    .bind(collectionId)
+    .all();
 
   const assetRows = (assetsResult.results ?? []) as Array<Record<string, unknown>>;
   const assets = assetRows.map((row) => ({
@@ -211,7 +222,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ collection_id: string }> },
+  { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
     const { collection_id } = await params;
@@ -225,7 +236,7 @@ export async function GET(
     if (collection_id === 'invalid-uuid') {
       return NextResponse.json(
         { error: 'Invalid ID format', message: 'Collection ID must be a valid UUID' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -239,7 +250,7 @@ export async function GET(
       if (!collection) {
         return NextResponse.json(
           { error: 'Not found', message: 'Collection not found' },
-          { status: 404 },
+          { status: 404 }
         );
       }
       return NextResponse.json(collection);
@@ -273,7 +284,7 @@ export async function GET(
     if (!collection) {
       return NextResponse.json(
         { error: 'Not found', message: 'Collection not found' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -294,14 +305,14 @@ export async function GET(
     console.error('Error fetching collection:', error);
     return NextResponse.json(
       { error: 'Internal server error', message: 'Failed to fetch collection' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ collection_id: string }> },
+  { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
     const { collection_id } = await params;
@@ -311,23 +322,41 @@ export async function PUT(
     if (!uuidRegex.test(collection_id)) {
       return NextResponse.json(
         { error: 'Invalid ID format', message: 'Collection ID must be a valid UUID' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    const { title, summary, cover_asset_id, status, order_index, updated_at, slug } = body;
+    const { title, summary, captured_at, cover_asset_id, status, order_index, slug } = body;
+
+    if (title !== undefined) {
+      if (typeof title !== 'string' || !title.trim() || title.length > 200) {
+        return NextResponse.json(
+          { error: 'Invalid title', message: 'title must be a non-empty string up to 200 characters' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (summary !== undefined) {
+      if (summary !== null && (typeof summary !== 'string' || summary.length > 500)) {
+        return NextResponse.json(
+          { error: 'Invalid summary', message: 'summary must be null or a string up to 500 characters' },
+          { status: 400 }
+        );
+      }
+    }
 
     if (status && !['draft', 'published'].includes(String(status))) {
       return NextResponse.json(
-        { error: 'Invalid status', message: 'Status must be draft or published' },
-        { status: 400 },
+        { error: 'Invalid status', message: 'status must be draft or published' },
+        { status: 400 }
       );
     }
 
     if (slug !== undefined && (typeof slug !== 'string' || !slug.trim())) {
       return NextResponse.json(
         { error: 'Invalid slug', message: 'Slug must be a non-empty string' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -337,14 +366,15 @@ export async function PUT(
     if (useD1) {
       const db = requireD1();
 
-      const existingRow = await db.prepare(
-        'SELECT * FROM collections WHERE id = ?1 LIMIT 1',
-      ).bind(collection_id).first() as Record<string, unknown> | null;
+      const existingRow = (await db
+        .prepare('SELECT * FROM collections WHERE id = ?1 LIMIT 1')
+        .bind(collection_id)
+        .first()) as Record<string, unknown> | null;
 
       if (!existingRow) {
         return NextResponse.json(
           { error: 'Not found', message: 'Collection not found' },
-          { status: 404 },
+          { status: 404 }
         );
       }
 
@@ -363,19 +393,42 @@ export async function PUT(
       if (summary !== undefined && summary !== existingRow.summary) {
         setField('summary', summary, 'summary');
       }
+      if (captured_at !== undefined) {
+        if (captured_at === null || captured_at === '') {
+          if ((existingRow.captured_at ?? null) !== null) {
+            setField('captured_at', null, 'captured_at');
+          }
+        } else {
+          const parsed = new Date(String(captured_at));
+          if (Number.isNaN(parsed.getTime())) {
+            return NextResponse.json(
+              {
+                error: 'Invalid captured_at',
+                message: 'captured_at must be a valid date string or null',
+              },
+              { status: 400 }
+            );
+          }
+          const iso = parsed.toISOString();
+          if (iso !== existingRow.captured_at) {
+            setField('captured_at', iso, 'captured_at');
+          }
+        }
+      }
       if (slug !== undefined && slug !== existingRow.slug) {
         // Check for slug uniqueness
-        const existingSlug = await db.prepare(
-          'SELECT id FROM collections WHERE slug = ?1 AND id != ?2 LIMIT 1',
-        ).bind(slug, collection_id).first() as { id: string } | null;
-        
+        const existingSlug = (await db
+          .prepare('SELECT id FROM collections WHERE slug = ?1 AND id != ?2 LIMIT 1')
+          .bind(slug, collection_id)
+          .first()) as { id: string } | null;
+
         if (existingSlug) {
           return NextResponse.json(
             { error: 'Conflict', message: 'Slug already exists' },
-            { status: 409 },
+            { status: 409 }
           );
         }
-        
+
         setField('slug', slug, 'slug');
       }
       if (cover_asset_id !== undefined && cover_asset_id !== existingRow.cover_asset_id) {
@@ -393,29 +446,23 @@ export async function PUT(
           updates.push('published_at = NULL');
         }
       }
-
-      if (updated_at !== undefined) {
-        const parsed = new Date(String(updated_at));
-        if (!Number.isNaN(parsed.getTime())) {
-          updates.push('updated_at = ?');
-          bindings.push(parsed.toISOString());
-        }
-      }
-
       if (updates.length > 0) {
         bindings.push(collection_id);
-        await db.prepare(
-          `UPDATE collections SET ${updates.join(', ')} WHERE id = ?`,
-        ).bind(...bindings).run();
+        await db
+          .prepare(`UPDATE collections SET ${updates.join(', ')} WHERE id = ?`)
+          .bind(...bindings)
+          .run();
       }
 
       const updated = await fetchCollectionD1(collection_id, { includeAssets: false });
 
-      await invalidateCache([
-        CACHE_TAGS.COLLECTIONS,
-        CACHE_TAGS.collection(collection_id),
-        updated ? CACHE_TAGS.yearCollections(String((updated as any).year_id)) : null,
-      ].filter(Boolean) as string[]);
+      await invalidateCache(
+        [
+          CACHE_TAGS.COLLECTIONS,
+          CACHE_TAGS.collection(collection_id),
+          updated ? CACHE_TAGS.yearCollections(String((updated as any).year_id)) : null,
+        ].filter(Boolean) as string[]
+      );
 
       await recordAudit(true, 'edit', collection_id, auditPayload);
 
@@ -427,30 +474,40 @@ export async function PUT(
     const updateData: Prisma.CollectionUpdateInput = {};
     if (title !== undefined) updateData.title = title as string;
     if (summary !== undefined) updateData.summary = summary as string | null;
+    if (captured_at !== undefined) {
+      if (captured_at === null || captured_at === '') {
+        updateData.captured_at = null;
+      } else {
+        const parsed = new Date(String(captured_at));
+        if (Number.isNaN(parsed.getTime())) {
+          return NextResponse.json(
+            {
+              error: 'Invalid captured_at',
+              message: 'captured_at must be a valid date string or null',
+            },
+            { status: 400 }
+          );
+        }
+        updateData.captured_at = parsed;
+      }
+    }
     if (slug !== undefined) {
       // Check for slug uniqueness
       const existingSlug = await prisma.collection.findFirst({
         where: { slug: slug as string, id: { not: collection_id } },
       });
-      
+
       if (existingSlug) {
         return NextResponse.json(
           { error: 'Conflict', message: 'Slug already exists' },
-          { status: 409 },
+          { status: 409 }
         );
       }
-      
+
       updateData.slug = slug as string;
     }
     if (cover_asset_id !== undefined) updateData.cover_asset_id = cover_asset_id as string | null;
     if (order_index !== undefined) updateData.order_index = order_index as string;
-
-    if (updated_at !== undefined) {
-      const parsed = new Date(String(updated_at));
-      if (!Number.isNaN(parsed.getTime())) {
-        updateData.updated_at = parsed;
-      }
-    }
 
     if (status !== undefined) {
       updateData.status = status as CollectionStatus;
@@ -484,30 +541,33 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating collection:', error);
 
-    if (error instanceof Error && error.message.includes('Record to update not found')) {
+    if (
+      (error instanceof Error && error.message.includes('Record to update not found'))
+      || (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2025')
+    ) {
       return NextResponse.json(
         { error: 'Not found', message: 'Collection not found' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { error: 'Invalid JSON', message: 'Request body must be valid JSON' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     return NextResponse.json(
       { error: 'Internal server error', message: 'Failed to update collection' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ collection_id: string }> },
+  { params }: { params: Promise<{ collection_id: string }> }
 ) {
   try {
     const { collection_id } = await params;
@@ -516,7 +576,7 @@ export async function DELETE(
     if (!uuidRegex.test(collection_id)) {
       return NextResponse.json(
         { error: 'Invalid ID format', message: 'Collection ID must be a valid UUID' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -525,14 +585,15 @@ export async function DELETE(
     if (useD1) {
       const db = requireD1();
 
-      const existing = await db.prepare(
-        'SELECT year_id FROM collections WHERE id = ?1 LIMIT 1',
-      ).bind(collection_id).first() as { year_id: string } | null;
+      const existing = (await db
+        .prepare('SELECT year_id FROM collections WHERE id = ?1 LIMIT 1')
+        .bind(collection_id)
+        .first()) as { year_id: string } | null;
 
       if (!existing) {
         return NextResponse.json(
           { error: 'Not found', message: 'Collection not found' },
-          { status: 404 },
+          { status: 404 }
         );
       }
 
@@ -563,7 +624,7 @@ export async function DELETE(
     if (!existing) {
       return NextResponse.json(
         { error: 'Not found', message: 'Collection not found' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -584,13 +645,13 @@ export async function DELETE(
     if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
       return NextResponse.json(
         { error: 'Not found', message: 'Collection not found' },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
     return NextResponse.json(
       { error: 'Internal server error', message: 'Failed to delete collection' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -15,6 +15,7 @@ export type CollectionAssignment = Prisma.CollectionGetPayload<{
     status: true;
     location_id: true;
     order_index: true;
+    captured_at: true;
     updated_at: true;
   };
 }>;
@@ -64,13 +65,14 @@ const assignmentSelect = {
   status: true,
   location_id: true,
   order_index: true,
+  captured_at: true,
   updated_at: true,
 } as const;
 
 export async function assignCollectionLocation(
   collectionId: string,
   locationId: string | null,
-  db: PrismaClientLike = prisma,
+  db: PrismaClientLike = prisma
 ): Promise<{ collection: CollectionAssignment; previousLocationId: string | null }> {
   const validCollectionId = validateCollectionId(collectionId);
   const normalizedLocationId = normalizeLocationId(locationId);

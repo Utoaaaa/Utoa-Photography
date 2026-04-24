@@ -14,8 +14,8 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       },
       body: JSON.stringify({
         label: 'Test Year for Collection Update',
-        status: 'published'
-      })
+        status: 'published',
+      }),
     });
     const year = await yearResponse.json();
     testYearId = year.id;
@@ -30,8 +30,8 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
         slug: 'update-collection',
         title: 'Original Title',
         summary: 'Original summary',
-        status: 'draft'
-      })
+        status: 'draft',
+      }),
     });
     const collection = await collectionResponse.json();
     testCollectionId = collection.id;
@@ -44,7 +44,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
 
   test('PUT /api/collections/{id} - should update collection title', async () => {
     const updateData = {
-      title: 'Updated Title'
+      title: 'Updated Title',
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -52,7 +52,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(200);
@@ -63,7 +63,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       title: 'Updated Title',
       summary: 'Original summary', // unchanged
       status: 'draft', // unchanged
-      updated_at: expect.any(String)
+      updated_at: expect.any(String),
     });
   });
 
@@ -71,8 +71,9 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     const updateData = {
       title: 'Multi Update Title',
       summary: 'Updated summary with new content',
+      captured_at: '2024-10-08',
       status: 'published',
-      order_index: '10.0'
+      order_index: '10.0',
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -80,7 +81,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(200);
@@ -90,15 +91,31 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       id: testCollectionId,
       title: 'Multi Update Title',
       summary: 'Updated summary with new content',
+      captured_at: expect.any(String),
       status: 'published',
       order_index: '10.0',
-      updated_at: expect.any(String)
+      updated_at: expect.any(String),
     });
+  });
+
+  test('PUT /api/collections/{id} - should clear captured_at when set to null', async () => {
+    const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ captured_at: null }),
+    });
+
+    expect(response.status).toBe(200);
+
+    const collection = await response.json();
+    expect(collection.captured_at).toBeNull();
   });
 
   test('PUT /api/collections/{id} - should update cover_asset_id', async () => {
     const updateData = {
-      cover_asset_id: 'new-cover-asset-id'
+      cover_asset_id: 'new-cover-asset-id',
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -106,7 +123,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(200);
@@ -117,7 +134,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
 
   test('PUT /api/collections/{id} - should clear cover_asset_id when set to null', async () => {
     const updateData = {
-      cover_asset_id: null
+      cover_asset_id: null,
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -125,7 +142,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(200);
@@ -136,7 +153,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
 
   test('PUT /api/collections/{id} - should validate title length', async () => {
     const updateData = {
-      title: 'x'.repeat(201) // exceeds 200 character limit
+      title: 'x'.repeat(201), // exceeds 200 character limit
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -144,19 +161,19 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('title')
+      message: expect.stringContaining('title'),
     });
   });
 
   test('PUT /api/collections/{id} - should validate summary length', async () => {
     const updateData = {
-      summary: 'x'.repeat(501) // exceeds 500 character limit
+      summary: 'x'.repeat(501), // exceeds 500 character limit
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -164,19 +181,19 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('summary')
+      message: expect.stringContaining('summary'),
     });
   });
 
   test('PUT /api/collections/{id} - should validate status enum', async () => {
     const updateData = {
-      status: 'invalid-status'
+      status: 'invalid-status',
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -184,39 +201,39 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('status')
+      message: expect.stringContaining('status'),
     });
   });
 
   test('PUT /api/collections/{id} - should return 404 for non-existent collection', async () => {
     const updateData = {
-      title: 'Update Non-Existent'
+      title: 'Update Non-Existent',
     };
 
-    const response = await fetch(`${API_BASE}/collections/non-existent-id`, {
+    const response = await fetch(`${API_BASE}/collections/11111111-1111-4111-8111-111111111111`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(404);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('Collection not found')
+      message: expect.stringContaining('Collection not found'),
     });
   });
 
   test('PUT /api/collections/{id} - should require valid UUID format', async () => {
     const updateData = {
-      title: 'Update Invalid UUID'
+      title: 'Update Invalid UUID',
     };
 
     const response = await fetch(`${API_BASE}/collections/invalid-uuid`, {
@@ -224,13 +241,13 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('UUID')
+      message: expect.stringContaining('UUID'),
     });
   });
 
@@ -242,7 +259,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(200);
@@ -259,7 +276,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     const originalCollection = await getResponse.json();
 
     const updateData = {
-      title: 'Integrity Test Title'
+      title: 'Integrity Test Title',
     };
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -267,19 +284,19 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateData)
+      body: JSON.stringify(updateData),
     });
 
     expect(response.status).toBe(200);
 
     const updatedCollection = await response.json();
-    
+
     // These fields should remain unchanged
     expect(updatedCollection.id).toBe(originalCollection.id);
     expect(updatedCollection.year_id).toBe(originalCollection.year_id);
     expect(updatedCollection.slug).toBe(originalCollection.slug);
     expect(updatedCollection.created_at).toBe(originalCollection.created_at);
-    
+
     // Only title and updated_at should change
     expect(updatedCollection.title).toBe('Integrity Test Title');
     expect(updatedCollection.updated_at).not.toBe(originalCollection.updated_at);

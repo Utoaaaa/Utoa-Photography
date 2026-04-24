@@ -59,6 +59,7 @@ model Collection {
   slug             String            // URL-friendly identifier
   title            String
   summary          String?           // Optional short description
+  captured_at      DateTime?         // Optional shooting/capture date
   cover_asset_id   String?           // Optional cover asset reference (no FK)
   template_id      String?           // Future: different layout templates
   status           CollectionStatus  @default(draft)

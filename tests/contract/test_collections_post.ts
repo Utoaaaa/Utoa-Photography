@@ -13,8 +13,8 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       },
       body: JSON.stringify({
         label: 'Test Year for Collections POST',
-        status: 'published'
-      })
+        status: 'published',
+      }),
     });
     const year = await yearResponse.json();
     testYearId = year.id;
@@ -28,7 +28,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
   test('POST /api/years/{year_id}/collections - should create collection with required fields', async () => {
     const collectionData = {
       slug: 'minimal-collection',
-      title: 'Minimal Collection'
+      title: 'Minimal Collection',
     };
 
     const response = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
@@ -36,7 +36,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(collectionData)
+      body: JSON.stringify(collectionData),
     });
 
     expect(response.status).toBe(201);
@@ -50,7 +50,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       status: 'draft', // default status
       order_index: expect.any(String),
       created_at: expect.any(String),
-      updated_at: expect.any(String)
+      updated_at: expect.any(String),
     });
   });
 
@@ -59,9 +59,10 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       slug: 'full-collection',
       title: 'Full Collection',
       summary: 'A complete test collection with all fields',
+      captured_at: '2024-11-18',
       cover_asset_id: 'test-image-id',
       status: 'published',
-      order_index: '5.0'
+      order_index: '5.0',
     };
 
     const response = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
@@ -69,7 +70,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(collectionData)
+      body: JSON.stringify(collectionData),
     });
 
     expect(response.status).toBe(201);
@@ -81,16 +82,17 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       slug: 'full-collection',
       title: 'Full Collection',
       summary: 'A complete test collection with all fields',
+      captured_at: expect.any(String),
       cover_asset_id: 'test-image-id',
       status: 'published',
-      order_index: '5.0'
+      order_index: '5.0',
     });
   });
 
   test('POST /api/years/{year_id}/collections - should enforce unique slug within year', async () => {
     const collectionData = {
       slug: 'duplicate-slug',
-      title: 'First Collection'
+      title: 'First Collection',
     };
 
     // Create first collection
@@ -99,14 +101,14 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(collectionData)
+      body: JSON.stringify(collectionData),
     });
     expect(firstResponse.status).toBe(201);
 
     // Try to create second collection with same slug
     const duplicateData = {
       slug: 'duplicate-slug',
-      title: 'Second Collection'
+      title: 'Second Collection',
     };
 
     const secondResponse = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
@@ -114,19 +116,19 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(duplicateData)
+      body: JSON.stringify(duplicateData),
     });
 
     expect(secondResponse.status).toBe(409);
     expect(await secondResponse.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('slug')
+      message: expect.stringContaining('slug'),
     });
   });
 
   test('POST /api/years/{year_id}/collections - should validate required fields', async () => {
     const invalidData = {
-      title: 'Collection without slug'
+      title: 'Collection without slug',
       // missing slug
     };
 
@@ -135,20 +137,20 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invalidData)
+      body: JSON.stringify(invalidData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('slug')
+      message: expect.stringContaining('slug'),
     });
   });
 
   test('POST /api/years/{year_id}/collections - should validate slug format', async () => {
     const invalidData = {
       slug: 'Invalid Slug With Spaces!',
-      title: 'Invalid Slug Collection'
+      title: 'Invalid Slug Collection',
     };
 
     const response = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
@@ -156,13 +158,13 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invalidData)
+      body: JSON.stringify(invalidData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('slug')
+      message: expect.stringContaining('slug'),
     });
   });
 
@@ -170,7 +172,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     const invalidData = {
       slug: 'invalid-status-collection',
       title: 'Invalid Status Collection',
-      status: 'invalid-status'
+      status: 'invalid-status',
     };
 
     const response = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
@@ -178,20 +180,20 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invalidData)
+      body: JSON.stringify(invalidData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('status')
+      message: expect.stringContaining('status'),
     });
   });
 
   test('POST /api/years/{year_id}/collections - should validate title length', async () => {
     const invalidData = {
       slug: 'long-title-collection',
-      title: 'x'.repeat(201) // exceeds 200 character limit
+      title: 'x'.repeat(201), // exceeds 200 character limit
     };
 
     const response = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
@@ -199,20 +201,20 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invalidData)
+      body: JSON.stringify(invalidData),
     });
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('title')
+      message: expect.stringContaining('title'),
     });
   });
 
   test('POST /api/years/{year_id}/collections - should return 404 for non-existent year', async () => {
     const collectionData = {
       slug: 'orphan-collection',
-      title: 'Orphan Collection'
+      title: 'Orphan Collection',
     };
 
     const response = await fetch(`${API_BASE}/years/non-existent-id/collections`, {
@@ -220,20 +222,20 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(collectionData)
+      body: JSON.stringify(collectionData),
     });
 
     expect(response.status).toBe(404);
     expect(await response.json()).toMatchObject({
       error: expect.any(String),
-      message: expect.stringContaining('Year not found')
+      message: expect.stringContaining('Year not found'),
     });
   });
 
   test('POST /api/years/{year_id}/collections - should auto-generate order_index if not provided', async () => {
     const collectionData = {
       slug: 'auto-order-collection',
-      title: 'Auto Order Collection'
+      title: 'Auto Order Collection',
     };
 
     const response = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
@@ -241,7 +243,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(collectionData)
+      body: JSON.stringify(collectionData),
     });
 
     expect(response.status).toBe(201);

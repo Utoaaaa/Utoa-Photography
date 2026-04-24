@@ -8,6 +8,7 @@ export type D1Collection = {
   slug: string;
   title: string;
   summary: string | null;
+  captured_at: string | null;
   status: CollectionStatus;
   order_index: string;
   cover_asset_id: string | null;
@@ -28,6 +29,7 @@ type CreateCollectionInput = {
   slug: string;
   title: string;
   summary?: string | null;
+  captured_at?: string | null;
   status: CollectionStatus;
   order_index: string;
   cover_asset_id?: string | null;
@@ -49,6 +51,7 @@ function mapCollection(row: Record<string, unknown>): D1Collection {
     slug: String(row.slug),
     title: String(row.title),
     summary: (row.summary ?? null) as string | null,
+    captured_at: (row.captured_at ?? null) as string | null,
     status: (row.status ?? 'draft') as CollectionStatus,
     order_index: String(row.order_index),
     cover_asset_id: (row.cover_asset_id ?? null) as string | null,
@@ -83,27 +86,36 @@ export async function d1ListCollectionsForYear(params: {
 
   query += ' ORDER BY order_index ASC';
 
-  const result = await db.prepare(query).bind(...bindings).all();
-  return (result.results ?? []).map((row: unknown) => mapCollection(row as Record<string, unknown>));
+  const result = await db
+    .prepare(query)
+    .bind(...bindings)
+    .all();
+  return (result.results ?? []).map((row: unknown) =>
+    mapCollection(row as Record<string, unknown>)
+  );
 }
 
 export async function d1CreateCollection(
   yearId: string,
-  input: CreateCollectionInput,
+  input: CreateCollectionInput
 ): Promise<D1Collection> {
   const db = requireDb();
-  const id = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 10);
+  const id = typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
+    ? globalThis.crypto.randomUUID()
+    : Math.random().toString(36).slice(2, 10);
   const now = new Date().toISOString();
   const publishedAt = input.status === 'published' ? now : null;
 
-  await db.prepare(
-    `
+  await db
+    .prepare(
+      `
       INSERT INTO collections (
         id,
         year_id,
         slug,
         title,
         summary,
+        captured_at,
         status,
         order_index,
         cover_asset_id,
@@ -119,25 +131,31 @@ export async function d1CreateCollection(
         seo_description,
         seo_keywords
       ) VALUES (
-        ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, NULL,
-        ?10, ?10, ?11, ?11, 1, NULL, NULL, NULL, NULL
+        ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, NULL,
+        ?11, ?11, ?12, ?12, 1, NULL, NULL, NULL, NULL
       )
-    `,
-  ).bind(
-    id,
-    yearId,
-    input.slug,
-    input.title,
-    input.summary ?? null,
-    input.status,
-    input.order_index,
-    input.cover_asset_id ?? null,
-    input.location_id ?? null,
-    now,
-    publishedAt,
-  ).run();
+    `
+    )
+    .bind(
+      id,
+      yearId,
+      input.slug,
+      input.title,
+      input.summary ?? null,
+      input.status,
+      input.order_index,
+      input.cover_asset_id ?? null,
+      input.location_id ?? null,
+      input.captured_at ?? null,
+      now,
+      publishedAt
+    )
+    .run();
 
-  const created = await db.prepare('SELECT * FROM collections WHERE id = ?1 LIMIT 1').bind(id).first();
+  const created = await db
+    .prepare('SELECT * FROM collections WHERE id = ?1 LIMIT 1')
+    .bind(id)
+    .first();
   if (!created) {
     throw new Error('Failed to load created collection');
   }

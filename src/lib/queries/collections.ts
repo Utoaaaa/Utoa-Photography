@@ -27,12 +27,14 @@ function mapCollectionWithCount(row: Record<string, unknown>) {
     slug: String(row.slug),
     title: String(row.title),
     summary: row.summary != null ? String(row.summary) : null,
+    captured_at: row.captured_at != null ? new Date(String(row.captured_at)) : null,
     cover_asset_id: row.cover_asset_id != null ? String(row.cover_asset_id) : null,
     template_id: row.template_id ?? null,
     status: String(row.status),
     order_index: String(row.order_index),
     published_at: row.published_at != null ? new Date(String(row.published_at)) : null,
-    last_published_at: row.last_published_at != null ? new Date(String(row.last_published_at)) : null,
+    last_published_at:
+      row.last_published_at != null ? new Date(String(row.last_published_at)) : null,
     version: Number(row.version ?? 1),
     publish_note: row.publish_note ?? null,
     seo_title: row.seo_title ?? null,
@@ -77,8 +79,9 @@ export async function getCollectionsByYear(yearId: string) {
   try {
     if (shouldUseD1Direct()) {
       const db = requireD1();
-      const result = await db.prepare(
-        `
+      const result = await db
+        .prepare(
+          `
           SELECT
             c.*,
             (
@@ -89,8 +92,10 @@ export async function getCollectionsByYear(yearId: string) {
           FROM collections c
           WHERE c.year_id = ?1 AND c.status = 'published'
           ORDER BY c.order_index ASC
-        `,
-      ).bind(yearId).all();
+        `
+        )
+        .bind(yearId)
+        .all();
 
       const rows = (result.results ?? []) as Array<Record<string, unknown>>;
       return rows.map(mapCollectionWithCount);
@@ -114,8 +119,9 @@ export async function getCollectionBySlug(yearId: string, slug: string) {
   try {
     if (shouldUseD1Direct()) {
       const db = requireD1();
-      const row = await db.prepare(
-        `
+      const row = (await db
+        .prepare(
+          `
           SELECT
             c.*,
             y.label AS year_label,
@@ -132,15 +138,18 @@ export async function getCollectionBySlug(yearId: string, slug: string) {
           JOIN years y ON y.id = c.year_id
           WHERE c.year_id = ?1 AND c.slug = ?2
           LIMIT 1
-        `,
-      ).bind(yearId, slug).first() as Record<string, unknown> | null;
+        `
+        )
+        .bind(yearId, slug)
+        .first()) as Record<string, unknown> | null;
 
       if (!row) {
         return null;
       }
 
-      const assetsResult = await db.prepare(
-        `
+      const assetsResult = await db
+        .prepare(
+          `
           SELECT
             ca.collection_id,
             ca.asset_id,
@@ -153,8 +162,10 @@ export async function getCollectionBySlug(yearId: string, slug: string) {
           JOIN assets a ON a.id = ca.asset_id
           WHERE ca.collection_id = ?1
           ORDER BY CAST(ca.order_index AS REAL) ASC, ca.order_index ASC, ca.created_at ASC
-        `,
-      ).bind(String(row.id)).all();
+        `
+        )
+        .bind(String(row.id))
+        .all();
 
       const assetRows = (assetsResult.results ?? []) as Array<Record<string, unknown>>;
 
@@ -198,8 +209,9 @@ export async function getAllCollections() {
   try {
     if (shouldUseD1Direct()) {
       const db = requireD1();
-      const result = await db.prepare(
-        `
+      const result = await db
+        .prepare(
+          `
           SELECT
             c.*,
             y.label AS year_label,
@@ -215,8 +227,9 @@ export async function getAllCollections() {
           FROM collections c
           JOIN years y ON y.id = c.year_id
           ORDER BY y.order_index DESC, c.order_index ASC
-        `,
-      ).all();
+        `
+        )
+        .all();
 
       const rows = (result.results ?? []) as Array<Record<string, unknown>>;
       return rows.map((row) => ({
@@ -238,10 +251,7 @@ export async function getAllCollections() {
         year: true,
         _count: { select: { collection_assets: true } },
       },
-      orderBy: [
-        { year: { order_index: 'desc' } },
-        { order_index: 'asc' },
-      ],
+      orderBy: [{ year: { order_index: 'desc' } }, { order_index: 'asc' }],
     });
   } catch (error) {
     console.error('Error fetching all collections:', error);
@@ -253,8 +263,9 @@ export async function getCollectionById(id: string) {
   try {
     if (shouldUseD1Direct()) {
       const db = requireD1();
-      const row = await db.prepare(
-        `
+      const row = (await db
+        .prepare(
+          `
           SELECT
             c.*,
             y.label AS year_label,
@@ -271,15 +282,18 @@ export async function getCollectionById(id: string) {
           JOIN years y ON y.id = c.year_id
           WHERE c.id = ?1
           LIMIT 1
-        `,
-      ).bind(id).first() as Record<string, unknown> | null;
+        `
+        )
+        .bind(id)
+        .first()) as Record<string, unknown> | null;
 
       if (!row) {
         return null;
       }
 
-      const assetsResult = await db.prepare(
-        `
+      const assetsResult = await db
+        .prepare(
+          `
           SELECT
             ca.collection_id,
             ca.asset_id,
@@ -292,8 +306,10 @@ export async function getCollectionById(id: string) {
           JOIN assets a ON a.id = ca.asset_id
           WHERE ca.collection_id = ?1
           ORDER BY CAST(ca.order_index AS REAL) ASC, ca.order_index ASC, ca.created_at ASC
-        `,
-      ).bind(id).all();
+        `
+        )
+        .bind(id)
+        .all();
 
       const assetRows = (assetsResult.results ?? []) as Array<Record<string, unknown>>;
 

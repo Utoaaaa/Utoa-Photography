@@ -13,6 +13,7 @@ export interface LocationCollectionSummary {
   coverAssetWidth: number | null;
   coverAssetHeight: number | null;
   orderIndex: string;
+  capturedAt: string | null;
   publishedAt: string | null;
   updatedAt: string | null;
 }
@@ -66,6 +67,7 @@ type CollectionRecord = {
   cover_asset_width?: number | null;
   cover_asset_height?: number | null;
   order_index: string;
+  captured_at: Date | null;
   published_at: Date | null;
   updated_at: Date;
   cover_asset?: {
@@ -127,6 +129,7 @@ function mapCollection(record: CollectionRecord): LocationCollectionSummary {
     coverAssetWidth: width,
     coverAssetHeight: height,
     orderIndex: record.order_index,
+    capturedAt: record.captured_at ? record.captured_at.toISOString() : null,
     publishedAt: record.published_at ? record.published_at.toISOString() : null,
     updatedAt: record.updated_at.toISOString(),
   };
@@ -177,6 +180,7 @@ async function fetchYears(where: YearWhereInput): Promise<YearRecord[]> {
               summary: true,
               cover_asset_id: true,
               order_index: true,
+              captured_at: true,
               published_at: true,
               updated_at: true,
             },
@@ -208,6 +212,7 @@ async function fetchSingleYear(where: YearWhereInput): Promise<YearRecord | null
               summary: true,
               cover_asset_id: true,
               order_index: true,
+              captured_at: true,
               published_at: true,
               updated_at: true,
             },
@@ -250,6 +255,7 @@ type D1CollectionRow = {
   cover_asset_width: number | null;
   cover_asset_height: number | null;
   order_index: string;
+  captured_at: string | null;
   published_at: string | null;
   updated_at: string | null;
 };
@@ -284,6 +290,7 @@ async function fetchCollectionsForLocationD1(
         a.width AS cover_asset_width,
         a.height AS cover_asset_height,
         c.order_index,
+        c.captured_at,
         c.published_at,
         c.updated_at
       FROM collections c
@@ -305,6 +312,7 @@ async function fetchCollectionsForLocationD1(
     coverAssetWidth: row.cover_asset_width != null ? Number(row.cover_asset_width) : null,
     coverAssetHeight: row.cover_asset_height != null ? Number(row.cover_asset_height) : null,
     orderIndex: String(row.order_index),
+    capturedAt: row.captured_at ? new Date(row.captured_at).toISOString() : null,
     publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
   }));

@@ -18,8 +18,8 @@ export function CollectionList({ collections, yearLabel }: CollectionListProps) 
   }
 
   return (
-    <div 
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" 
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
       data-testid="collections-grid"
     >
       {collections.map((collection) => (
@@ -49,37 +49,38 @@ export function CollectionList({ collections, yearLabel }: CollectionListProps) 
                   </div>
                 </div>
               )}
-              
+
               {/* Photo count overlay */}
               {collection._count.collection_assets > 0 && (
                 <div className="absolute bottom-3 right-3 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-sm">
-                  {collection._count.collection_assets} {collection._count.collection_assets === 1 ? 'photo' : 'photos'}
+                  {collection._count.collection_assets}{' '}
+                  {collection._count.collection_assets === 1 ? 'photo' : 'photos'}
                 </div>
               )}
             </div>
-            
+
             {/* Content */}
             <div className="p-6">
               <h2 className="text-xl font-light text-gray-900 mb-2 group-hover:text-gray-700 transition-colors duration-300">
                 {collection.title}
               </h2>
-              
+
               {collection.summary && (
                 <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
                   {collection.summary}
                 </p>
               )}
-              
+
               {/* Updated date */}
-              {collection.updated_at && (
-                <time 
+              {collection.captured_at && (
+                <time
                   className="text-xs text-gray-400 mt-3 block"
-                  dateTime={collection.updated_at.toISOString()}
+                  dateTime={collection.captured_at.toISOString()}
                 >
-                  {collection.updated_at.toLocaleDateString('zh-TW', {
+                  {collection.captured_at.toLocaleDateString('zh-TW', {
                     year: 'numeric',
                     month: '2-digit',
-                    day: '2-digit'
+                    day: '2-digit',
                   })}
                 </time>
               )}

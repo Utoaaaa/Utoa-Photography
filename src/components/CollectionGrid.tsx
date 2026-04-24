@@ -50,7 +50,7 @@ interface CollectionCardProps {
 }
 
 function formatCollectionDate(collection: LocationCollectionSummary): string | null {
-  const timestamp = collection.updatedAt ?? collection.publishedAt;
+  const timestamp = collection.capturedAt;
   if (!timestamp) return null;
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return null;
@@ -191,9 +191,11 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
             >
               {summary}
             </p>
-            <div className="whitespace-nowrap text-right text-[0.72rem] font-medium uppercase tracking-[0.32em] text-gray-900/80 sm:text-[0.78rem]">
-              {formattedDate ?? '尚未公布'}
-            </div>
+            {formattedDate ? (
+              <div className="whitespace-nowrap text-right text-[0.72rem] font-medium uppercase tracking-[0.32em] text-gray-900/80 sm:text-[0.78rem]">
+                {formattedDate}
+              </div>
+            ) : null}
           </div>
         </div>
       </article>

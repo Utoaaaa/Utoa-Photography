@@ -40,7 +40,7 @@ async function ensureYear(yearIdentifier: string, useD1: boolean): Promise<YearL
 
 async function recordAudit(
   useD1: boolean,
-  params: { action: AuditAction; collectionId: string; payload?: Record<string, unknown> },
+  params: { action: AuditAction; collectionId: string; payload?: Record<string, unknown> }
 ) {
   const { action, collectionId, payload } = params;
   if (useD1) {
@@ -83,7 +83,7 @@ async function recordAudit(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ year_id: string }> },
+  { params }: { params: Promise<{ year_id: string }> }
 ) {
   try {
     const { year_id } = await params;
@@ -96,7 +96,7 @@ export async function GET(
     if (!['draft', 'published', 'all'].includes(status)) {
       return NextResponse.json(
         { error: 'Invalid status', message: 'status must be draft|published|all' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -129,7 +129,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ year_id: string }> },
+  { params }: { params: Promise<{ year_id: string }> }
 ) {
   try {
     const { year_id } = await params;
@@ -142,6 +142,7 @@ export async function POST(
       slug,
       title,
       summary,
+      captured_at,
       status = 'draft',
       order_index,
       cover_asset_id,
@@ -150,6 +151,7 @@ export async function POST(
       slug?: unknown;
       title?: unknown;
       summary?: unknown;
+      captured_at?: unknown;
       status?: unknown;
       order_index?: unknown;
       cover_asset_id?: unknown;
@@ -159,31 +161,37 @@ export async function POST(
     if (!slug || typeof slug !== 'string') {
       return NextResponse.json(
         { error: 'missing required field', message: 'slug is required' },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (!/^[a-z0-9-]+$/.test(slug)) {
       return NextResponse.json(
-        { error: 'invalid slug', message: 'slug must be lowercase letters, numbers, and hyphens only' },
-        { status: 400 },
+        {
+          error: 'invalid slug',
+          message: 'slug must be lowercase letters, numbers, and hyphens only',
+        },
+        { status: 400 }
       );
     }
     if (!title || typeof title !== 'string') {
       return NextResponse.json(
         { error: 'missing required field', message: 'title is required' },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (title.length > 200) {
       return NextResponse.json(
-        { error: 'invalid title', message: 'title must be a non-empty string up to 200 characters' },
-        { status: 400 },
+        {
+          error: 'invalid title',
+          message: 'title must be a non-empty string up to 200 characters',
+        },
+        { status: 400 }
       );
     }
     if (status && !['draft', 'published'].includes(String(status))) {
       return NextResponse.json(
         { error: 'invalid status', message: 'status must be draft or published' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -194,10 +202,33 @@ export async function POST(
     }
 
     let locationId: string | null = null;
+    let capturedAt: string | null = null;
     const normalizedStatus = (status || 'draft') as 'draft' | 'published';
-    const finalOrderIndex = typeof order_index === 'string' && order_index.trim()
-      ? order_index.trim()
-      : '1.0';
+    const finalOrderIndex =
+      typeof order_index === 'string' && order_index.trim() ? order_index.trim() : '1.0';
+
+    if (captured_at !== undefined) {
+      if (captured_at === null || captured_at === '') {
+        capturedAt = null;
+      } else if (typeof captured_at === 'string') {
+        const parsed = new Date(captured_at);
+        if (Number.isNaN(parsed.getTime())) {
+          return NextResponse.json(
+            {
+              error: 'invalid captured_at',
+              message: 'captured_at must be a valid date string or null',
+            },
+            { status: 400 }
+          );
+        }
+        capturedAt = parsed.toISOString();
+      } else {
+        return NextResponse.json(
+          { error: 'invalid captured_at', message: 'captured_at must be a string or null' },
+          { status: 400 }
+        );
+      }
+    }
 
     if (rawLocationId !== undefined) {
       if (rawLocationId === null || rawLocationId === '') {
@@ -208,7 +239,7 @@ export async function POST(
           if (!location || location.year_id !== year.id) {
             return NextResponse.json(
               { error: 'invalid location', message: 'Location does not exist for this year' },
-              { status: 400 },
+              { status: 400 }
             );
           }
           locationId = location.id;
@@ -221,7 +252,7 @@ export async function POST(
           if (!location || location.year_id !== year.id) {
             return NextResponse.json(
               { error: 'invalid location', message: 'Location does not exist for this year' },
-              { status: 400 },
+              { status: 400 }
             );
           }
           locationId = location.id;
@@ -229,7 +260,7 @@ export async function POST(
       } else {
         return NextResponse.json(
           { error: 'invalid location', message: 'location_id must be a string or null' },
-          { status: 400 },
+          { status: 400 }
         );
       }
     }
@@ -240,6 +271,7 @@ export async function POST(
           slug,
           title,
           summary: typeof summary === 'string' ? summary : null,
+          captured_at: capturedAt,
           status: normalizedStatus,
           order_index: finalOrderIndex,
           cover_asset_id: typeof cover_asset_id === 'string' ? cover_asset_id : null,
@@ -263,7 +295,7 @@ export async function POST(
         if (error instanceof Error && /UNIQUE constraint/i.test(error.message)) {
           return NextResponse.json(
             { error: 'conflict', message: 'duplicate slug for this year' },
-            { status: 409 },
+            { status: 409 }
           );
         }
         throw error;
@@ -276,6 +308,7 @@ export async function POST(
       slug,
       title,
       summary: typeof summary === 'string' ? summary : null,
+      captured_at: capturedAt,
       status: normalizedStatus,
       order_index: finalOrderIndex,
     };
@@ -312,7 +345,7 @@ export async function POST(
     if (error instanceof Error && error.message.includes('Unique constraint')) {
       return NextResponse.json(
         { error: 'conflict', message: 'duplicate slug for this year' },
-        { status: 409 },
+        { status: 409 }
       );
     }
     console.error('Error creating collection:', error);
