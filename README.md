@@ -20,6 +20,7 @@
 - `specs/003-admin-years-collections/quickstart.md`
 - `specs/004-/quickstart.md`
 - `docs/admin-workflow.md`
+- `docs/admin-cli.md`
 
 ## Private Tool Separation
 
@@ -30,15 +31,28 @@
 
 如需新增私有工具，請遵循上述規範並避免將敏感程式碼或密鑰打包至前端資產。
 
+## Admin CLI
+
+專案現在包含一個本地管理 CLI：`tools/admin-cli`。
+
+- 執行方式：`npm run admin-cli -- help`
+- 用途：透過 Cloudflare Access 保護的 admin API 建立年份、地點、作品集，並上傳與整理照片
+- 限制：CLI 不提供任何刪除、移除或解除關聯功能；刪除一律保留在後台 UI 手動操作
+- 拍攝日期：統一寫入 `captured_at`，不會自動從 EXIF 或 `updated_at` 回填
+
+詳細格式與流程請看 `docs/admin-cli.md`。
+
 ## No-JS Baseline
 
 前台閱讀在停用 JavaScript 時仍可完整瀏覽：
+
 - 作品集視圖之點點導航退化為 `<noscript>` 連結清單（可逐張開啟）。
 - 影像以原生 `<img>` 呈現並提供替代文字（alt）。
 
 ## 技術棧
 
 ## 專案結構（重點）
+
 - src/app — Next.js pages 與路由（site / admin）
 - src/app/api — 提供上傳、年分、作品集等 REST API 路由
 - src/components — UI 與共用元件
@@ -47,6 +61,7 @@
 - tests — contract 與 integration 測試
 
 ## 在本機啟動
+
 1. 下載相依套件
    ```
    npm install
@@ -74,6 +89,7 @@ npm run lighthouse
 （如專案使用特殊部署環境或變數，請參考專案內相關設定檔或部署說明）
 
 ## 環境變數（測試穩定性）
+
 為確保契約/整合測試穩定，請設定以下變數：
 
 - `TEST_API_URL`：直傳端點基底（通常為網站根，例如 `http://localhost:3000`）
@@ -93,24 +109,27 @@ GitHub Actions（CI）範例（於 workflow 檔加入 env）：
 
 ```yaml
 env:
-   TEST_API_URL: http://localhost:3000
-   TEST_API_BASE: http://localhost:3000/api
-   BYPASS_ACCESS_FOR_TESTS: true
+  TEST_API_URL: http://localhost:3000
+  TEST_API_BASE: http://localhost:3000/api
+  BYPASS_ACCESS_FOR_TESTS: true
 ```
 
 提示：若測試仍回報 401/403，請確認 `BYPASS_ACCESS_FOR_TESTS` 已生效；若直傳相關測試失敗，請檢查 `TEST_API_URL` 是否指向可用的站台根並且路由 `/api/images/direct-upload` 存在。
 
 ## API 快速參考
+
 - /api/years — 取得年份列表
 - /api/years/[year_id]/collections — 取得某年份下的作品集
 - /api/collections/[collection_id]/assets — 取得或上傳作品集內的影像
 - /api/images/direct-upload — 影像直接上傳端點
-（詳細 API 規格請參考 src/app/api 目錄中的 route 檔案）
+  （詳細 API 規格請參考 src/app/api 目錄中的 route 檔案）
 
 ## 貢獻
+
 歡迎提出 issue 或 pull request。請遵守既有程式碼風格、加入必要測試並在 PR 說明中清楚描述修改內容與原因。
 
 ## 授權
+
 本專案採用 MIT 授權條款（MIT License）。
 
 完整授權內容請參考專案根目錄的 `LICENSE` 檔案。若尚未建立 `LICENSE` 檔案，可使用以下內容並儲存為專案根目錄的 `LICENSE`：
