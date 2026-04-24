@@ -1,6 +1,13 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import { useToast } from '@/components/admin/Toast';
@@ -31,7 +38,7 @@ type CollectionFormPayload = {
   title: string;
   summary?: string;
   status: 'draft' | 'published';
-  updated_at?: string;
+  captured_at?: string | null;
   location_id?: string;
   cover_asset_id?: string | null;
 };
@@ -45,6 +52,7 @@ type CollectionRecord = {
   status: 'draft' | 'published';
   location_id: string | null;
   order_index: string | null;
+  captured_at: string | null;
   updated_at: string | null;
   cover_asset_id: string | null;
 };
@@ -54,7 +62,7 @@ type CollectionFormState = {
   title: string;
   summary?: string;
   status: 'draft' | 'published';
-  updated_at?: string;
+  captured_at?: string;
   cover_asset_id?: string | null;
 };
 
@@ -81,10 +89,14 @@ const isCollectionRecord = (value: unknown): value is CollectionRecord =>
       typeof (value as Partial<CollectionRecord>).slug === 'string' &&
       typeof (value as Partial<CollectionRecord>).title === 'string' &&
       (((value as Partial<CollectionRecord>).status as CollectionRecord['status']) === 'draft' ||
-        ((value as Partial<CollectionRecord>).status as CollectionRecord['status']) === 'published'),
+        ((value as Partial<CollectionRecord>).status as CollectionRecord['status']) === 'published')
   );
 
-async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknown) => value is T): Promise<T> {
+async function safeJson<T>(
+  res: Response,
+  fallback: T,
+  validate?: (value: unknown) => value is T
+): Promise<T> {
   try {
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) return fallback;
@@ -98,7 +110,12 @@ async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknow
   }
 }
 
-async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retries = 2, backoffMs = 200): Promise<Response> {
+async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  retries = 2,
+  backoffMs = 200
+): Promise<Response> {
   let lastErr: unknown = null;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
@@ -122,6 +139,7 @@ const normalize = (record: CollectionRecord): AdminCollectionDetail => ({
   status: record.status,
   locationId: record.location_id,
   orderIndex: record.order_index ?? null,
+  capturedAt: record.captured_at ?? null,
   updatedAt: record.updated_at ?? null,
   summary: record.summary,
   coverAssetId: record.cover_asset_id,
@@ -135,6 +153,7 @@ const toSummary = (record: CollectionRecord): AdminCollectionSummary => ({
   status: record.status,
   locationId: record.location_id,
   orderIndex: record.order_index ?? null,
+  capturedAt: record.captured_at ?? null,
   updatedAt: record.updated_at ?? null,
 });
 
@@ -153,7 +172,8 @@ const isErrorPayload = (value: unknown): value is { message?: string; error?: st
   Boolean(
     value &&
       typeof value === 'object' &&
-      ('message' in (value as Record<string, unknown>) || 'error' in (value as Record<string, unknown>)),
+      ('message' in (value as Record<string, unknown>) ||
+        'error' in (value as Record<string, unknown>))
   );
 
 export default function CollectionManager({
@@ -171,29 +191,45 @@ export default function CollectionManager({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<AdminCollectionDetail | null>(null);
-  const [form, setForm] = useState<CollectionFormState>({ slug: '', title: '', status: 'draft', cover_asset_id: null });
+  const [form, setForm] = useState<CollectionFormState>({
+    slug: '',
+    title: '',
+    status: 'draft',
+    cover_asset_id: null,
+  });
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [photoManagerCollection, setPhotoManagerCollection] = useState<AdminCollectionDetail | null>(null);
+  const [photoManagerCollection, setPhotoManagerCollection] =
+    useState<AdminCollectionDetail | null>(null);
   const [liveText, setLiveText] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
   const toast = useToast();
   const formRef = useRef<HTMLDivElement>(null);
 
-  const locationsMap = useMemo(() => new Map(locations.map((loc) => [loc.id, loc.name])), [locations]);
+  const locationsMap = useMemo(
+    () => new Map(locations.map((loc) => [loc.id, loc.name])),
+    [locations]
+  );
   const activeLocationId = activeLocation?.id ?? null;
   const visibleCollections = useMemo(
-    () => (activeLocationId ? collections.filter((item) => item.locationId === activeLocationId) : collections),
-    [collections, activeLocationId],
+    () =>
+      activeLocationId
+        ? collections.filter((item) => item.locationId === activeLocationId)
+        : collections,
+    [collections, activeLocationId]
   );
   const isFilteringByLocation = Boolean(activeLocationId);
-  const unassignedCount = useMemo(() => collections.filter((item) => !item.locationId).length, [collections]);
+  const unassignedCount = useMemo(
+    () => collections.filter((item) => !item.locationId).length,
+    [collections]
+  );
   const otherLocationsCount = useMemo(
     () =>
       activeLocationId
-        ? collections.filter((item) => item.locationId && item.locationId !== activeLocationId).length
+        ? collections.filter((item) => item.locationId && item.locationId !== activeLocationId)
+            .length
         : 0,
-    [collections, activeLocationId],
+    [collections, activeLocationId]
   );
 
   const loadCollections = useCallback(async () => {
@@ -203,7 +239,11 @@ export default function CollectionManager({
     }
     setLoading(true);
     try {
-      const res = await fetchWithRetry(`/api/admin/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' }, 1);
+      const res = await fetchWithRetry(
+        `/api/admin/years/${encodeURIComponent(yearId)}/collections?status=all`,
+        { cache: 'no-store' },
+        1
+      );
       const data = await safeJson<CollectionRecord[]>(res, [], isCollectionArray);
       if (!res.ok) {
         throw new Error('Failed to load collections');
@@ -224,7 +264,14 @@ export default function CollectionManager({
   }, [loadCollections, refreshKey]);
 
   const resetForm = () => {
-    setForm({ slug: '', title: '', summary: '', status: 'draft', updated_at: '', cover_asset_id: null });
+    setForm({
+      slug: '',
+      title: '',
+      summary: '',
+      status: 'draft',
+      captured_at: '',
+      cover_asset_id: null,
+    });
     setSlugTouched(false);
   };
 
@@ -234,7 +281,9 @@ export default function CollectionManager({
     setShowForm(true);
     requestAnimationFrame(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const input = formRef.current?.querySelector('#collection-title-input') as HTMLInputElement | null;
+      const input = formRef.current?.querySelector(
+        '#collection-title-input'
+      ) as HTMLInputElement | null;
       input?.focus();
     });
   };
@@ -246,14 +295,18 @@ export default function CollectionManager({
       title: collection.title,
       summary: collection.summary ?? '',
       status: collection.status,
-      updated_at: collection.updatedAt ? new Date(collection.updatedAt).toISOString().split('T')[0] : '',
+      captured_at: collection.capturedAt
+        ? new Date(collection.capturedAt).toISOString().split('T')[0]
+        : '',
       cover_asset_id: collection.coverAssetId ?? null,
     });
     setSlugTouched(true);
     setShowForm(true);
     requestAnimationFrame(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const input = formRef.current?.querySelector('#collection-title-input') as HTMLInputElement | null;
+      const input = formRef.current?.querySelector(
+        '#collection-title-input'
+      ) as HTMLInputElement | null;
       input?.focus();
     });
   };
@@ -279,8 +332,8 @@ export default function CollectionManager({
     try {
       const payload: CollectionFormPayload = { ...form };
       if (!payload.summary) delete payload.summary;
-      if (!payload.updated_at) delete payload.updated_at;
-  if (payload.cover_asset_id === undefined) payload.cover_asset_id = null;
+      if (!payload.captured_at) payload.captured_at = null;
+      if (payload.cover_asset_id === undefined) payload.cover_asset_id = null;
 
       let createdRecord: CollectionRecord | null = null;
 
@@ -386,7 +439,10 @@ export default function CollectionManager({
       insertionIndex += 1;
     }
     ordered.splice(insertionIndex, 0, moved);
-    const updates = ordered.map((item, idx) => ({ id: item.id, order_index: String(idx + 1).padStart(6, '0') }));
+    const updates = ordered.map((item, idx) => ({
+      id: item.id,
+      order_index: String(idx + 1).padStart(6, '0'),
+    }));
 
     try {
       const results = await Promise.all(
@@ -395,11 +451,16 @@ export default function CollectionManager({
             method: 'PUT',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ order_index: u.order_index }),
-          }),
-        ),
+          })
+        )
       );
       if (!results.every((res) => res.ok)) throw new Error('排序失敗');
-      setMessage({ type: 'success', text: activeLocation ? `作品集排序已更新（${activeLocation.name}）。` : '作品集排序已更新。' });
+      setMessage({
+        type: 'success',
+        text: activeLocation
+          ? `作品集排序已更新（${activeLocation.name}）。`
+          : '作品集排序已更新。',
+      });
       const locationLabel = activeLocation ? ` in ${activeLocation.name}` : '';
       setLiveText(`Reordered collection: ${moved.title}${locationLabel}`);
       await loadCollections();
@@ -424,7 +485,10 @@ export default function CollectionManager({
 
   if (!yearId) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600" data-testid="collection-manager-empty">
+      <div
+        className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600"
+        data-testid="collection-manager-empty"
+      >
         請先選擇左側年份後再進行作品集管理。
       </div>
     );
@@ -448,7 +512,13 @@ export default function CollectionManager({
             新增作品集
           </button>
         </div>
-        <div role="status" aria-live="polite" aria-atomic="true" data-testid="collection-announce" className="sr-only">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          data-testid="collection-announce"
+          className="sr-only"
+        >
           {liveText}
         </div>
         {message && (
@@ -460,15 +530,17 @@ export default function CollectionManager({
           </div>
         )}
 
-        {locations.length > 0 && (
-          activeLocation ? (
+        {locations.length > 0 &&
+          (activeLocation ? (
             <div
               className="rounded-md border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-800"
               data-testid="collection-location-summary"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-blue-900">目前地點：{activeLocation.name}</p>
+                  <p className="text-sm font-semibold text-blue-900">
+                    目前地點：{activeLocation.name}
+                  </p>
                   <p className="text-xs text-blue-700">slug：{activeLocation.slug}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs">
@@ -489,18 +561,24 @@ export default function CollectionManager({
               className="rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600"
               data-testid="collection-location-hint"
             >
-              點選上方地點即可篩選作品集；目前顯示此年份的所有 {collections.length} 個作品集，其中 {unassignedCount}
+              點選上方地點即可篩選作品集；目前顯示此年份的所有 {collections.length} 個作品集，其中{' '}
+              {unassignedCount}
               個未指派地點。
             </div>
-          )
-        )}
+          ))}
       </div>
 
       {showForm && (
-        <div ref={formRef} data-testid="collection-form" className="rounded-lg border border-gray-200 bg-white p-4">
+        <div
+          ref={formRef}
+          data-testid="collection-form"
+          className="rounded-lg border border-gray-200 bg-white p-4"
+        >
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm" htmlFor="collection-slug-input">Slug</label>
+              <label className="mb-1 block text-sm" htmlFor="collection-slug-input">
+                Slug
+              </label>
               <input
                 id="collection-slug-input"
                 data-testid="collection-slug-input"
@@ -516,13 +594,19 @@ export default function CollectionManager({
               />
               <p className="mt-1 text-xs text-gray-500">僅限小寫英數字與連字號，會自動轉換。</p>
               {!form.slug && (
-                <div id="collection-slug-error" className="mt-1 text-xs text-red-600" data-testid="field-error">
+                <div
+                  id="collection-slug-error"
+                  className="mt-1 text-xs text-red-600"
+                  data-testid="field-error"
+                >
                   Slug is required
                 </div>
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm" htmlFor="collection-title-input">Title</label>
+              <label className="mb-1 block text-sm" htmlFor="collection-title-input">
+                Title
+              </label>
               <input
                 id="collection-title-input"
                 data-testid="collection-title-input"
@@ -542,13 +626,19 @@ export default function CollectionManager({
                 aria-describedby={!form.title ? 'collection-title-error' : undefined}
               />
               {!form.title && (
-                <div id="collection-title-error" className="mt-1 text-xs text-red-600" data-testid="field-error">
+                <div
+                  id="collection-title-error"
+                  className="mt-1 text-xs text-red-600"
+                  data-testid="field-error"
+                >
                   Title is required
                 </div>
               )}
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm" htmlFor="collection-summary-textarea">Summary</label>
+              <label className="mb-1 block text-sm" htmlFor="collection-summary-textarea">
+                Summary
+              </label>
               <textarea
                 id="collection-summary-textarea"
                 data-testid="collection-summary-textarea"
@@ -575,29 +665,42 @@ export default function CollectionManager({
               )}
             </div>
             <div>
-              <label className="mb-1 block text-sm" htmlFor="collection-status-select">Status</label>
+              <label className="mb-1 block text-sm" htmlFor="collection-status-select">
+                Status
+              </label>
               <select
                 id="collection-status-select"
                 data-testid="collection-status-select"
                 className="w-full rounded border px-2 py-1"
                 value={form.status}
-                onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value as 'draft' | 'published' }))}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    status: event.target.value as 'draft' | 'published',
+                  }))
+                }
               >
                 <option value="draft">draft</option>
                 <option value="published">published</option>
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm" htmlFor="collection-updated-at-input">拍攝日期（選填）</label>
+              <label className="mb-1 block text-sm" htmlFor="collection-captured-at-input">
+                拍攝日期（選填）
+              </label>
               <input
                 type="date"
-                id="collection-updated-at-input"
-                data-testid="collection-updated-at-input"
+                id="collection-captured-at-input"
+                data-testid="collection-captured-at-input"
                 className="w-full rounded border px-2 py-1"
-                value={form.updated_at || ''}
-                onChange={(event) => setForm((prev) => ({ ...prev, updated_at: event.target.value }))}
+                value={form.captured_at || ''}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, captured_at: event.target.value }))
+                }
               />
-              <div className="mt-1 text-xs text-gray-500">留空則使用自動產生時間。</div>
+              <div className="mt-1 text-xs text-gray-500">
+                留空則不設定拍攝日期，可由 CLI 或手動補上。
+              </div>
             </div>
           </div>
           <div className="mt-3 flex gap-2">
@@ -625,28 +728,42 @@ export default function CollectionManager({
       )}
 
       {loading ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600" data-testid="collection-loading">
+        <div
+          className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600"
+          data-testid="collection-loading"
+        >
           載入作品集中…
         </div>
       ) : collections.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600" data-testid="collection-empty">
+        <div
+          className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600"
+          data-testid="collection-empty"
+        >
           尚未建立任何作品集。
         </div>
       ) : isFilteringByLocation && visibleCollections.length === 0 ? (
-        <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4 text-sm text-blue-800" data-testid="collection-empty-filtered">
+        <div
+          className="rounded-lg border border-blue-200 bg-blue-50/70 p-4 text-sm text-blue-800"
+          data-testid="collection-empty-filtered"
+        >
           「{activeLocation?.name}」目前尚未指派任何作品集，可在下方的作品集指派區進行調整。
         </div>
       ) : (
         <ul className="space-y-3">
           {visibleCollections.map((collection, index) => {
-            const locationName = collection.locationId ? locationsMap.get(collection.locationId) ?? '未知地點' : null;
-            const shouldShowLocation = !activeLocationId || collection.locationId !== activeLocationId;
+            const locationName = collection.locationId
+              ? (locationsMap.get(collection.locationId) ?? '未知地點')
+              : null;
+            const shouldShowLocation =
+              !activeLocationId || collection.locationId !== activeLocationId;
             return (
               <li
                 key={collection.id}
                 data-testid="collection-item"
                 className={`flex flex-col gap-3 rounded-lg p-4 shadow-sm transition md:flex-row md:items-start md:justify-between ${
-                  isFilteringByLocation ? 'border border-blue-200 bg-blue-50/70 ring-1 ring-blue-100' : 'border border-gray-200 bg-white'
+                  isFilteringByLocation
+                    ? 'border border-blue-200 bg-blue-50/70 ring-1 ring-blue-100'
+                    : 'border border-gray-200 bg-white'
                 }`}
                 tabIndex={0}
                 onKeyDown={(event) => onCollectionKeyDown(event, collection.id)}
@@ -654,13 +771,18 @@ export default function CollectionManager({
                 <div className="space-y-1 text-sm">
                   <div className="flex items-center gap-2 text-gray-900">
                     <span className="font-medium">{collection.title}</span>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{collection.status}</span>
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                      {collection.status}
+                    </span>
                   </div>
                   <div className="text-xs text-gray-500">Slug：{collection.slug}</div>
-                  {shouldShowLocation && locationName && <div className="text-xs text-gray-500">目前地點：{locationName}</div>}
-                  {collection.updatedAt && (
+                  {shouldShowLocation && locationName && (
+                    <div className="text-xs text-gray-500">目前地點：{locationName}</div>
+                  )}
+                  {collection.capturedAt && (
                     <div className="text-xs text-gray-500">
-                      拍攝於 {new Date(collection.updatedAt).toLocaleDateString('zh-TW', {
+                      拍攝於{' '}
+                      {new Date(collection.capturedAt).toLocaleDateString('zh-TW', {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit',
@@ -737,7 +859,9 @@ export default function CollectionManager({
             setConfirmId(null);
           }}
         >
-          <p id="confirm-delete-collection-title" className="mb-3">確定要刪除此作品集嗎？</p>
+          <p id="confirm-delete-collection-title" className="mb-3">
+            確定要刪除此作品集嗎？
+          </p>
           <div className="flex justify-end gap-2">
             <button
               type="button"

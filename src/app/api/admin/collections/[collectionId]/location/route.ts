@@ -49,6 +49,7 @@ type CollectionRecord = {
   status: 'draft' | 'published';
   location_id: string | null;
   order_index: string | null;
+  captured_at: Date | string | null;
   updated_at: Date | null;
 };
 
@@ -60,17 +61,20 @@ type CollectionDto = {
   status: 'draft' | 'published';
   locationId: string | null;
   orderIndex: string | null;
+  capturedAt: string | null;
   updatedAt: string | null;
 };
 
-type PostResult = NextResponse<CollectionDto | { error: string; message: string; field?: string }> | Response;
+type PostResult =
+  | NextResponse<CollectionDto | { error: string; message: string; field?: string }>
+  | Response;
 
 const ADMIN_ACTOR = 'system';
 
 function validationError(message: string, field?: string) {
   return NextResponse.json(
     field ? { error: 'validation_error', message, field } : { error: 'validation_error', message },
-    { status: 400 },
+    { status: 400 }
   );
 }
 
@@ -80,7 +84,7 @@ function notFound(message: string) {
 
 async function recordAudit(
   useD1: boolean,
-  params: { action: AuditAction; collectionId: string; payload?: Record<string, unknown> },
+  params: { action: AuditAction; collectionId: string; payload?: Record<string, unknown> }
 ) {
   const { action, collectionId, payload } = params;
   if (useD1) {
@@ -129,7 +133,9 @@ function mapCollection(record: CollectionRecord): CollectionDto {
     status: record.status,
     locationId: record.location_id,
     orderIndex: record.order_index,
-    updatedAt: record.updated_at instanceof Date ? record.updated_at.toISOString() : record.updated_at,
+    capturedAt: record.captured_at ? new Date(record.captured_at).toISOString() : null,
+    updatedAt:
+      record.updated_at instanceof Date ? record.updated_at.toISOString() : record.updated_at,
   };
 }
 
@@ -162,7 +168,8 @@ async function postImpl(request: NextRequest, context: RouteContextLike): Promis
     const resolvedParams = await Promise.resolve(context.params);
     const raw = resolvedParams?.collectionId;
     const collectionParam = Array.isArray(raw) ? raw[0] : raw;
-    const collectionId = typeof collectionParam === 'string' && collectionParam ? collectionParam : '';
+    const collectionId =
+      typeof collectionParam === 'string' && collectionParam ? collectionParam : '';
     const decodedCollectionId = collectionId ? decodeURIComponent(collectionId) : '';
     if (!uuidRegex.test(decodedCollectionId)) {
       return validationError('Collection ID 格式不正確。', 'collectionId');
@@ -175,7 +182,11 @@ async function postImpl(request: NextRequest, context: RouteContextLike): Promis
       return validationError('請提供 locationId 欄位。', 'locationId');
     }
 
-    if (typeof normalizedLocation === 'string' && normalizedLocation && !uuidRegex.test(normalizedLocation)) {
+    if (
+      typeof normalizedLocation === 'string' &&
+      normalizedLocation &&
+      !uuidRegex.test(normalizedLocation)
+    ) {
       return validationError('地點 ID 格式不正確。', 'locationId');
     }
 
@@ -185,21 +196,27 @@ async function postImpl(request: NextRequest, context: RouteContextLike): Promis
     if (useD1) {
       const db = requireD1();
 
-      const collectionRow = await db.prepare(
-        `SELECT id, year_id, title, slug, status, location_id, order_index, updated_at FROM collections WHERE id = ?1 LIMIT 1`,
-      ).bind(decodedCollectionId).first() as Record<string, unknown> | null;
+      const collectionRow = (await db
+        .prepare(
+          `SELECT id, year_id, title, slug, status, location_id, order_index, captured_at, updated_at FROM collections WHERE id = ?1 LIMIT 1`
+        )
+        .bind(decodedCollectionId)
+        .first()) as Record<string, unknown> | null;
 
       if (!collectionRow) {
         return notFound('找不到作品集。');
       }
 
       const yearId = String(collectionRow.year_id);
-      const previousLocationId = collectionRow.location_id ? String(collectionRow.location_id) : null;
+      const previousLocationId = collectionRow.location_id
+        ? String(collectionRow.location_id)
+        : null;
 
       if (targetLocationId === null) {
-        await db.prepare(
-          'UPDATE collections SET location_id = NULL, updated_at = ?1 WHERE id = ?2',
-        ).bind(new Date().toISOString(), decodedCollectionId).run();
+        await db
+          .prepare('UPDATE collections SET location_id = NULL, updated_at = ?1 WHERE id = ?2')
+          .bind(new Date().toISOString(), decodedCollectionId)
+          .run();
       } else {
         const location = await d1FindLocationById(targetLocationId);
         if (!location) {
@@ -209,14 +226,18 @@ async function postImpl(request: NextRequest, context: RouteContextLike): Promis
           return validationError('地點必須與作品集屬於同一年份。', 'locationId');
         }
 
-        await db.prepare(
-          'UPDATE collections SET location_id = ?1, updated_at = ?2 WHERE id = ?3',
-        ).bind(location.id, new Date().toISOString(), decodedCollectionId).run();
+        await db
+          .prepare('UPDATE collections SET location_id = ?1, updated_at = ?2 WHERE id = ?3')
+          .bind(location.id, new Date().toISOString(), decodedCollectionId)
+          .run();
       }
 
-      const updated = await db.prepare(
-        'SELECT id, year_id, title, slug, status, location_id, order_index, updated_at FROM collections WHERE id = ?1 LIMIT 1',
-      ).bind(decodedCollectionId).first() as Record<string, unknown> | null;
+      const updated = (await db
+        .prepare(
+          'SELECT id, year_id, title, slug, status, location_id, order_index, captured_at, updated_at FROM collections WHERE id = ?1 LIMIT 1'
+        )
+        .bind(decodedCollectionId)
+        .first()) as Record<string, unknown> | null;
 
       if (!updated) {
         return notFound('找不到作品集。');
@@ -245,6 +266,7 @@ async function postImpl(request: NextRequest, context: RouteContextLike): Promis
         status: true,
         location_id: true,
         order_index: true,
+        captured_at: true,
         updated_at: true,
       },
     });
@@ -286,6 +308,7 @@ async function postImpl(request: NextRequest, context: RouteContextLike): Promis
         status: true,
         location_id: true,
         order_index: true,
+        captured_at: true,
         updated_at: true,
       },
     });
@@ -304,11 +327,14 @@ async function postImpl(request: NextRequest, context: RouteContextLike): Promis
       return error;
     }
     console.error('[POST assign collection location] unexpected error', error);
-    return NextResponse.json({ error: 'internal_error', message: '更新作品集指派時發生錯誤。' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'internal_error', message: '更新作品集指派時發生錯誤。' },
+      { status: 500 }
+    );
   }
 }
 
 export const POST = postImpl as (
   request: NextRequest,
-  context: RouteContext,
+  context: RouteContext
 ) => Promise<PostResult>;

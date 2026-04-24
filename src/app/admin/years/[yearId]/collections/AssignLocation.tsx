@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -15,6 +15,7 @@ export interface AdminCollectionSummary {
   status: AdminCollectionStatus;
   locationId: string | null;
   orderIndex: string | null;
+  capturedAt: string | null;
   updatedAt: string | null;
 }
 
@@ -23,7 +24,10 @@ interface AssignLocationProps {
   yearLabel: string;
   activeLocation: AdminLocation;
   locations: AdminLocation[];
-  onAssignmentChange: (collection: AdminCollectionSummary, previousLocationId: string | null) => void;
+  onAssignmentChange: (
+    collection: AdminCollectionSummary,
+    previousLocationId: string | null
+  ) => void;
   refreshKey?: number | string;
 }
 
@@ -35,6 +39,7 @@ type CollectionRecord = {
   status: AdminCollectionStatus;
   location_id: string | null;
   order_index: string | null;
+  captured_at: string | null;
   updated_at: string | null;
 };
 
@@ -66,6 +71,7 @@ function normalizeCollection(record: CollectionRecord): AdminCollectionSummary {
     status: record.status,
     locationId: record.location_id,
     orderIndex: record.order_index ?? null,
+    capturedAt: record.captured_at ?? null,
     updatedAt: record.updated_at ?? null,
   };
 }
@@ -79,7 +85,12 @@ function mapApiCollection(record: any): AdminCollectionSummary {
       updated_at?: string | null;
     };
 
-    const yearId = typeof obj.yearId === 'string' ? obj.yearId : typeof obj.year_id === 'string' ? obj.year_id : '';
+    const yearId =
+      typeof obj.yearId === 'string'
+        ? obj.yearId
+        : typeof obj.year_id === 'string'
+          ? obj.year_id
+          : '';
     const locationId =
       typeof obj.locationId === 'string'
         ? obj.locationId
@@ -97,12 +108,23 @@ function mapApiCollection(record: any): AdminCollectionSummary {
       slug: typeof obj.slug === 'string' ? obj.slug : '',
       status: obj.status === 'draft' || obj.status === 'published' ? obj.status : 'draft',
       locationId,
-      orderIndex: typeof obj.orderIndex === 'string' ? obj.orderIndex : typeof obj.order_index === 'string' ? obj.order_index : null,
+      orderIndex:
+        typeof obj.orderIndex === 'string'
+          ? obj.orderIndex
+          : typeof obj.order_index === 'string'
+            ? obj.order_index
+            : null,
       updatedAt:
         typeof obj.updatedAt === 'string'
           ? obj.updatedAt
           : typeof obj.updated_at === 'string'
             ? obj.updated_at
+            : null,
+      capturedAt:
+        typeof obj.capturedAt === 'string'
+          ? obj.capturedAt
+          : typeof (obj as { captured_at?: string | null }).captured_at === 'string'
+            ? ((obj as { captured_at?: string | null }).captured_at ?? null)
             : null,
     };
   }
@@ -114,11 +136,16 @@ function mapApiCollection(record: any): AdminCollectionSummary {
     status: 'draft',
     locationId: null,
     orderIndex: null,
+    capturedAt: null,
     updatedAt: null,
   };
 }
 
-async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknown) => value is T): Promise<T> {
+async function safeJson<T>(
+  res: Response,
+  fallback: T,
+  validate?: (value: unknown) => value is T
+): Promise<T> {
   try {
     const contentType = res.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) return fallback;
@@ -132,7 +159,12 @@ async function safeJson<T>(res: Response, fallback: T, validate?: (value: unknow
   }
 }
 
-async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retries = 2, backoffMs = 200): Promise<Response> {
+async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  retries = 2,
+  backoffMs = 200
+): Promise<Response> {
   let lastError: unknown = null;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
@@ -152,7 +184,14 @@ async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, retr
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default function AssignLocation({ yearId, yearLabel, activeLocation, locations, onAssignmentChange, refreshKey }: AssignLocationProps) {
+export default function AssignLocation({
+  yearId,
+  yearLabel,
+  activeLocation,
+  locations,
+  onAssignmentChange,
+  refreshKey,
+}: AssignLocationProps) {
   const [collections, setCollections] = useState<AdminCollectionSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,7 +199,10 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
   const [showTransfers, setShowTransfers] = useState(false);
   const toast = useToast();
 
-  const locationsMap = useMemo(() => new Map(locations.map((loc) => [loc.id, loc.name])), [locations]);
+  const locationsMap = useMemo(
+    () => new Map(locations.map((loc) => [loc.id, loc.name])),
+    [locations]
+  );
 
   const reloadCollections = useCallback(async () => {
     if (!yearId) {
@@ -171,7 +213,11 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchWithRetry(`/api/admin/years/${encodeURIComponent(yearId)}/collections?status=all`, { cache: 'no-store' }, 1);
+      const res = await fetchWithRetry(
+        `/api/admin/years/${encodeURIComponent(yearId)}/collections?status=all`,
+        { cache: 'no-store' },
+        1
+      );
       if (!res.ok) {
         const fallback = await safeJson<{ message?: string; error?: string }>(res, {});
         throw new Error(fallback?.message || fallback?.error || '無法載入作品集資料。');
@@ -194,20 +240,26 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
 
   const assignedCollections = useMemo(
     () => collections.filter((collection) => collection.locationId === activeLocation.id),
-    [collections, activeLocation.id],
+    [collections, activeLocation.id]
   );
 
   const unassignedCollections = useMemo(
     () => collections.filter((collection) => !collection.locationId),
-    [collections],
+    [collections]
   );
 
   const otherLocationCollections = useMemo(
-    () => collections.filter((collection) => collection.locationId && collection.locationId !== activeLocation.id),
-    [collections, activeLocation.id],
+    () =>
+      collections.filter(
+        (collection) => collection.locationId && collection.locationId !== activeLocation.id
+      ),
+    [collections, activeLocation.id]
   );
 
-  async function handleAssignment(collection: AdminCollectionSummary, targetLocationId: string | null) {
+  async function handleAssignment(
+    collection: AdminCollectionSummary,
+    targetLocationId: string | null
+  ) {
     if (!collection.id || !uuidRegex.test(collection.id)) {
       toast.error('無效的作品集 ID。');
       return;
@@ -225,11 +277,14 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
 
     setBusyCollectionId(collection.id);
     try {
-      const res = await fetch(`/api/admin/collections/${encodeURIComponent(collection.id)}/location`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ locationId: targetLocationId } satisfies AssignmentPayload),
-      });
+      const res = await fetch(
+        `/api/admin/collections/${encodeURIComponent(collection.id)}/location`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ locationId: targetLocationId } satisfies AssignmentPayload),
+        }
+      );
 
       if (!res.ok) {
         const info = await safeJson<{ message?: string; error?: string }>(res, {});
@@ -237,13 +292,15 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
       }
 
       const updatedCollection = mapApiCollection(await res.json());
-      setCollections((prev) => prev.map((item) => (item.id === updatedCollection.id ? updatedCollection : item)));
+      setCollections((prev) =>
+        prev.map((item) => (item.id === updatedCollection.id ? updatedCollection : item))
+      );
       onAssignmentChange(updatedCollection, collection.locationId);
 
       toast.success(
         targetLocationId
           ? `已將 ${collection.title} 指派至 ${activeLocation.name}。`
-          : `已取消 ${collection.title} 的地點指派。`,
+          : `已取消 ${collection.title} 的地點指派。`
       );
     } catch (assignError) {
       const text = assignError instanceof Error ? assignError.message : '指派失敗。';
@@ -259,24 +316,38 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
     const activeAssigned = assignedCollections.length;
     const other = otherLocationCollections.length;
     return { total, unassigned, activeAssigned, other };
-  }, [collections.length, unassignedCollections.length, assignedCollections.length, otherLocationCollections.length]);
+  }, [
+    collections.length,
+    unassignedCollections.length,
+    assignedCollections.length,
+    otherLocationCollections.length,
+  ]);
 
   return (
     <div className="space-y-6" data-testid="assign-location-pane">
       <div className="flex flex-col gap-1">
         <p className="text-sm text-gray-600">年份：{yearLabel}</p>
-        <p className="text-sm text-gray-600">目前地點：<span className="font-medium text-gray-900">{activeLocation.name}</span></p>
+        <p className="text-sm text-gray-600">
+          目前地點：<span className="font-medium text-gray-900">{activeLocation.name}</span>
+        </p>
         <div className="text-xs text-gray-500" data-testid="assignment-summary">
-          總計 {summaryCounts.total} 個作品集，{summaryCounts.activeAssigned} 個屬於此地點，{summaryCounts.unassigned} 個未指派，{summaryCounts.other} 個屬於其他地點。
+          總計 {summaryCounts.total} 個作品集，{summaryCounts.activeAssigned} 個屬於此地點，
+          {summaryCounts.unassigned} 個未指派，{summaryCounts.other} 個屬於其他地點。
         </div>
       </div>
 
       {loading ? (
-        <div className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-500" data-testid="assignment-loading">
+        <div
+          className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-500"
+          data-testid="assignment-loading"
+        >
           載入作品集中…
         </div>
       ) : error ? (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700" data-testid="assignment-error">
+        <div
+          className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          data-testid="assignment-error"
+        >
           {error}
         </div>
       ) : (
@@ -287,7 +358,10 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
               <p className="text-xs text-gray-500">僅顯示屬於「{activeLocation.name}」的作品集。</p>
             </div>
             {assignedCollections.length === 0 ? (
-              <div className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600" data-testid="assignment-assigned-empty">
+              <div
+                className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600"
+                data-testid="assignment-assigned-empty"
+              >
                 目前沒有作品集指派到此地點。
               </div>
             ) : (
@@ -304,11 +378,15 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-gray-900">
                             <span className="font-medium">{collection.title}</span>
-                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{collection.status}</span>
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                              {collection.status}
+                            </span>
                           </div>
                           <div className="text-xs text-gray-500">
                             指派於 {activeLocation.name}
-                            {collection.updatedAt ? ` · 拍攝於 ${new Date(collection.updatedAt).toLocaleDateString('zh-TW')}` : ''}
+                            {collection.capturedAt
+                              ? ` · 拍攝於 ${new Date(collection.capturedAt).toLocaleDateString('zh-TW')}`
+                              : ''}
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 sm:min-w-[180px]">
@@ -338,7 +416,10 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
               <p className="text-xs text-gray-500">僅顯示尚未指派地點的作品集。</p>
             </div>
             {unassignedCollections.length === 0 ? (
-              <div className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600" data-testid="assignment-unassigned-empty">
+              <div
+                className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600"
+                data-testid="assignment-unassigned-empty"
+              >
                 目前沒有未指派的作品集。
               </div>
             ) : (
@@ -355,11 +436,15 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-gray-900">
                             <span className="font-medium">{collection.title}</span>
-                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{collection.status}</span>
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                              {collection.status}
+                            </span>
                           </div>
                           <div className="text-xs text-gray-500">
                             尚未指派地點
-                            {collection.updatedAt ? ` · 拍攝於 ${new Date(collection.updatedAt).toLocaleDateString('zh-TW')}` : ''}
+                            {collection.capturedAt
+                              ? ` · 拍攝於 ${new Date(collection.capturedAt).toLocaleDateString('zh-TW')}`
+                              : ''}
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 sm:min-w-[220px]">
@@ -387,7 +472,9 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
             <div className="flex items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-semibold text-gray-700">其他地點的作品集</h3>
-                <p className="text-xs text-gray-500">展開後可將其他地點的作品集移轉到「{activeLocation.name}」。</p>
+                <p className="text-xs text-gray-500">
+                  展開後可將其他地點的作品集移轉到「{activeLocation.name}」。
+                </p>
               </div>
               <button
                 type="button"
@@ -402,13 +489,18 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
             {showTransfers && (
               <div className="space-y-3" data-testid="assignment-transfer-list">
                 {otherLocationCollections.length === 0 ? (
-                  <div className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600" data-testid="assignment-transfer-empty">
+                  <div
+                    className="rounded-md border border-gray-200 bg-white p-4 text-sm text-gray-600"
+                    data-testid="assignment-transfer-empty"
+                  >
                     目前沒有其他地點的作品集。
                   </div>
                 ) : (
                   <ul className="space-y-3">
                     {otherLocationCollections.map((collection) => {
-                      const locationName = collection.locationId ? locationsMap.get(collection.locationId) ?? '未知地點' : '未知地點';
+                      const locationName = collection.locationId
+                        ? (locationsMap.get(collection.locationId) ?? '未知地點')
+                        : '未知地點';
                       const isBusy = busyCollectionId === collection.id;
                       return (
                         <li
@@ -420,7 +512,9 @@ export default function AssignLocation({ yearId, yearLabel, activeLocation, loca
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 text-gray-900">
                                 <span className="font-medium">{collection.title}</span>
-                                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{collection.status}</span>
+                                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                                  {collection.status}
+                                </span>
                               </div>
                               <div className="text-xs text-gray-500">目前指派於 {locationName}</div>
                             </div>

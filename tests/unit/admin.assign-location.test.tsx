@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import AssignLocation, { type AdminCollectionSummary } from '../../src/app/admin/years/[yearId]/collections/AssignLocation';
+import AssignLocation, {
+  type AdminCollectionSummary,
+} from '../../src/app/admin/years/[yearId]/collections/AssignLocation';
 import type { AdminLocation } from '../../src/app/admin/years/[yearId]/locations/Form';
 import { ToastProvider } from '../../src/components/admin/Toast';
 
@@ -7,7 +9,9 @@ function createFetchResponse(body: unknown, ok = true) {
   return {
     ok,
     status: ok ? 200 : 400,
-    headers: { get: (key: string) => (key.toLowerCase() === 'content-type' ? 'application/json' : null) },
+    headers: {
+      get: (key: string) => (key.toLowerCase() === 'content-type' ? 'application/json' : null),
+    },
     text: async () => JSON.stringify(body),
     json: async () => body,
   } as any;
@@ -50,6 +54,7 @@ describe('AssignLocation component', () => {
       status: 'draft' as const,
       location_id: null,
       order_index: '1.0',
+      captured_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
     },
   ];
@@ -60,8 +65,9 @@ describe('AssignLocation component', () => {
     title: 'Autumn Set',
     slug: 'autumn-set',
     status: 'draft',
-  locationId: '550e8400-e29b-41d4-a716-446655440201',
+    locationId: '550e8400-e29b-41d4-a716-446655440201',
     orderIndex: '1.0',
+    capturedAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   };
 
@@ -69,7 +75,8 @@ describe('AssignLocation component', () => {
 
   beforeEach(() => {
     originalFetch = global.fetch;
-    global.fetch = jest.fn()
+    global.fetch = jest
+      .fn()
       .mockResolvedValueOnce(createFetchResponse(collectionsApiResponse))
       .mockResolvedValueOnce(createFetchResponse(updatedCollection));
   });
@@ -91,7 +98,7 @@ describe('AssignLocation component', () => {
           locations={locations}
           onAssignmentChange={onAssignmentChange}
         />
-      </ToastProvider>,
+      </ToastProvider>
     );
 
     const assignButton = await screen.findByTestId('assignment-assign-btn');
@@ -110,7 +117,7 @@ describe('AssignLocation component', () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ locationId: '550e8400-e29b-41d4-a716-446655440201' }),
-      }),
+      })
     );
     const assignedItem = await screen.findByTestId('assignment-item-assigned');
     expect(assignedItem).toHaveTextContent('Autumn Set');
@@ -131,6 +138,7 @@ describe('AssignLocation component', () => {
         status: 'published' as const,
         location_id: '550e8400-e29b-41d4-a716-446655440202',
         order_index: '2.0',
+        captured_at: '2024-02-01T00:00:00Z',
         updated_at: '2024-02-01T00:00:00Z',
       },
     ];
@@ -143,10 +151,12 @@ describe('AssignLocation component', () => {
       status: 'published' as const,
       locationId: '550e8400-e29b-41d4-a716-446655440201',
       orderIndex: '2.0',
+      capturedAt: '2024-02-01T00:00:00Z',
       updatedAt: '2024-02-01T00:00:00Z',
     } satisfies AdminCollectionSummary;
 
-    global.fetch = jest.fn()
+    global.fetch = jest
+      .fn()
       .mockResolvedValueOnce(createFetchResponse(transferResponse))
       .mockResolvedValueOnce(createFetchResponse(updatedTransfer));
 
@@ -159,7 +169,7 @@ describe('AssignLocation component', () => {
           locations={locations}
           onAssignmentChange={onAssignmentChange}
         />
-      </ToastProvider>,
+      </ToastProvider>
     );
 
     const toggle = await screen.findByTestId('assignment-transfer-toggle');
@@ -182,7 +192,7 @@ describe('AssignLocation component', () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ locationId: '550e8400-e29b-41d4-a716-446655440201' }),
-      }),
+      })
     );
 
     const toast = await screen.findByTestId('toast-item');
