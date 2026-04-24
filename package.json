@@ -47,7 +47,8 @@
     "postdeploy": "echo '\n✅ 部署完成!請檢查您的網站是否正常運行。'",
     "ci:check:optional-calls": "sh -c \"if git grep -nE '\\\\?\\\\.\\\\(' -- src; then echo 'Found optional call, fail'; exit 1; fi; if git grep -nE '\\\\?\\\\.[A-Za-z_$][\\\\w$]*\\\\s*\\\\(' -- src; then echo 'Found optional method call, fail'; exit 1; fi\"",
     "diag:scan-call": "rg -n \\\"\\.call\\(\\\" .next/static/chunks/app --no-ignore || true",
-    "r2:sync-static": "node tools/r2-sync-static.js"
+    "r2:sync-static": "node tools/r2-sync-static.js",
+    "admin-cli": "ts-node --project tools/admin-cli/tsconfig.json tools/admin-cli/src/index.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
