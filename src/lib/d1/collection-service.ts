@@ -142,11 +142,11 @@ export async function d1CreateCollection(
       input.slug,
       input.title,
       input.summary ?? null,
+      input.captured_at ?? null,
       input.status,
       input.order_index,
       input.cover_asset_id ?? null,
       input.location_id ?? null,
-      input.captured_at ?? null,
       now,
       publishedAt
     )

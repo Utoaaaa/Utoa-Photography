@@ -178,7 +178,7 @@ export class AdminApiClient {
     metadata_json?: Record<string, unknown> | null;
     location_id?: string;
   }): Promise<AssetRecord> {
-    return this.postJson<AssetRecord>('/api/assets', payload);
+    return this.postJson<AssetRecord>('/api/admin/assets', payload);
   }
 
   updateAsset(
@@ -197,7 +197,7 @@ export class AdminApiClient {
       location_id?: string;
     }
   ): Promise<AssetRecord> {
-    return this.putJson<AssetRecord>(`/api/assets/${encodeURIComponent(assetId)}`, payload);
+    return this.putJson<AssetRecord>(`/api/admin/assets/${encodeURIComponent(assetId)}`, payload);
   }
 
   attachAssets(collectionId: string, assetIds: string[]): Promise<Array<{ asset_id: string }>> {
