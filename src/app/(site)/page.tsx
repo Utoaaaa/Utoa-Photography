@@ -16,6 +16,7 @@ export default async function Homepage() {
     .filter((year) => year.status === 'published')
     .sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
   const hasYears = years.length > 0;
+  const firstPriorityLocationId = years.find((year) => year.locations.length > 0)?.locations[0]?.id ?? null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -103,7 +104,12 @@ export default async function Homepage() {
                     {year.locations.length > 0 ? (
                       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="location-grid">
                         {year.locations.map((location) => (
-                          <LocationCard key={location.id} yearLabel={year.label} location={location} />
+                          <LocationCard
+                            key={location.id}
+                            yearLabel={year.label}
+                            location={location}
+                            priority={location.id === firstPriorityLocationId}
+                          />
                         ))}
                       </div>
                     ) : (

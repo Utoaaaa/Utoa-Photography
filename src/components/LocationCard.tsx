@@ -11,9 +11,10 @@ import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 interface LocationCardProps {
   yearLabel: string;
   location: LocationEntry;
+  priority?: boolean;
 }
 
-export function LocationCard({ yearLabel, location }: LocationCardProps) {
+export function LocationCard({ yearLabel, location, priority = false }: LocationCardProps) {
   const href = `/${encodeURIComponent(yearLabel)}/${encodeURIComponent(location.slug)}`;
 
   const [revealed, setRevealed] = useState(false);
@@ -97,7 +98,8 @@ export function LocationCard({ yearLabel, location }: LocationCardProps) {
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   alt={`${location.name} 封面視覺`}
                   className="h-full w-full object-cover object-center"
-                  loading="lazy"
+                  loading={priority ? 'eager' : 'lazy'}
+                  fetchPriority={priority ? 'high' : undefined}
                   decoding="async"
                 />
               </>

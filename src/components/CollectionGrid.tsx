@@ -31,12 +31,13 @@ export function CollectionGrid({ yearLabel, locationSlug, collections }: Collect
       className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3"
       data-testid="collection-grid"
     >
-      {collections.map((collection) => (
+      {collections.map((collection, index) => (
         <CollectionCard
           key={collection.id}
           yearLabel={yearLabel}
           locationSlug={locationSlug}
           collection={collection}
+          priority={index === 0}
         />
       ))}
     </div>
@@ -47,6 +48,7 @@ interface CollectionCardProps {
   yearLabel: string;
   locationSlug: string;
   collection: LocationCollectionSummary;
+  priority?: boolean;
 }
 
 function formatCollectionDate(collection: LocationCollectionSummary): string | null {
@@ -61,7 +63,7 @@ function formatCollectionDate(collection: LocationCollectionSummary): string | n
   return `${year}/${month}/${day}`;
 }
 
-function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardProps) {
+function CollectionCard({ yearLabel, locationSlug, collection, priority = false }: CollectionCardProps) {
   const href = buildCollectionHref(yearLabel, locationSlug, collection.slug);
   const [revealed, setRevealed] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -143,7 +145,8 @@ function CollectionCard({ yearLabel, locationSlug, collection }: CollectionCardP
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 alt={`${collection.title} 封面視覺`}
                 className={`h-full w-full ${imageClass}`}
-                loading="lazy"
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : undefined}
                 decoding="async"
               />
             ) : (
