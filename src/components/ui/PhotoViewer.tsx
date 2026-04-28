@@ -5,6 +5,14 @@ import Head from 'next/head';
 import { getR2VariantDirectUrl, isCloudflareConfigured } from '@/lib/images';
 import { DotNavigation } from './DotNavigation';
 
+function getPhotoViewerSrcSet(photoId: string): string {
+  return `${getR2VariantDirectUrl(photoId, 'medium')} 1200w, ${getR2VariantDirectUrl(photoId, 'large')} 3840w`;
+}
+
+function getPhotoViewerPreferredVariant(isDesktopViewport: boolean): 'medium' | 'large' {
+  return isDesktopViewport ? 'large' : 'medium';
+}
+
 type Asset = {
   id: string;
   alt: string;
@@ -429,11 +437,12 @@ export function PhotoViewer({
       return undefined;
     }
     const head = document.head;
+    const preferredVariant = getPhotoViewerPreferredVariant(isDesktopViewport);
     const links = preloadImages.map((photo) => {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = getR2VariantDirectUrl(photo.id, 'medium');
+      link.href = getR2VariantDirectUrl(photo.id, preferredVariant);
       head.appendChild(link);
       return link;
     });
@@ -445,7 +454,7 @@ export function PhotoViewer({
         }
       });
     };
-  }, [preloadImages, singleScreen, cloudflareConfigured]);
+  }, [preloadImages, singleScreen, cloudflareConfigured, isDesktopViewport]);
 
   photoRefs.current.length = photos.length;
 
@@ -461,7 +470,7 @@ export function PhotoViewer({
   // T027: Single-screen viewer render
   if (singleScreen) {
     const cfConfigured = cloudflareConfigured;
-    const preferredVariant = isDesktopViewport ? 'large' : 'medium';
+    const preferredVariant = getPhotoViewerPreferredVariant(isDesktopViewport);
     const currentSrc = cfConfigured
       ? getR2VariantDirectUrl(currentPhoto.id, preferredVariant)
       : '/placeholder.svg';
@@ -504,7 +513,7 @@ export function PhotoViewer({
               src={currentSrc}
               srcSet={
                 cfConfigured
-                  ? `${getR2VariantDirectUrl(currentPhoto.id, 'medium')} 1200w, ${getR2VariantDirectUrl(currentPhoto.id, 'large')} 3840w`
+                  ? getPhotoViewerSrcSet(currentPhoto.id)
                   : undefined
               }
               sizes="100vw"
@@ -588,12 +597,15 @@ export function PhotoViewer({
                     <img
                       src={
                         cloudflareConfigured
-                          ? getR2VariantDirectUrl(photo.id, isDesktopViewport ? 'large' : 'medium')
+                          ? getR2VariantDirectUrl(
+                              photo.id,
+                              getPhotoViewerPreferredVariant(isDesktopViewport)
+                            )
                           : '/placeholder.svg'
                       }
                       srcSet={
                         cloudflareConfigured
-                          ? `${getR2VariantDirectUrl(photo.id, 'medium')} 1200w, ${getR2VariantDirectUrl(photo.id, 'large')} 3840w`
+                          ? getPhotoViewerSrcSet(photo.id)
                           : undefined
                       }
                       sizes="100vw"
