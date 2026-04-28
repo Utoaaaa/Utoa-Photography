@@ -12,6 +12,7 @@ export default function Loader({ onDoneAction, minDurationMs = 4000 }: LoaderPro
   const overlayRef = useRef<HTMLDivElement>(null);
   const numberRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState('00');
+  const settledNumberOffset = '-12%';
 
   useEffect(() => {
     let isActive = true;
@@ -100,7 +101,7 @@ export default function Loader({ onDoneAction, minDurationMs = 4000 }: LoaderPro
     // 第一個數字從左邊滑入
     if (numberRef.current) {
       if (prefersReducedMotion) {
-        gsap.set(numberRef.current, { x: '-12%', opacity: 1 });
+        gsap.set(numberRef.current, { x: settledNumberOffset, opacity: 1 });
         showNextNumber();
       } else {
         gsap.set(numberRef.current, {
@@ -108,7 +109,7 @@ export default function Loader({ onDoneAction, minDurationMs = 4000 }: LoaderPro
           opacity: 0,
         });
         introTween = gsap.to(numberRef.current, {
-          x: '-12%',
+          x: settledNumberOffset,
           opacity: 1,
           duration: 0.6,
           ease: 'power2.out',
@@ -153,7 +154,7 @@ export default function Loader({ onDoneAction, minDurationMs = 4000 }: LoaderPro
             fontFamily: 'Georgia, "Times New Roman", serif',
             letterSpacing: '-0.02em',
             opacity: 0,
-            transform: 'translateX(-50%)',
+            transform: `translateX(${settledNumberOffset})`,
             willChange: 'opacity, transform',
           }}
         >
