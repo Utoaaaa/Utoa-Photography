@@ -1,7 +1,8 @@
 import type { NextConfig } from 'next';
+import bundleAnalyzer from '@next/bundle-analyzer';
 import path from 'path';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const withBundleAnalyzer = require('@next/bundle-analyzer')({ enabled: process.env.ANALYZE === 'true' });
+
+const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
 const baseConfig: NextConfig = {
   // Allow builds to proceed without ESLint blocking (deployment focus)
@@ -136,23 +137,6 @@ const baseConfig: NextConfig = {
         ],
       },
     ];
-  },
-  
-  // Webpack optimizations: only adjust in client production builds
-  webpack: (config, { isServer, dev }) => {
-    if (!isServer && !dev) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      };
-    }
-    return config;
   },
   
   // Production optimizations

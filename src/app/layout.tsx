@@ -50,7 +50,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant">
-      <head></head>
       <body className={`${utoaSerif.variable} antialiased`} style={{ overscrollBehaviorX: 'auto' }}>
         <SmoothScrollProvider>
           <LoaderStateProvider>

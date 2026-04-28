@@ -4,29 +4,32 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
 type LoaderProps = {
-  onDone?: () => void;
+  onDoneAction?: () => void;
   minDurationMs?: number;
 };
 
-export default function Loader({ onDone, minDurationMs = 4000 }: LoaderProps) {
+export default function Loader({ onDoneAction, minDurationMs = 4000 }: LoaderProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const numberRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState('00');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
     let isActive = true;
+    let timeline: gsap.core.Timeline | null = null;
+    let introTween: gsap.core.Tween | null = null;
+    const timeoutIds = new Set<number>();
+    const scheduleTimeout = (callback: () => void, delay: number) => {
+      const timeoutId = window.setTimeout(() => {
+        timeoutIds.delete(timeoutId);
+        callback();
+      }, delay);
+      timeoutIds.add(timeoutId);
+    };
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // 多組數字序列,每次隨機選一組
-    const numberSequences = [
+    const numberSequences: ReadonlyArray<readonly number[]> = [
       [10, 36, 77, 86, 99],
       [15, 42, 68, 83, 99],
       [8, 29, 54, 82, 99],
@@ -36,7 +39,7 @@ export default function Loader({ onDone, minDurationMs = 4000 }: LoaderProps) {
     ];
     
     // 隨機選擇一組數字序列
-    const targetNumbers = numberSequences[Math.floor(Math.random() * numberSequences.length)];
+    const targetNumbers = numberSequences[Math.floor(Math.random() * numberSequences.length)] ?? numberSequences[0];
     let currentIndex = 0;
     
     const randomDelays = targetNumbers.map(() => 
@@ -46,37 +49,37 @@ export default function Loader({ onDone, minDurationMs = 4000 }: LoaderProps) {
     const startFadeOut = () => {
       if (!isActive) return;
       
-      const tl = gsap.timeline({
+      timeline = gsap.timeline({
         onComplete: () => {
-          if (onDone) {
-            onDone();
+          if (onDoneAction) {
+            onDoneAction();
           }
         },
       });
 
       if (prefersReducedMotion) {
-        tl.to(overlayRef.current, { opacity: 0, duration: 0.05 });
+        timeline.to(overlayRef.current, { opacity: 0, duration: 0.05 });
       } else {
-        // 稍微等待顯示一下（300ms）
-        tl.to({}, { duration: 0.3 });
-        
+        // 讓最後的 99 短暫停留後再收掉
+        timeline.to({}, { duration: 0.4 });
+
         // 數字向左滑出與背景淡出同時進行
-        tl.to(numberRef.current, {
+        timeline.to(numberRef.current, {
           x: '-100%',
           opacity: 0,
-          duration: 0.8,
+          duration: 0.7,
           ease: 'power2.in',
-        }, 0.3); // 從 0.3s 開始
+        }, 0.4);
 
         // 背景淡出 - 與滑出同時開始
-        tl.to(overlayRef.current, {
+        timeline.to(overlayRef.current, {
           opacity: 0,
-          duration: 0.8,
+          duration: 0.6,
           ease: 'power2.inOut',
-        }, 0.3); // 從 0.3s 開始
+        }, 0.4);
       }
 
-      tl.set(overlayRef.current, { display: 'none' });
+      timeline.set(overlayRef.current, { display: 'none' });
     };
     
     const showNextNumber = () => {
@@ -87,7 +90,7 @@ export default function Loader({ onDone, minDurationMs = 4000 }: LoaderProps) {
       currentIndex++;
       
       if (currentIndex < targetNumbers.length) {
-        setTimeout(showNextNumber, currentDelay);
+        scheduleTimeout(showNextNumber, currentDelay);
       } else {
         // 顯示完所有數字後,開始淡出動畫
         startFadeOut();
@@ -95,56 +98,68 @@ export default function Loader({ onDone, minDurationMs = 4000 }: LoaderProps) {
     };
     
     // 第一個數字從左邊滑入
-    if (numberRef.current && !prefersReducedMotion) {
-      gsap.set(numberRef.current, {
-        x: '-50%',
-        opacity: 0,
-      });
-      gsap.to(numberRef.current, {
-        x: '-12%',
-        opacity: 1,
-        duration: 0.6,
-        ease: 'power2.out',
-        onComplete: () => {
-          showNextNumber();
-        }
-      });
+    if (numberRef.current) {
+      if (prefersReducedMotion) {
+        gsap.set(numberRef.current, { x: '-12%', opacity: 1 });
+        showNextNumber();
+      } else {
+        gsap.set(numberRef.current, {
+          x: '-50%',
+          opacity: 0,
+        });
+        introTween = gsap.to(numberRef.current, {
+          x: '-12%',
+          opacity: 1,
+          duration: 0.6,
+          ease: 'power2.out',
+          onComplete: () => {
+            showNextNumber();
+          }
+        });
+      }
     } else {
       showNextNumber();
     }
 
     return () => {
       isActive = false;
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      timeoutIds.clear();
+      introTween?.kill();
+      timeline?.kill();
     };
-  }, [mounted, onDone, minDurationMs]);
-
-  if (!mounted) {
-    return null;
-  }
+  }, [onDoneAction, minDurationMs]);
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-[9999] bg-background"
-      aria-hidden="true"
-      role="status"
-      aria-label="Loading"
-      data-loader-active="true"
-    >
-      <div 
-        ref={numberRef}
-        className="fixed bottom-8 left-0 text-foreground"
-        style={{
-          fontSize: 'clamp(270px, 42vw, 630px)',
-          lineHeight: 1.1,
-          fontWeight: 500,
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          letterSpacing: '-0.02em',
-          transform: 'translateX(-12%)',
-        }}
+    <>
+      <noscript>
+        <style>{'[data-loader-active="true"]{display:none!important}'}</style>
+      </noscript>
+      <div
+        ref={overlayRef}
+        className="fixed inset-0 z-[9999] bg-background"
+        aria-hidden="true"
+        role="status"
+        aria-label="Loading"
+        data-loader-active="true"
       >
-        {progress}
+        <div 
+          ref={numberRef}
+          className="fixed bottom-8 left-0 text-foreground"
+          style={{
+            fontSize: 'clamp(270px, 42vw, 630px)',
+            lineHeight: 1.1,
+            fontWeight: 500,
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            letterSpacing: '-0.02em',
+            opacity: 0,
+            transform: 'translateX(-50%)',
+            willChange: 'opacity, transform',
+          }}
+        >
+          {progress}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

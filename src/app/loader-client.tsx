@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { gsap } from 'gsap';
 import Loader from '@/components/Loader';
@@ -8,6 +8,7 @@ import { useLoaderState } from '@/components/providers/LoaderStateProvider';
 
 export default function LoaderClient() {
   const pathname = usePathname();
+  const hideTimeoutRef = useRef<number | null>(null);
   const isAdminRoute = !!pathname && pathname.startsWith('/admin');
   const shouldSkipInitially = !!pathname && pathname !== '/' && !isAdminRoute;
   const { setLoaderActive } = useLoaderState();
@@ -88,9 +89,17 @@ export default function LoaderClient() {
     }
 
     return () => observer.disconnect();
-  }, [isAdminRoute, pathname, show, skipLoader]);
+  }, [isAdminRoute, pathname, setLoaderActive, show, skipLoader]);
 
-  const handleLoaderDone = () => {
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current !== null) {
+        window.clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleLoaderDone = useCallback(() => {
     // 主內容入場動畫（從中間淡入）
     const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
     if (mainContent) {
@@ -108,13 +117,17 @@ export default function LoaderClient() {
     setLoaderActive(false);
 
     // 延遲移除 loader 以確保動畫開始
-    setTimeout(() => {
+    if (hideTimeoutRef.current !== null) {
+      window.clearTimeout(hideTimeoutRef.current);
+    }
+    hideTimeoutRef.current = window.setTimeout(() => {
+      hideTimeoutRef.current = null;
       setShow(false);
     }, 100);
-  };
+  }, [setLoaderActive]);
 
   // 404 頁面或已完成，不顯示 loader
   if (!show || skipLoader) return null;
 
-  return <Loader onDone={handleLoaderDone} minDurationMs={3000} />;
+  return <Loader onDoneAction={handleLoaderDone} minDurationMs={3000} />;
 }
