@@ -2,9 +2,25 @@
 
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import GlassSurface from '@/components/ui/GlassSurface';
+import { useLenisInstance } from '@/components/providers/SmoothScrollProvider';
 import { loadGSAP } from '@/lib/gsap-loader';
 
 type GSAPInstance = NonNullable<Awaited<ReturnType<typeof loadGSAP>>>['gsap'];
+
+interface MenuLenisController {
+  scrollTo?: (value: number, options?: { immediate?: boolean; force?: boolean }) => void;
+  start?: () => void;
+  stop?: () => void;
+}
+
+interface ScrollLockState {
+  bodyOverflow: string;
+  bodyOverscrollBehavior: string;
+  docOverflow: string;
+  docOverscrollBehavior: string;
+  docScrollBehavior: string;
+  scrollY: number;
+}
 
 export type StaggeredMenuItemVariant = 'home' | 'year' | 'location' | 'location-first';
 
@@ -53,6 +69,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 }: StaggeredMenuProps) => {
   const [open, setOpen] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const lenis = useLenisInstance<MenuLenisController>();
   const openRef = useRef(false);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -80,6 +97,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
   const itemEntranceTweenRef = useRef<gsap.core.Tween | null>(null);
   const innerWrapRef = useRef<HTMLSpanElement | null>(null);
   const pendingNavigationRef = useRef(false);
+  const scrollLockStateRef = useRef<ScrollLockState | null>(null);
 
   useLayoutEffect(() => {
     let mounted = true;
@@ -407,8 +425,80 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     });
   }, []);
 
+  const freezePageScroll = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    if (scrollLockStateRef.current !== null) return;
+
+    const body = document.body;
+    const docEl = document.documentElement;
+    const scrollY = window.scrollY;
+
+    scrollLockStateRef.current = {
+      bodyOverflow: body.style.overflow,
+      bodyOverscrollBehavior: body.style.overscrollBehavior,
+      docOverflow: docEl.style.overflow,
+      docOverscrollBehavior: docEl.style.overscrollBehavior,
+      docScrollBehavior: docEl.style.scrollBehavior,
+      scrollY,
+    };
+
+    docEl.style.scrollBehavior = 'auto';
+    window.scrollTo({ left: 0, top: scrollY, behavior: 'auto' });
+
+    if (typeof lenis?.scrollTo === 'function') {
+      lenis.scrollTo(scrollY, { immediate: true, force: true });
+    }
+    if (typeof lenis?.stop === 'function') {
+      lenis.stop();
+    }
+
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none';
+    docEl.style.overflow = 'hidden';
+    docEl.style.overscrollBehavior = 'none';
+  }, [lenis]);
+
+  const restorePageScroll = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const lockState = scrollLockStateRef.current;
+    if (lockState === null) return;
+
+    const body = document.body;
+    const docEl = document.documentElement;
+
+    body.style.overflow = lockState.bodyOverflow;
+    body.style.overscrollBehavior = lockState.bodyOverscrollBehavior;
+    docEl.style.overflow = lockState.docOverflow;
+    docEl.style.overscrollBehavior = lockState.docOverscrollBehavior;
+    docEl.style.scrollBehavior = 'auto';
+
+    if (!pendingNavigationRef.current) {
+      window.scrollTo({ left: 0, top: lockState.scrollY, behavior: 'auto' });
+      if (typeof lenis?.scrollTo === 'function') {
+        lenis.scrollTo(lockState.scrollY, { immediate: true, force: true });
+      }
+    } else {
+      pendingNavigationRef.current = false;
+    }
+
+    docEl.style.scrollBehavior = lockState.docScrollBehavior;
+    scrollLockStateRef.current = null;
+
+    if (typeof lenis?.start === 'function') {
+      lenis.start();
+    }
+  }, [lenis]);
+
   const toggleMenu = useCallback(() => {
     const target = !openRef.current;
+    if (target) {
+      freezePageScroll();
+    } else {
+      restorePageScroll();
+    }
+
     openRef.current = target;
     setOpen(target);
 
@@ -425,7 +515,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     animateIcon(target);
     animateColor(target);
     animateText(target);
-  }, [animateIcon, animateColor, animateText, onMenuOpen, onMenuClose]);
+  }, [animateIcon, animateColor, animateText, freezePageScroll, onMenuOpen, onMenuClose, restorePageScroll]);
 
   React.useEffect(() => {
     if (open) {
@@ -461,41 +551,8 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
   }, [shouldRender, open, position, playOpen]);
 
   React.useEffect(() => {
-    if (!open || typeof window === 'undefined') {
-      return undefined;
-    }
-
-    const body = document.body;
-    const docEl = document.documentElement;
-
-    const prevState = {
-      bodyOverflow: body.style.overflow,
-      bodyPosition: body.style.position,
-      bodyTop: body.style.top,
-      bodyWidth: body.style.width,
-      docOverflow: docEl.style.overflow,
-    };
-
-    const scrollY = window.scrollY;
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.width = '100%';
-    body.style.overflow = 'hidden';
-    docEl.style.overflow = 'hidden';
-
-    return () => {
-      body.style.position = prevState.bodyPosition;
-      body.style.top = prevState.bodyTop;
-      body.style.width = prevState.bodyWidth;
-      body.style.overflow = prevState.bodyOverflow;
-      docEl.style.overflow = prevState.docOverflow;
-      if (!pendingNavigationRef.current) {
-        window.scrollTo(0, scrollY);
-      } else {
-        pendingNavigationRef.current = false;
-      }
-    };
-  }, [open]);
+    return () => restorePageScroll();
+  }, [restorePageScroll]);
 
   const handleMenuItemClick = useCallback(() => {
     pendingNavigationRef.current = true;
@@ -528,6 +585,27 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     };
   }, [open]);
 
+  React.useEffect(() => {
+    if (!open) return undefined;
+
+    const preventPageScroll = (event: Event) => {
+      const panel = panelRef.current;
+      if (panel && event.target instanceof Node && panel.contains(event.target)) {
+        return;
+      }
+
+      event.preventDefault();
+    };
+
+    window.addEventListener('wheel', preventPageScroll, { capture: true, passive: false });
+    window.addEventListener('touchmove', preventPageScroll, { capture: true, passive: false });
+
+    return () => {
+      window.removeEventListener('wheel', preventPageScroll, { capture: true });
+      window.removeEventListener('touchmove', preventPageScroll, { capture: true });
+    };
+  }, [open]);
+
   return (
     <div className="sm-scope w-full h-full">
       <div
@@ -543,6 +621,12 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
       >
         {shouldRender && (
           <>
+            <div
+              className="sm-page-backdrop fixed inset-0 z-[1] bg-transparent pointer-events-auto"
+              aria-hidden="true"
+              data-lenis-prevent="true"
+              onClick={open ? toggleMenu : undefined}
+            />
             {/* Pre-layers for staggered animation */}
             <div
               ref={preLayersRef}
@@ -630,6 +714,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
             className="staggered-menu-panel fixed top-0 right-0 h-full bg-white/95 backdrop-blur-md flex flex-col p-[8em_2.5em_3em_2.5em] overflow-y-auto z-10 pointer-events-auto [will-change:transform]"
             style={{ WebkitBackdropFilter: 'blur(12px)' }}
             aria-hidden={!open}
+            data-lenis-prevent="true"
           >
             <div className="sm-panel-inner flex-1 flex flex-col gap-8">
               <ul
@@ -718,6 +803,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-icon { position: relative; width: 14px; height: 14px; flex: 0 0 14px; display: inline-flex; align-items: center; justify-content: center; will-change: transform; }
 .sm-scope .sm-icon-line { position: absolute; left: 50%; top: 50%; width: 100%; height: 1.5px; background: currentColor; border-radius: 2px; transform: translate(-50%, -50%); will-change: transform; }
 .sm-scope .sm-icon-line-v { transform: translate(-50%, -50%) rotate(90deg); }
+.sm-scope .sm-page-backdrop { position: fixed; inset: 0; background: transparent; pointer-events: auto; touch-action: none; overscroll-behavior: contain; z-index: 1; }
 .sm-scope .staggered-menu-panel { position: fixed; top: 0; right: 0; width: clamp(280px, 25vw, 380px); height: 100%; background: rgba(255, 253, 228, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; flex-direction: column; padding: 8em 2.5em 3em 2.5em; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; z-index: 10; pointer-events: auto; will-change: transform; }
 .sm-scope [data-position='left'] .staggered-menu-panel { right: auto; left: 0; }
 .sm-scope .sm-prelayers { position: fixed; top: 0; right: 0; bottom: 0; width: clamp(280px, 25vw, 380px); pointer-events: none; z-index: 5; }
