@@ -9,6 +9,8 @@ function randomId() {
 
 const ALLOWED_EXTS = ['jpg','jpeg','png','webp','avif'];
 const ALLOWED_VARIANTS = new Set(['thumb', 'medium', 'large', 'original']);
+const CACHEABLE_IMAGE_VARIANTS = new Set(['thumb', 'medium', 'large']);
+const IMAGE_VARIANT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,12 +58,14 @@ export async function POST(request: NextRequest) {
     const key = variant
       ? `images/${imageId}/${variant}.${ext}`
       : `images/${imageId}/original.${ext}`;
+    const isCacheableVariant = variant ? CACHEABLE_IMAGE_VARIANTS.has(variant) : false;
 
     await bucket.put(key, body, {
       httpMetadata: {
         contentType: file.type || 'application/octet-stream',
+        ...(isCacheableVariant ? { cacheControl: IMAGE_VARIANT_CACHE_CONTROL } : {}),
       },
-    } as any);
+    });
     if (!variant) {
       after(async () => {
         try {
@@ -79,5 +83,9 @@ export async function POST(request: NextRequest) {
 }
 
 type R2Bucket = {
-  put(key: string, value: ArrayBuffer | ArrayBufferView | ReadableStream, options?: any): Promise<void>;
+  put(
+    key: string,
+    value: ArrayBuffer | ArrayBufferView | ReadableStream,
+    options?: { httpMetadata?: { contentType?: string; cacheControl?: string } },
+  ): Promise<void>;
 };

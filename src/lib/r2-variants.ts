@@ -7,6 +7,7 @@ const VARIANT_CONTENT_TYPE = VARIANT_EXT === 'jpg' ? 'image/jpeg'
   : VARIANT_EXT === 'jpeg' ? 'image/jpeg'
   : VARIANT_EXT === 'png' ? 'image/png'
   : `image/${VARIANT_EXT}`;
+const IMAGE_VARIANT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 const ORIGINAL_EXTS = ['avif', 'webp', 'jpg', 'jpeg', 'png'] as const;
 
@@ -29,7 +30,7 @@ type OriginalExt = typeof ORIGINAL_EXTS[number];
 
 type R2Bucket = {
   get(key: string, options?: { range?: { offset: number; length?: number } }): Promise<{ body: ReadableStream | null } | null>;
-  put(key: string, value: ArrayBuffer | ArrayBufferView | ReadableStream, options?: { httpMetadata?: { contentType?: string } }): Promise<void>;
+  put(key: string, value: ArrayBuffer | ArrayBufferView | ReadableStream, options?: { httpMetadata?: { contentType?: string; cacheControl?: string } }): Promise<void>;
 };
 
 function getBucket(): R2Bucket {
@@ -119,7 +120,10 @@ export async function regenerateR2Variants(imageId: string, options?: { original
         const { body, contentType } = await fetchVariantFromResizing(imageId, originalExt, variant);
         const key = `images/${imageId}/${variant}.${VARIANT_EXT}`;
         await bucket.put(key, body, {
-          httpMetadata: { contentType: contentType || VARIANT_CONTENT_TYPE },
+          httpMetadata: {
+            contentType: contentType || VARIANT_CONTENT_TYPE,
+            cacheControl: IMAGE_VARIANT_CACHE_CONTROL,
+          },
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
