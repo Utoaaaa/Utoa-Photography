@@ -22,8 +22,17 @@ Use this skill to prepare and operate the local admin CLI workflow for photo ing
    - `npm run admin-cli -- init-plan ...`
    - edit the generated plan JSON
    - `npm run admin-cli -- validate-plan <plan.json>`
-   - `npm run admin-cli -- apply <plan.json> --base-url <admin-base-url>`
+   - resolve Cloudflare Access token for `https://utoa.studio/admin`
+   - `npm run admin-cli -- apply <plan.json> --base-url https://utoa.studio`
 5. After apply, inspect the generated run state with `npm run admin-cli -- status <run-state.json>`.
+6. Verify production D1 read-only counts for the created draft year/location/collection/assets when operating on production.
+
+## Production Access Notes
+
+- Use API base URL `https://utoa.studio`, not `https://www.utoa.studio` and not `https://utoa.studio/admin`.
+- Use Access app URL `https://utoa.studio/admin` only for `cloudflared access login/token`.
+- Prefer `UTOA_CF_ACCESS_TOKEN` env over `--token` so tokens do not appear in npm command output.
+- Treat pasted Access JWTs as sensitive; do not echo, store, or commit them.
 
 ## Plan Rules
 
@@ -46,8 +55,10 @@ Use this skill to prepare and operate the local admin CLI workflow for photo ing
 - A ready-to-run plan JSON
 - A short checklist of missing values, especially `captured_at`, `baseUrl`, and metadata fields
 - Exact CLI commands for `validate-plan`, `apply`, and `status`
+- A note of any production fixes/deploys required before retrying apply
 
 ## References
 
 - Read `references/cli-reference.md` for the checklist and field summary.
+- Read `references/troubleshooting.md` when Access login, apply, D1, R2, or deploy fails.
 - Read `docs/admin-cli.md` for the full project documentation when you need exact command usage or plan examples.
