@@ -122,6 +122,7 @@ function CollectionCard({ yearLabel, locationSlug, collection, priority = false 
   const formattedDate = useMemo(() => formatCollectionDate(collection), [collection]);
 
   const summary = collection.summary ?? '';
+  const photoCountLabel = `${collection.photoCount} ${collection.photoCount === 1 ? 'photo' : 'photos'}`;
 
   useAutoShrinkText(titleRef, { minFontSize: 28 }, [collection.title]);
 
@@ -194,11 +195,10 @@ function CollectionCard({ yearLabel, locationSlug, collection, priority = false 
             >
               {summary}
             </p>
-            {formattedDate ? (
-              <div className="whitespace-nowrap text-right text-[0.72rem] font-medium uppercase tracking-[0.32em] text-gray-900/80 sm:text-[0.78rem]">
-                {formattedDate}
-              </div>
-            ) : null}
+            <div className="flex flex-col items-start gap-2 whitespace-nowrap text-[0.72rem] font-medium uppercase tracking-[0.32em] text-gray-900/80 sm:items-end sm:text-right sm:text-[0.78rem]">
+              {formattedDate ? <span>{formattedDate}</span> : null}
+              <span>{photoCountLabel}</span>
+            </div>
           </div>
         </div>
       </article>

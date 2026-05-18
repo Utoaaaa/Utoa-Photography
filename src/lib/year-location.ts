@@ -9,6 +9,7 @@ export interface LocationCollectionSummary {
   slug: string;
   title: string;
   summary: string | null;
+  photoCount: number;
   coverAssetId: string | null;
   coverAssetWidth: number | null;
   coverAssetHeight: number | null;
@@ -74,6 +75,9 @@ type CollectionRecord = {
     width: number | null;
     height: number | null;
   } | null;
+  _count?: {
+    collection_assets: number;
+  };
 };
 
 type LocationRecord = {
@@ -125,6 +129,7 @@ function mapCollection(record: CollectionRecord): LocationCollectionSummary {
     slug: record.slug,
     title: record.title,
     summary: record.summary ?? null,
+    photoCount: record._count?.collection_assets ?? 0,
     coverAssetId: record.cover_asset_id ?? null,
     coverAssetWidth: width,
     coverAssetHeight: height,
@@ -183,6 +188,9 @@ async function fetchYears(where: YearWhereInput): Promise<YearRecord[]> {
               captured_at: true,
               published_at: true,
               updated_at: true,
+              _count: {
+                select: { collection_assets: true },
+              },
             },
           },
         },
@@ -215,6 +223,9 @@ async function fetchSingleYear(where: YearWhereInput): Promise<YearRecord | null
               captured_at: true,
               published_at: true,
               updated_at: true,
+              _count: {
+                select: { collection_assets: true },
+              },
             },
           },
         },
@@ -254,6 +265,7 @@ type D1CollectionRow = {
   cover_asset_id: string | null;
   cover_asset_width: number | null;
   cover_asset_height: number | null;
+  photo_count: number | string | null;
   order_index: string;
   captured_at: string | null;
   published_at: string | null;
@@ -289,6 +301,11 @@ async function fetchCollectionsForLocationD1(
         c.cover_asset_id,
         a.width AS cover_asset_width,
         a.height AS cover_asset_height,
+        (
+          SELECT COUNT(*)
+          FROM collection_assets ca
+          WHERE ca.collection_id = c.id
+        ) AS photo_count,
         c.order_index,
         c.captured_at,
         c.published_at,
@@ -308,6 +325,7 @@ async function fetchCollectionsForLocationD1(
     slug: String(row.slug),
     title: String(row.title),
     summary: row.summary ?? null,
+    photoCount: Number(row.photo_count ?? 0),
     coverAssetId: row.cover_asset_id ?? null,
     coverAssetWidth: row.cover_asset_width != null ? Number(row.cover_asset_width) : null,
     coverAssetHeight: row.cover_asset_height != null ? Number(row.cover_asset_height) : null,
