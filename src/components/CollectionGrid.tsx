@@ -6,22 +6,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
 import { getR2VariantDirectUrl, generateSrcSet } from '@/lib/images';
+import { buildCollectionHref } from '@/lib/site-paths';
 import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
 interface CollectionGridProps {
   yearLabel: string;
   locationSlug: string;
   collections: LocationCollectionSummary[];
+  basePath?: string;
 }
 
-function buildCollectionHref(yearLabel: string, locationSlug: string, collectionSlug: string) {
-  const yearPath = encodeURIComponent(yearLabel);
-  const locationPath = encodeURIComponent(locationSlug);
-  const collectionPath = encodeURIComponent(collectionSlug);
-  return `/${yearPath}/${locationPath}/${collectionPath}`;
-}
-
-export function CollectionGrid({ yearLabel, locationSlug, collections }: CollectionGridProps) {
+export function CollectionGrid({ yearLabel, locationSlug, collections, basePath }: CollectionGridProps) {
   if (collections.length === 0) {
     return null;
   }
@@ -38,6 +33,7 @@ export function CollectionGrid({ yearLabel, locationSlug, collections }: Collect
           locationSlug={locationSlug}
           collection={collection}
           priority={index === 0}
+          basePath={basePath}
         />
       ))}
     </div>
@@ -49,6 +45,7 @@ interface CollectionCardProps {
   locationSlug: string;
   collection: LocationCollectionSummary;
   priority?: boolean;
+  basePath?: string;
 }
 
 function formatCollectionDate(collection: LocationCollectionSummary): string | null {
@@ -63,8 +60,8 @@ function formatCollectionDate(collection: LocationCollectionSummary): string | n
   return `${year}/${month}/${day}`;
 }
 
-function CollectionCard({ yearLabel, locationSlug, collection, priority = false }: CollectionCardProps) {
-  const href = buildCollectionHref(yearLabel, locationSlug, collection.slug);
+function CollectionCard({ yearLabel, locationSlug, collection, priority = false, basePath }: CollectionCardProps) {
+  const href = buildCollectionHref(yearLabel, locationSlug, collection.slug, basePath);
   const [revealed, setRevealed] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);

@@ -1,5 +1,12 @@
 import dynamic from 'next/dynamic';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import {
+  buildCollectionHref,
+  buildHomeHref,
+  buildLocationHref,
+  buildYearHref,
+  normalizeBasePath,
+} from '@/lib/site-paths';
 import type { CollectionViewerPayload } from '@/lib/viewer/collection';
 
 const PhotoViewer = dynamic(
@@ -14,27 +21,28 @@ import { BackToTopButton } from './BackToTopButton';
 interface Props {
   data: CollectionViewerPayload;
   fallbackLocationSlug: string;
+  basePath?: string;
 }
 
-export default function CollectionViewer({ data, fallbackLocationSlug }: Props) {
+export default function CollectionViewer({ data, fallbackLocationSlug, basePath }: Props) {
   const { collection, location, photos, year } = data;
-  const anchorSafeYear = year.label.replace(/\s+/g, '-');
-  const yearHref = `/#year-${encodeURIComponent(anchorSafeYear)}`;
+  const normalizedBasePath = normalizeBasePath(basePath);
+  const yearHref = buildYearHref(year.label, basePath);
   const resolvedLocationSlug = location?.slug ?? fallbackLocationSlug;
   const locationLabel = location?.name ?? '未指派地點';
   const locationHref = resolvedLocationSlug
-    ? `/${encodeURIComponent(year.label)}/${encodeURIComponent(resolvedLocationSlug)}`
+    ? buildLocationHref(year.label, resolvedLocationSlug, basePath)
     : yearHref;
 
   const breadcrumbItems = [
-    { label: 'Home', href: '/' },
+    { label: 'Home', href: buildHomeHref(basePath) },
     { label: year.label, href: yearHref },
     { label: locationLabel, href: locationHref },
     {
       label: collection.title,
       href: resolvedLocationSlug
-        ? `/${encodeURIComponent(year.label)}/${encodeURIComponent(resolvedLocationSlug)}/${encodeURIComponent(collection.slug)}`
-        : `/${encodeURIComponent(year.label)}/${encodeURIComponent(collection.slug)}`,
+        ? buildCollectionHref(year.label, resolvedLocationSlug, collection.slug, basePath)
+        : `${normalizedBasePath}/${encodeURIComponent(year.label)}/${encodeURIComponent(collection.slug)}`,
     },
   ];
 

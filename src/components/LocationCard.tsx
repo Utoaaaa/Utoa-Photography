@@ -6,16 +6,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationEntry } from '@/lib/year-location';
 import { getR2VariantDirectUrl, generateSrcSet } from '@/lib/images';
+import { buildLocationHref } from '@/lib/site-paths';
 import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
 interface LocationCardProps {
   yearLabel: string;
   location: LocationEntry;
   priority?: boolean;
+  basePath?: string;
 }
 
-export function LocationCard({ yearLabel, location, priority = false }: LocationCardProps) {
-  const href = `/${encodeURIComponent(yearLabel)}/${encodeURIComponent(location.slug)}`;
+export function LocationCard({ yearLabel, location, priority = false, basePath }: LocationCardProps) {
+  const href = buildLocationHref(yearLabel, location.slug, basePath);
 
   const [revealed, setRevealed] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
