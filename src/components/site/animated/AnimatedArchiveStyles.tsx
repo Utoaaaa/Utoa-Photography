@@ -143,17 +143,6 @@ export function AnimatedArchiveStyles() {
       .animated-cover-fallback[data-tone='4'] { --animated-cover-a: #451a03; --animated-cover-b: #ea580c; --animated-cover-c: #facc15; --animated-cover-glow: rgb(255 255 255 / 0.42); }
       .animated-cover-fallback[data-tone='5'] { --animated-cover-a: #0f2f2f; --animated-cover-b: #5aa0a0; --animated-cover-c: #dce6d3; --animated-cover-glow: rgb(220 252 231 / 0.48); }
 
-      .animated-cover-grid {
-        position: absolute;
-        inset: 0;
-        background:
-          linear-gradient(rgb(255 255 255 / 0.18) 1px, transparent 1px),
-          linear-gradient(90deg, rgb(255 255 255 / 0.16) 1px, transparent 1px);
-        background-size: 2.6rem 2.6rem;
-        mask-image: radial-gradient(circle at 50% 42%, black, transparent 76%);
-        opacity: 0.65;
-      }
-
       .animated-cover-flare {
         position: absolute;
         inset: auto -18% 10% 20%;
