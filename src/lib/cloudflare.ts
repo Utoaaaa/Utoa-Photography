@@ -13,7 +13,7 @@ export function getCloudflareEnv(): CloudflareEnv {
   const isDev = process.env.NODE_ENV !== 'production';
   
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getCloudflareContext } = require('@opennextjs/cloudflare');
     const { env } = getCloudflareContext();
     return env as CloudflareEnv;

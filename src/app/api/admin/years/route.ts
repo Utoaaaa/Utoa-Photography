@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
     }
 
     const finalOrderIndex = order_index || `${new Date().getFullYear()}.0`;
-    const id = (globalThis.crypto?.randomUUID?.() || Math.random().toString(36).slice(2, 10)) as string;
+    const id = typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10);
     const now = new Date().toISOString();
 
     const db: any = getD1Database();

@@ -3,7 +3,6 @@ import {
   CreateLocationDraft,
   UpdateLocationDraft,
   LocationServiceError,
-  UUID_REGEX,
 } from '@/lib/location-service-shared';
 import {
   LocationValidationError,
@@ -212,7 +211,9 @@ export async function d1CreateLocation(
       orderIndex = await computeNextOrderIndex(db, yearId);
     }
 
-    const id = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 10);
+    const id = typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 10);
     const now = new Date().toISOString();
 
     await db.prepare(
