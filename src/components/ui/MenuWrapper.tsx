@@ -3,24 +3,37 @@
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 import { useLoaderState } from '@/components/providers/LoaderStateProvider';
-import type { StaggeredMenuItem, StaggeredMenuSocialItem } from './StaggeredMenu';
+import type {
+  StaggeredMenuItem,
+  StaggeredMenuSocialItem,
+  StaggeredMenuUtilityItem,
+} from './StaggeredMenu';
 
 const StaggeredMenu = dynamic(() => import('./StaggeredMenu'), {
   ssr: false,
 });
 
 const DEFAULT_SOCIAL_ITEMS: StaggeredMenuSocialItem[] = [
-  { label: 'Instagram', link: 'https://instagram.com/__utoa' }
+  { label: 'Instagram', link: 'https://instagram.com/__utoa', external: true }
+];
+
+const DEFAULT_UTILITY_ITEMS: StaggeredMenuUtilityItem[] = [
+  { label: 'Classic web', link: '/classic' }
 ];
 
 interface MenuWrapperProps {
   menuItems: StaggeredMenuItem[];
   socialItems?: StaggeredMenuSocialItem[];
+  utilityItems?: StaggeredMenuUtilityItem[];
 }
 
-export default function MenuWrapper({ menuItems, socialItems }: MenuWrapperProps) {
+export default function MenuWrapper({ menuItems, socialItems, utilityItems }: MenuWrapperProps) {
   const { loaderActive } = useLoaderState();
   const resolvedSocials = useMemo(() => socialItems ?? DEFAULT_SOCIAL_ITEMS, [socialItems]);
+  const resolvedUtilityItems = useMemo(
+    () => utilityItems ?? DEFAULT_UTILITY_ITEMS,
+    [utilityItems]
+  );
 
   return (
     <div
@@ -32,6 +45,7 @@ export default function MenuWrapper({ menuItems, socialItems }: MenuWrapperProps
         position="right"
         items={menuItems}
         socialItems={resolvedSocials}
+        utilityItems={resolvedUtilityItems}
         displaySocials={true}
         displayItemNumbering={false}
         menuButtonColor="#111"

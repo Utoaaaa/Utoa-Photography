@@ -34,6 +34,13 @@ export interface StaggeredMenuItem {
 export interface StaggeredMenuSocialItem {
   label: string;
   link: string;
+  external?: boolean;
+}
+
+export interface StaggeredMenuUtilityItem {
+  label: string;
+  link: string;
+  external?: boolean;
 }
 
 export interface StaggeredMenuProps {
@@ -41,6 +48,7 @@ export interface StaggeredMenuProps {
   colors?: string[];
   items?: StaggeredMenuItem[];
   socialItems?: StaggeredMenuSocialItem[];
+  utilityItems?: StaggeredMenuUtilityItem[];
   displaySocials?: boolean;
   displayItemNumbering?: boolean;
   className?: string;
@@ -57,6 +65,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
   colors = ['#fff8dfff', '#fff7e6ff'],
   items = [],
   socialItems = [],
+  utilityItems = [],
   displaySocials = true,
   displayItemNumbering = false,
   className,
@@ -167,8 +176,10 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
     const numberEls = Array.from(
       panel.querySelectorAll('.sm-panel-list[data-numbering] .sm-panel-item')
     ) as HTMLElement[];
-    const socialTitle = panel.querySelector('.sm-socials-title') as HTMLElement | null;
-    const socialLinks = Array.from(panel.querySelectorAll('.sm-socials-link')) as HTMLElement[];
+    const secondaryTitles = Array.from(panel.querySelectorAll('.sm-secondary-title')) as HTMLElement[];
+    const socialLinks = Array.from(
+      panel.querySelectorAll('.sm-socials-link, .sm-utility-link')
+    ) as HTMLElement[];
 
     const layerStates = layers.map((el) => ({
       el,
@@ -178,7 +189,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
     if (itemEls.length) gsap.set(itemEls, { yPercent: 140, rotate: 10 });
     if (numberEls.length) gsap.set(numberEls, { ['--sm-num-opacity' as any]: 0 });
-    if (socialTitle) gsap.set(socialTitle, { opacity: 0 });
+    if (secondaryTitles.length) gsap.set(secondaryTitles, { opacity: 0 });
     if (socialLinks.length) gsap.set(socialLinks, { y: 25, opacity: 0 });
 
     // 確保色塊在動畫開始時是可見的
@@ -238,11 +249,16 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
       }
     }
 
-    if (socialTitle || socialLinks.length) {
+    if (secondaryTitles.length || socialLinks.length) {
       const socialsStart = panelInsertTime + panelDuration * 0.4;
 
-      if (socialTitle)
-        tl.to(socialTitle, { opacity: 1, duration: 0.5, ease: 'power2.out' }, socialsStart);
+      if (secondaryTitles.length) {
+        tl.to(
+          secondaryTitles,
+          { opacity: 1, duration: 0.5, ease: 'power2.out', stagger: 0.04 },
+          socialsStart
+        );
+      }
       if (socialLinks.length) {
         tl.to(
           socialLinks,
@@ -312,9 +328,13 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         ) as HTMLElement[];
         if (numberEls.length) gsap.set(numberEls, { ['--sm-num-opacity' as any]: 0 });
 
-        const socialTitle = panel.querySelector('.sm-socials-title') as HTMLElement | null;
-        const socialLinks = Array.from(panel.querySelectorAll('.sm-socials-link')) as HTMLElement[];
-        if (socialTitle) gsap.set(socialTitle, { opacity: 0 });
+        const secondaryTitles = Array.from(
+          panel.querySelectorAll('.sm-secondary-title')
+        ) as HTMLElement[];
+        const socialLinks = Array.from(
+          panel.querySelectorAll('.sm-socials-link, .sm-utility-link')
+        ) as HTMLElement[];
+        if (secondaryTitles.length) gsap.set(secondaryTitles, { opacity: 0 });
         if (socialLinks.length) gsap.set(socialLinks, { y: 25, opacity: 0 });
 
         layers.forEach((layer) => {
@@ -655,7 +675,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         {/* Menu Toggle Button - Top Right */}
         <button
           ref={toggleBtnRef}
-          className="sm-toggle fixed right-8 md:right-12 bg-transparent border-0 cursor-pointer font-light text-base md:text-lg leading-none overflow-visible pointer-events-auto z-50 transition-colors"
+          className="sm-toggle fixed right-8 md:right-12 bg-transparent border-0 cursor-pointer font-serif text-xl font-semibold tracking-wide md:text-2xl leading-none overflow-visible pointer-events-auto z-50 transition-colors"
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
           aria-controls="staggered-menu-panel"
@@ -682,7 +702,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
               >
                 <span ref={textInnerRef} className="sm-toggle-textInner flex flex-col leading-none">
                   {textLines.map((l, i) => (
-                    <span className="sm-toggle-line block h-[1em] leading-none" key={i}>
+                    <span className="sm-toggle-line block h-[1em] font-serif text-xl font-semibold leading-none tracking-wide md:text-2xl" key={i}>
                       {l}
                     </span>
                   ))}
@@ -758,32 +778,71 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                 )}
               </ul>
 
-              {displaySocials && socialItems && socialItems.length > 0 && (
-                <div
-                  className="sm-socials mt-auto pt-8 flex flex-col gap-4"
-                  aria-label="Social links"
-                >
-                  <h3 className="sm-socials-title m-0 text-sm font-light tracking-wider uppercase text-gray-500">
-                    Connect
-                  </h3>
-                  <ul
-                    className="sm-socials-list list-none m-0 p-0 flex flex-row items-center gap-6 flex-wrap"
-                    role="list"
-                  >
-                    {socialItems.map((s, i) => (
-                      <li key={s.label + i} className="sm-socials-item">
-                        <a
-                          href={s.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="sm-socials-link text-base font-light text-gray-700 no-underline relative inline-block transition-colors duration-300 ease-out hover:text-gray-900"
-                          onClick={handleMenuItemClick}
-                        >
-                          {s.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+              {((displaySocials && socialItems && socialItems.length > 0) ||
+                utilityItems.length > 0) && (
+                <div className="sm-secondary-links mt-auto pt-8 flex flex-col gap-5">
+                  {utilityItems.length > 0 && (
+                    <nav
+                      className="sm-utility-links flex flex-col gap-4"
+                      aria-labelledby="archive-links-title"
+                    >
+                      <h3
+                        id="archive-links-title"
+                        className="sm-secondary-title sm-utility-title m-0 text-sm font-light tracking-wider uppercase text-gray-500"
+                      >
+                        Archive
+                      </h3>
+                      <ul className="sm-utility-list list-none m-0 p-0 flex flex-col items-start gap-3">
+                        {utilityItems.map((item, i) => {
+                          const isExternal = item.external ?? /^https?:\/\//.test(item.link);
+
+                          return (
+                            <li key={item.label + i} className="sm-utility-item">
+                              <a
+                                href={item.link}
+                                target={isExternal ? '_blank' : undefined}
+                                rel={isExternal ? 'noopener noreferrer' : undefined}
+                                className="sm-utility-link text-base font-light text-gray-700 no-underline relative inline-block transition-colors duration-300 ease-out hover:text-gray-900"
+                                onClick={handleMenuItemClick}
+                              >
+                                {item.label}
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </nav>
+                  )}
+
+                  {displaySocials && socialItems && socialItems.length > 0 && (
+                    <div className="sm-socials flex flex-col gap-4" aria-label="Social links">
+                      <h3 className="sm-secondary-title sm-socials-title m-0 text-sm font-light tracking-wider uppercase text-gray-500">
+                        Connect
+                      </h3>
+                      <ul
+                        className="sm-socials-list list-none m-0 p-0 flex flex-row items-center gap-6 flex-wrap"
+                        role="list"
+                      >
+                        {socialItems.map((s, i) => {
+                          const isExternal = s.external ?? /^https?:\/\//.test(s.link);
+
+                          return (
+                            <li key={s.label + i} className="sm-socials-item">
+                              <a
+                                href={s.link}
+                                target={isExternal ? '_blank' : undefined}
+                                rel={isExternal ? 'noopener noreferrer' : undefined}
+                                className="sm-socials-link text-base font-light text-gray-700 no-underline relative inline-block transition-colors duration-300 ease-out hover:text-gray-900"
+                                onClick={handleMenuItemClick}
+                              >
+                                {s.label}
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -793,13 +852,14 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
       <style>{`
 .sm-scope .staggered-menu-wrapper { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
-.sm-scope .sm-toggle { position: fixed; top: 2rem; right: 2rem; display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; border: none; cursor: pointer; font-weight: 300; line-height: 1; overflow: visible; z-index: 50; opacity: 1; transition: opacity 0.3s ease; }
+.sm-scope .sm-toggle { position: fixed; top: 2rem; right: 2rem; display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; border: none; cursor: pointer; font-family: var(--font-utoa-serif), "Noto Serif TC", "Source Han Serif TC", "Songti TC", Georgia, Cambria, "Times New Roman", Times, serif; font-weight: 600; font-size: 1.25rem; letter-spacing: 0.025em; line-height: 1; overflow: visible; z-index: 50; opacity: 1; transition: opacity 0.3s ease; }
 .sm-scope .sm-toggle.sm-hide-during-loader { opacity: 0; pointer-events: none; }
 @media (min-width: 768px) { .sm-scope .sm-toggle { top: 3rem; right: 3rem; } }
 .sm-scope .sm-toggle:focus-visible { outline: 2px solid #666; outline-offset: 4px; border-radius: 4px; }
 .sm-scope .sm-toggle-textWrap { position: relative; display: inline-block; height: 1em; overflow: hidden; white-space: nowrap; width: var(--sm-toggle-width, auto); min-width: var(--sm-toggle-width, auto); }
 .sm-scope .sm-toggle-textInner { display: flex; flex-direction: column; line-height: 1; }
-.sm-scope .sm-toggle-line { display: block; height: 1em; line-height: 1; }
+.sm-scope .sm-toggle-line { display: block; height: 1em; font-family: var(--font-utoa-serif), "Noto Serif TC", "Source Han Serif TC", "Songti TC", Georgia, Cambria, "Times New Roman", Times, serif; font-weight: 600; font-size: 1.25rem; letter-spacing: 0.025em; line-height: 1; }
+@media (min-width: 768px) { .sm-scope .sm-toggle, .sm-scope .sm-toggle-line { font-size: 1.5rem; } }
 .sm-scope .sm-icon { position: relative; width: 14px; height: 14px; flex: 0 0 14px; display: inline-flex; align-items: center; justify-content: center; will-change: transform; }
 .sm-scope .sm-icon-line { position: absolute; left: 50%; top: 50%; width: 100%; height: 1.5px; background: currentColor; border-radius: 2px; transform: translate(-50%, -50%); will-change: transform; }
 .sm-scope .sm-icon-line-v { transform: translate(-50%, -50%) rotate(90deg); }
@@ -811,7 +871,11 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-prelayer { position: fixed; top: 0; right: 0; height: 100%; width: clamp(280px, 25vw, 380px); transform: translateX(0); will-change: transform; }
 .sm-scope .sm-panel-inner { flex: 1; display: flex; flex-direction: column; gap: 2rem; }
 .sm-scope .sm-panel-itemWrap { position: relative; overflow: hidden; line-height: 1; }
-.sm-scope .sm-socials { margin-top: auto; padding-top: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+.sm-scope .sm-secondary-links { margin-top: auto; padding-top: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.sm-scope .sm-secondary-title { margin: 0; font-size: 0.875rem; font-weight: 300; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7280; }
+.sm-scope .sm-socials { display: flex; flex-direction: column; gap: 1rem; }
+.sm-scope .sm-utility-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+.sm-scope .sm-utility-link { opacity: 1; transition: opacity 0.3s ease, color 0.3s ease; }
 .sm-scope .sm-socials-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: row; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
 .sm-scope .sm-socials-list .sm-socials-link { opacity: 1; transition: opacity 0.3s ease, color 0.3s ease; }
 .sm-scope .sm-socials-list:hover .sm-socials-link:not(:hover) { opacity: 0.4; }
