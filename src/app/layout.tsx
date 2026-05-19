@@ -4,6 +4,7 @@ import './globals.css';
 import { SmoothScroll } from '@/components/SmoothScroll';
 import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
 import { LoaderStateProvider } from '@/components/providers/LoaderStateProvider';
+import { getSiteUrl, getSiteUrlMetadataBase } from '@/lib/site-url';
 import LoaderClient from './loader-client';
 
 const utoaSerif = Noto_Serif_TC({
@@ -13,11 +14,11 @@ const utoaSerif = Noto_Serif_TC({
   variable: '--font-utoa-serif',
 });
 
-const SITE_URL = 'https://utoa.studio';
+const SITE_URL = getSiteUrl();
 const OG_IMAGE_PATH = '/assets/og-camera.svg';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: getSiteUrlMetadataBase(),
   title: 'UTOA Photography',
   description: 'Moments In Focus',
   openGraph: {

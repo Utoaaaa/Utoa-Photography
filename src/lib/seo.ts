@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { getSiteUrl } from './site-url';
+
 interface SEOData {
   title: string;
   description: string;
@@ -16,7 +18,7 @@ interface SEOData {
 }
 
 export function generateSEOMetadata(data: SEOData): Metadata {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.studio';
+  const baseUrl = getSiteUrl();
   const fallbackImage = {
     url: `${baseUrl}/assets/og-camera.svg`,
     width: 980,
@@ -85,7 +87,7 @@ export function generateSEOMetadata(data: SEOData): Metadata {
 }
 
 export function generateStructuredData(type: 'website' | 'collection' | 'imageGallery', data: any) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.studio';
+  const baseUrl = getSiteUrl();
   
   switch (type) {
     case 'website':
@@ -154,7 +156,7 @@ export function generateStructuredData(type: 'website' | 'collection' | 'imageGa
 
 export function generateSitemap() {
   // This would typically be generated from your data
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://utoa.studio';
+  const baseUrl = getSiteUrl();
   
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
