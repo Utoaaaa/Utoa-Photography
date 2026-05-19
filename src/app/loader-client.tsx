@@ -24,6 +24,7 @@ export default function LoaderClient() {
     const revealMainContent = () => {
       const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
       if (mainContent) {
+        mainContent.classList.remove('animated-loader-pending');
         gsap.set(mainContent, { opacity: 1, scale: 1 });
       }
     };
@@ -82,9 +83,11 @@ export default function LoaderClient() {
     // 不是 404，預先隱藏主內容 (僅在首次載入時)
     const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
     if (mainContent && !skipLoader && show) {
+      mainContent.classList.add('animated-loader-pending');
       gsap.set(mainContent, { opacity: 0, scale: 0.98 });
     } else if (mainContent) {
       // 客戶端導航時,確保內容可見
+      mainContent.classList.remove('animated-loader-pending');
       gsap.set(mainContent, { opacity: 1, scale: 1 });
     }
 
@@ -103,6 +106,7 @@ export default function LoaderClient() {
     // 主內容入場動畫（從中間淡入）
     const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
     if (mainContent) {
+      mainContent.classList.remove('animated-loader-pending');
       gsap.to(
         mainContent,
         { 

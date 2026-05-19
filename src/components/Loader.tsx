@@ -138,15 +138,16 @@ export default function Loader({ onDoneAction, minDurationMs = 4000 }: LoaderPro
       </noscript>
       <div
         ref={overlayRef}
-        className="fixed inset-0 z-[9999] bg-background"
+        className="animated-archive-home fixed inset-0 z-[9999] overflow-hidden bg-background"
         aria-hidden="true"
         role="status"
         aria-label="Loading"
         data-loader-active="true"
       >
+        <div className="pointer-events-none fixed inset-0 z-0 animated-exposure-field" aria-hidden="true" />
         <div 
           ref={numberRef}
-          className="fixed bottom-8 left-0 text-foreground"
+          className="fixed bottom-8 left-0 z-10 text-foreground"
           style={{
             fontSize: 'clamp(270px, 42vw, 630px)',
             lineHeight: 1.1,
@@ -160,6 +161,35 @@ export default function Loader({ onDoneAction, minDurationMs = 4000 }: LoaderPro
         >
           {progress}
         </div>
+        <style>{`
+          .animated-archive-home {
+            --animated-paper: var(--background);
+            --animated-ink: var(--foreground);
+            background:
+              radial-gradient(circle at 18% 10%, rgb(255 208 54 / 0.28), transparent 24rem),
+              radial-gradient(circle at 86% 8%, rgb(1 175 246 / 0.16), transparent 22rem),
+              linear-gradient(180deg, var(--animated-paper), rgb(255 252 232));
+          }
+
+          .animated-exposure-field {
+            background:
+              linear-gradient(105deg, transparent 0 34%, rgb(255 255 255 / 0.54) 41%, transparent 48% 100%),
+              radial-gradient(circle at 62% 18%, rgb(242 0 133 / 0.14), transparent 16rem),
+              radial-gradient(circle at 22% 78%, rgb(1 175 246 / 0.13), transparent 18rem);
+            animation: animated-exposure-sweep 8s ease-in-out infinite;
+          }
+
+          @keyframes animated-exposure-sweep {
+            0%, 100% { transform: translateX(-12%) scale(1); opacity: 0.52; }
+            50% { transform: translateX(12%) scale(1.03); opacity: 0.88; }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .animated-exposure-field {
+              animation: none !important;
+            }
+          }
+        `}</style>
       </div>
     </>
   );
