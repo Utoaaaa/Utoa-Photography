@@ -1,5 +1,5 @@
+import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import React from 'react';
 import { PhotoViewer } from '../../src/components/ui/PhotoViewer';
 
 const genPhoto = (id: string) => ({
@@ -12,9 +12,35 @@ const genPhoto = (id: string) => ({
   created_at: new Date(),
 });
 
+type ActiveHandle = {
+  constructor?: { name?: string };
+  close?: () => void;
+};
+
 describe('PhotoViewer', () => {
+  afterAll(() => {
+    const getActiveHandles = (process as typeof process & { _getActiveHandles?: () => ActiveHandle[] })._getActiveHandles;
+    if (!getActiveHandles) return;
+
+    for (const handle of getActiveHandles()) {
+      if (handle.constructor?.name === 'MessagePort' && typeof handle.close === 'function') {
+        handle.close();
+      }
+    }
+  });
+
   beforeEach(() => {
     process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH = 'TEST';
+    window.matchMedia = jest.fn().mockImplementation((query) => ({
+      matches: query === '(min-width: 1024px)',
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
   });
 
   it('renders traditional scroll viewer and dots', () => {
@@ -46,7 +72,7 @@ describe('PhotoViewer', () => {
 
   it('preloads adjacent images without crashing', async () => {
     const photos = [genPhoto('1'), genPhoto('2'), genPhoto('3')];
-    render(<PhotoViewer photos={photos} collectionTitle="C" singleScreen />);
+    render(<PhotoViewer photos={photos} collectionTitle="C" singleScreen={false} />);
     await waitFor(() => {
       const links = document.querySelectorAll('link[rel="preload"]');
       expect(links.length).toBeGreaterThan(0);

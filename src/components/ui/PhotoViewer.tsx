@@ -572,19 +572,23 @@ export function PhotoViewer({
       {/* Photo container */}
       <div
         ref={containerRef}
-        className="mx-auto w-full max-w-[140rem] px-2 sm:px-4 md:px-8 lg:px-12"
+        className="mx-auto w-full max-w-[120rem] px-0 sm:px-2 md:px-8 lg:px-12"
       >
         {photos.map((photo, index) => {
           const isActive = index === activePhotoIndex;
           const isNearActive = Math.abs(index - activePhotoIndex) <= 1;
           const isFirst = index === 0;
+          const isLandscape = photo.width >= photo.height;
+          const photoWrapperClassName = isLandscape
+            ? 'relative mx-auto h-auto max-h-[84vh] w-full max-w-[120rem] px-0 sm:px-2 md:px-4'
+            : 'relative mx-auto h-auto max-h-[84vh] w-full max-w-6xl px-0 sm:px-2 md:px-4';
           return (
             <article
               key={photo.id}
               ref={(el) => {
                 photoRefs.current[index] = el;
               }}
-              className="flex min-h-[88vh] w-full flex-col items-center justify-center py-20 md:py-24 first:pt-16 first:-mt-25"
+              className="flex min-h-[78vh] w-full flex-col items-center justify-center py-14 md:min-h-[82vh] md:py-18 lg:py-20 first:pt-0 first:mt-0"
               data-testid="photo-container"
             >
               <div className="relative flex w-full flex-col items-center">
@@ -593,7 +597,7 @@ export function PhotoViewer({
                   data-testid="current-photo"
                   id={`photo-${index + 1}`}
                 >
-                  <div className="relative mx-auto h-auto max-h-[92vh] w-full max-w-[140rem] px-2 sm:px-4">
+                  <div className={photoWrapperClassName}>
                     <img
                       src={
                         cloudflareConfigured
