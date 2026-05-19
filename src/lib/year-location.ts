@@ -3,6 +3,14 @@ import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from './d1-queries';
 import { getD1Database } from './cloudflare';
+import {
+  getLocalLocationByYearAndSlug,
+  getLocalYearByLabel,
+  getLocalYearLocationData,
+  getLocalYearLocationNavData,
+  localTestDataForced,
+  localTestDataEnabled,
+} from './local-test-data';
 
 export interface LocationCollectionSummary {
   id: string;
@@ -545,6 +553,10 @@ async function fetchLocationBySlugD1(
 }
 
 export async function loadYearLocationData(): Promise<YearLocationPayload> {
+  if (localTestDataForced) {
+    return getLocalYearLocationData();
+  }
+
   if (shouldUseD1Direct()) {
     const years = await fetchYearsD1();
     return {
@@ -553,11 +565,22 @@ export async function loadYearLocationData(): Promise<YearLocationPayload> {
     };
   }
 
-  const years = await fetchYears({ status: 'published' });
-  return {
-    generatedAt: new Date().toISOString(),
-    years: years.map(mapYear),
-  };
+  try {
+    const years = await fetchYears({ status: 'published' });
+    if (years.length > 0 || !localTestDataEnabled) {
+      return {
+        generatedAt: new Date().toISOString(),
+        years: years.map(mapYear),
+      };
+    }
+  } catch (error) {
+    if (!localTestDataEnabled) {
+      throw error;
+    }
+    console.warn('[local-test-data] Falling back to local year/location data:', error);
+  }
+
+  return getLocalYearLocationData();
 }
 
 export async function getYearByLabel(label: string): Promise<YearEntry | null> {
@@ -565,12 +588,27 @@ export async function getYearByLabel(label: string): Promise<YearEntry | null> {
     return null;
   }
 
+  if (localTestDataForced) {
+    return getLocalYearByLabel(label);
+  }
+
   if (shouldUseD1Direct()) {
     return fetchYearByLabelD1(label);
   }
 
-  const year = await fetchSingleYear({ label, status: 'published' });
-  return year ? mapYear(year) : null;
+  try {
+    const year = await fetchSingleYear({ label, status: 'published' });
+    if (year || !localTestDataEnabled) {
+      return year ? mapYear(year) : null;
+    }
+  } catch (error) {
+    if (!localTestDataEnabled) {
+      throw error;
+    }
+    console.warn(`[local-test-data] Falling back to local year data for ${label}:`, error);
+  }
+
+  return getLocalYearByLabel(label);
 }
 
 export async function getLocationByYearAndSlug(
@@ -581,62 +619,90 @@ export async function getLocationByYearAndSlug(
     return null;
   }
 
+  if (localTestDataForced) {
+    return getLocalLocationByYearAndSlug(label, slug);
+  }
+
   if (shouldUseD1Direct()) {
     return fetchLocationBySlugD1(label, slug);
   }
 
-  const year = await fetchSingleYear({ label, status: 'published' });
-  if (!year) {
-    return null;
-  }
+  try {
+    const year = await fetchSingleYear({ label, status: 'published' });
+    if (!year) {
+      return localTestDataEnabled ? getLocalLocationByYearAndSlug(label, slug) : null;
+    }
 
-  const mappedYear = mapYear(year);
-  const location = mappedYear.locations.find((entry) => entry.slug === slug);
-  if (!location) {
-    return null;
-  }
+    const mappedYear = mapYear(year);
+    const location = mappedYear.locations.find((entry) => entry.slug === slug);
+    if (!location) {
+      return localTestDataEnabled ? getLocalLocationByYearAndSlug(label, slug) : null;
+    }
 
-  return { year: mappedYear, location };
+    return { year: mappedYear, location };
+  } catch (error) {
+    if (!localTestDataEnabled) {
+      throw error;
+    }
+    console.warn(`[local-test-data] Falling back to local location data for ${label}/${slug}:`, error);
+    return getLocalLocationByYearAndSlug(label, slug);
+  }
 }
 
 export const getLocationByYearAndSlugCached = cache(getLocationByYearAndSlug);
 
 export async function loadYearLocationNavData(): Promise<YearNavEntry[]> {
+  if (localTestDataForced) {
+    return getLocalYearLocationNavData();
+  }
+
   if (shouldUseD1Direct()) {
     return fetchYearsNavD1();
   }
 
-  const prisma = await getPrisma();
-  const years = await prisma.year.findMany({
-    where: { status: 'published' },
-    orderBy: { order_index: 'asc' },
-    select: {
-      id: true,
-      label: true,
-      order_index: true,
-      status: true,
-      locations: {
-        orderBy: { order_index: 'asc' },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          order_index: true,
+  try {
+    const prisma = await getPrisma();
+    const years = await prisma.year.findMany({
+      where: { status: 'published' },
+      orderBy: { order_index: 'asc' },
+      select: {
+        id: true,
+        label: true,
+        order_index: true,
+        status: true,
+        locations: {
+          orderBy: { order_index: 'asc' },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            order_index: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  return years.map((year) => ({
-    id: year.id,
-    label: year.label,
-    orderIndex: year.order_index,
-    status: year.status,
-    locations: (year.locations ?? []).map((location) => ({
-      id: location.id,
-      slug: location.slug,
-      name: location.name,
-      orderIndex: location.order_index,
-    })),
-  }));
+    if (years.length === 0 && localTestDataEnabled) {
+      return getLocalYearLocationNavData();
+    }
+
+    return years.map((year) => ({
+      id: year.id,
+      label: year.label,
+      orderIndex: year.order_index,
+      status: year.status,
+      locations: (year.locations ?? []).map((location) => ({
+        id: location.id,
+        slug: location.slug,
+        name: location.name,
+        orderIndex: location.order_index,
+      })),
+    }));
+  } catch (error) {
+    if (!localTestDataEnabled) {
+      throw error;
+    }
+    console.warn('[local-test-data] Falling back to local navigation data:', error);
+    return getLocalYearLocationNavData();
+  }
 }

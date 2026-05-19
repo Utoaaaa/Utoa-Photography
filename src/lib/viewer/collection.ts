@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from '@/lib/d1-queries';
 import { getD1Database } from '@/lib/cloudflare';
+import { getLocalCollectionForViewer, localTestDataEnabled, localTestDataForced } from '@/lib/local-test-data';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
 
@@ -215,39 +216,51 @@ export async function fetchCollectionForViewer(params: {
   allowAnyYearStatus?: boolean;
 }): Promise<CollectionViewerPayload | null> {
   const { yearLabel, slug, allowAnyYearStatus = false } = params;
+  if (localTestDataForced) {
+    return getLocalCollectionForViewer({ yearLabel, slug });
+  }
+
   if (shouldUseD1Direct()) {
     return fetchCollectionBySlugD1({ yearLabel, slug, allowAnyYearStatus });
   }
 
-  const prisma = await getPrisma();
+  try {
+    const prisma = await getPrisma();
 
-  const collection = await prisma.collection.findFirst({
-    where: {
-      slug,
-      year: {
-        label: yearLabel,
-        ...(allowAnyYearStatus ? {} : { status: 'published' }),
+    const collection = await prisma.collection.findFirst({
+      where: {
+        slug,
+        year: {
+          label: yearLabel,
+          ...(allowAnyYearStatus ? {} : { status: 'published' }),
+        },
       },
-    },
-    orderBy: [
-      { year: { created_at: 'desc' } },
-      { created_at: 'desc' },
-    ],
-    include: {
-      collection_assets: {
-        include: { asset: true },
-        orderBy: { order_index: 'asc' },
+      orderBy: [
+        { year: { created_at: 'desc' } },
+        { created_at: 'desc' },
+      ],
+      include: {
+        collection_assets: {
+          include: { asset: true },
+          orderBy: { order_index: 'asc' },
+        },
+        year: true,
+        location: true,
       },
-      year: true,
-      location: true,
-    },
-  });
+    });
 
-  if (!collection) {
-    return null;
+    if (!collection) {
+      return localTestDataEnabled ? getLocalCollectionForViewer({ yearLabel, slug }) : null;
+    }
+
+    return mapPrismaCollection(collection);
+  } catch (error) {
+    if (!localTestDataEnabled) {
+      throw error;
+    }
+    console.warn(`[local-test-data] Falling back to local collection data for ${yearLabel}/${slug}:`, error);
+    return getLocalCollectionForViewer({ yearLabel, slug });
   }
-
-  return mapPrismaCollection(collection);
 }
 
 export async function fetchCollectionByIdForViewer(collectionId: string): Promise<CollectionViewerPayload | null> {
