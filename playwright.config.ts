@@ -1,6 +1,9 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 const includeWip = process.env.E2E_INCLUDE_WIP === '1';
+const e2ePort = process.env.E2E_PORT ?? '3000';
+const e2eBaseURL = `http://localhost:${e2ePort}`;
+const chromeExecutablePath = process.env.E2E_CHROME_EXECUTABLE_PATH;
 
 // Stable suites that should pass on main CI/dev runs
 const stableTests = [
@@ -17,6 +20,7 @@ const stableTests = [
   'test_uploads_add_to_collection.ts',
   'test_admin_keyboard_navigation.ts', // T062
   'test_audit_retention.ts', // T063
+  'classic-demo-migration.spec.ts',
 ];
 
 // WIP/experimental suites (intentionally failing or pending implementation)
@@ -30,16 +34,17 @@ export default defineConfig({
   testMatch: includeWip ? [...stableTests, ...wipTests] : stableTests,
   timeout: 30_000,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: e2eBaseURL,
     trace: 'retain-on-failure',
     headless: true,
     viewport: { width: 1280, height: 800 },
     // Default to Chromium for speed/stability; can add others later
     browserName: 'chromium',
+    launchOptions: chromeExecutablePath ? { executablePath: chromeExecutablePath } : undefined,
   },
   webServer: {
-    command: 'next dev -p 3000',
-    url: 'http://localhost:3000',
+    command: `next dev -p ${e2ePort}`,
+    url: e2eBaseURL,
     reuseExistingServer: true,
     timeout: 120_000,
     env: {
