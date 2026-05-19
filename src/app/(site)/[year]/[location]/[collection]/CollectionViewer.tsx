@@ -72,7 +72,9 @@ export default function CollectionViewer({ data, fallbackLocationSlug, basePath 
 
       <main className="bg-background -mt-8 sm:-mt-10 md:-mt-14 lg:-mt-16">
         {photos.length > 0 ? (
-          <PhotoViewer photos={photos} collectionTitle={collection.title} singleScreen={false} />
+          <section className="relative left-1/2 w-screen max-w-none -translate-x-1/2 px-4 sm:px-6 md:static md:mx-auto md:w-full md:max-w-7xl md:translate-x-0 md:p-7 2xl:max-w-[128rem]">
+            <PhotoViewer photos={photos} collectionTitle={collection.title} singleScreen={false} />
+          </section>
         ) : (
           <div
             className="mx-auto max-w-6xl px-8 py-24 md:px-12 lg:px-16"
