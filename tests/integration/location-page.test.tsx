@@ -2,7 +2,7 @@
  * Integration Test: Location detail routing + empty states
  */
 import '@testing-library/jest-dom';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 
 interface LocationCollectionSummary {
   id: string;
@@ -13,6 +13,8 @@ interface LocationCollectionSummary {
   coverAssetHeight: number | null;
   coverAssetId: string | null;
   orderIndex: string;
+  capturedAt: string | null;
+  photoCount: number;
   publishedAt: string | null;
   updatedAt: string | null;
 }
@@ -57,6 +59,7 @@ const getLocationByYearAndSlugMock = jest.fn(async (label: string, slug: string)
 jest.mock('@/lib/year-location', () => ({
   loadYearLocationData: () => loadYearLocationDataMock(),
   getLocationByYearAndSlug: (label: string, slug: string) => getLocationByYearAndSlugMock(label, slug),
+  getLocationByYearAndSlugCached: (label: string, slug: string) => getLocationByYearAndSlugMock(label, slug),
 }));
 
 describe('Integration: Location detail flow', () => {
@@ -98,6 +101,8 @@ describe('Integration: Location detail flow', () => {
                   coverAssetHeight: null,
                   coverAssetId: null,
                   orderIndex: '0001',
+                  capturedAt: '2024-06-15T00:00:00.000Z',
+                  photoCount: 1,
                   publishedAt: '2024-06-15T00:00:00.000Z',
                   updatedAt: '2024-07-20T00:00:00.000Z',
                 },
@@ -111,12 +116,12 @@ describe('Integration: Location detail flow', () => {
     const HomePage = await loadHomepage();
     render(await HomePage());
 
-    const cards = await screen.findAllByTestId('location-card');
+    const cards = await screen.findAllByTestId('animated-location-card');
     expect(cards).toHaveLength(1);
 
-  const viewLink = cards[0];
+    const viewLink = cards[0];
     expect(viewLink).toHaveAttribute('href', '/2024/city-lights-24');
-    expect(viewLink).toHaveAccessibleName(/查看作品/i);
+    expect(viewLink).toHaveAccessibleName('City Lights: open archive for 2024');
 
     const LocationPage = await loadLocationPage();
     render(
@@ -130,8 +135,8 @@ describe('Integration: Location detail flow', () => {
 
     expect(getLocationByYearAndSlugMock).toHaveBeenCalledWith('2024', 'city-lights-24');
     expect(screen.getByRole('heading', { level: 1, name: 'City Lights' })).toBeInTheDocument();
-    expect(screen.getByTestId('collection-grid')).toBeInTheDocument();
-    expect(screen.getAllByTestId('collection-card')).toHaveLength(1);
+    expect(screen.getByTestId('animated-location-collections')).toBeInTheDocument();
+    expect(screen.getAllByTestId('animated-collection-card')).toHaveLength(1);
     expect(screen.getByText(/Urban Stories/)).toBeInTheDocument();
   });
 
@@ -171,9 +176,8 @@ describe('Integration: Location detail flow', () => {
       }),
     );
 
-    const emptyState = screen.getByTestId('location-empty');
+    const emptyState = screen.getByTestId('animated-empty-collections');
     expect(emptyState).toBeInTheDocument();
-    const backLink = within(emptyState).getByRole('link', { name: /返回 2024 年其他地點/i });
-    expect(backLink).toHaveAttribute('href', '/2024');
+    expect(screen.getByRole('link', { name: '2024' })).toHaveAttribute('href', '/#year-2024');
   });
 });
