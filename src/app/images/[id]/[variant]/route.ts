@@ -9,11 +9,75 @@ const CONTENT_TYPES: Record<string, string> = {
   png: 'image/png',
 };
 
+type EdgeCache = {
+  match(request: Request): Promise<Response | undefined | null>;
+  put(request: Request, response: Response): Promise<void>;
+};
+
+type CacheStorageWithDefault = CacheStorage & {
+  default?: EdgeCache;
+};
+
+function escapeSvgText(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function buildLocalTestSvg(id: string, variant: string): string {
+  const isPortrait = id.includes('portrait') || id.endsWith('urban-02') || id.endsWith('spring-03');
+  const width = isPortrait ? 1080 : 1600;
+  const height = isPortrait ? 1620 : 1067;
+  const label = escapeSvgText(`${id.replace(/^local-test-image-/, '')} / ${variant}`);
+  const titleY = isPortrait ? 1450 : 940;
+  const labelY = isPortrait ? 1532 : 1010;
+  const ridgePath = isPortrait
+    ? 'M0 1210 C170 1080 310 1340 490 1160 C690 960 810 1210 1080 1040 L1080 1620 L0 1620 Z'
+    : 'M0 790 C260 690 390 900 640 760 C940 590 1110 760 1600 585 L1600 1067 L0 1067 Z';
+  const accentA = isPortrait ? { cx: 260, cy: 420, r: 150 } : { cx: 330, cy: 300, r: 160 };
+  const accentB = isPortrait ? { cx: 760, cy: 600, r: 210 } : { cx: 1090, cy: 360, r: 220 };
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}">
+    <defs>
+      <linearGradient id="paper" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0" stop-color="#fff7d6"/>
+        <stop offset="0.48" stop-color="#dff5ff"/>
+        <stop offset="1" stop-color="#f9d2e7"/>
+      </linearGradient>
+      <radialGradient id="flare" cx="68%" cy="22%" r="58%">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.82"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="${width}" height="${height}" fill="url(#paper)"/>
+    <rect width="${width}" height="${height}" fill="url(#flare)"/>
+    <path d="${ridgePath}" fill="#111827" fill-opacity="0.12"/>
+    <circle cx="${accentA.cx}" cy="${accentA.cy}" r="${accentA.r}" fill="#01aff6" fill-opacity="0.18"/>
+    <circle cx="${accentB.cx}" cy="${accentB.cy}" r="${accentB.r}" fill="#f20085" fill-opacity="0.13"/>
+    <text x="72" y="${titleY}" fill="#111827" font-family="Georgia, 'Times New Roman', serif" font-size="${isPortrait ? 62 : 72}" letter-spacing="-2">UTOA local test image</text>
+    <text x="76" y="${labelY}" fill="#111827" fill-opacity="0.62" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${isPortrait ? 24 : 28}" letter-spacing="5">${label}</text>
+  </svg>`;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; variant: string }> }
 ) {
   const { id, variant } = await params;
+  const localTestImagesEnabled = process.env.UTOA_ENABLE_LOCAL_TEST_DATA === 'true'
+    || process.env.NODE_ENV !== 'production';
+  if (localTestImagesEnabled && id.startsWith('local-test-image-')) {
+    return new Response(buildLocalTestSvg(id, variant), {
+      headers: {
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
   // If R2 public origin is configured, redirect to direct R2 variant URL to bypass Worker
   const R2_BASE = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
   const R2_PREFIX = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
@@ -47,13 +111,14 @@ export async function GET(
     }
 
     // Edge cache: serve from caches.default when available
-    const cachesAny = (globalThis as any)?.caches as any;
-    const cache: undefined | { match: (req: Request) => Promise<Response | undefined | null>; put: (req: Request, res: Response) => Promise<void> } =
-      cachesAny && cachesAny.default ? (cachesAny.default as any) : undefined
+    const runtimeCaches = typeof caches === 'undefined'
+      ? undefined
+      : (caches as CacheStorageWithDefault);
+    const cache = runtimeCaches?.default;
     const cacheKey = new Request(new URL(request.url), request as unknown as Request);
     if (cache) {
-      const cached = await (cache as any).match(cacheKey);
-      if (cached) return cached as Response;
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
     }
 
     // Choose a single best extension from Accept header to avoid multiple R2 reads
@@ -90,7 +155,11 @@ export async function GET(
         const response = new Response(obj.body, { status: 200, headers });
         // Store to edge cache for future hits
         if (cache) {
-          try { await (cache as any).put(cacheKey, response.clone()); } catch {}
+          try {
+            await cache.put(cacheKey, response.clone());
+          } catch (cacheError) {
+            console.warn('[images] failed to store edge cache entry', cacheError);
+          }
         }
         return response;
       }
