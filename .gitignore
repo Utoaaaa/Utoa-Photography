@@ -106,6 +106,8 @@ prisma/dev.db-wal
 
 # Local dev tools/caches
 .playwright-mcp/
+.sisyphus/
+.github/
 
 # TypeScript
 *.tsbuildinfo
