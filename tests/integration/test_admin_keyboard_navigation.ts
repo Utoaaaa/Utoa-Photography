@@ -29,9 +29,6 @@ test.describe('Admin keyboard navigation (T062)', () => {
     // Start from body and tab through interactive elements
     await page.keyboard.press('Tab');
     
-    // First tab should focus skip link or first interactive element
-    let focused = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'));
-    
     // Continue tabbing and verify focus indicators are visible
     const tabSequence: string[] = [];
     for (let i = 0; i < 10; i++) {
@@ -77,9 +74,6 @@ test.describe('Admin keyboard navigation (T062)', () => {
 
     // Focus first item
     await items.first().focus();
-    
-    // Get initial focused element
-    const firstItem = await page.evaluate(() => document.activeElement?.textContent);
     
     // Press ArrowDown - should change focus or trigger sort
     await page.keyboard.press('ArrowDown');

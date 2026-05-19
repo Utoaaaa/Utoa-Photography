@@ -1,8 +1,8 @@
-import { describe, expect, test, beforeAll, afterAll } from '@jest/globals';
+import { describe, expect, test, afterAll } from '@jest/globals';
 
 describe('POST /api/assets Contract Tests', () => {
   const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api';
-  let testAssetIds: string[] = [];
+  const testAssetIds: string[] = [];
 
   afterAll(async () => {
     // Cleanup test assets
