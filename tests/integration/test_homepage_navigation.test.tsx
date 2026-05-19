@@ -43,23 +43,21 @@ jest.mock('@/lib/year-location', () => ({
 describe('Integration: Homepage hero + navigation', () => {
   const loadPage = async () => (await import('../../src/app/(site)/page')).default;
 
-  it('renders brand header anchored left with banner landmark', async () => {
+  it('renders brand link anchored left', async () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    const header = screen.getByRole('banner');
-    expect(header).toHaveClass('fixed');
-    expect(header).toHaveClass('top-0');
-    expect(header).toHaveClass('left-0');
-    expect(within(header).getByText(/Utoa/i)).toBeInTheDocument();
-    expect(within(header).getByText(/Photography/i)).toBeInTheDocument();
+    const brand = screen.getByRole('link', { name: 'Utoa Photography' });
+    expect(brand).toHaveClass('animated-home-brand');
+    expect(brand).toHaveClass('fixed');
+    expect(brand).toHaveAttribute('href', '/');
   });
 
   it('displays hero headline and decorative camera animation', async () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    expect(screen.getByRole('heading', { level: 2, name: /Moments in/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Moment in Focus' })).toBeInTheDocument();
     const animation = screen.getByTestId('camera-wire-animation');
     expect(animation).toBeInTheDocument();
   });
@@ -68,15 +66,15 @@ describe('Integration: Homepage hero + navigation', () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    const sections = await screen.findAllByTestId('year-section');
+    const sections = await screen.findAllByTestId('animated-year-section');
     expect(sections).toHaveLength(2);
 
-    const firstHeading = within(sections[0]).getByRole('heading', { level: 2, name: '2026' });
-    const firstSummary = within(sections[0]).getByText(/1 個地點/);
+    const firstHeading = within(sections[0]).getByRole('heading', { level: 3, name: '2026' });
+    const firstSummary = within(sections[0]).getByText(/1 location/);
     expect(firstHeading).toBeInTheDocument();
     expect(firstSummary).toBeInTheDocument();
 
-    const secondHeading = within(sections[1]).getByRole('heading', { level: 2, name: '2025' });
+    const secondHeading = within(sections[1]).getByRole('heading', { level: 3, name: '2025' });
     expect(secondHeading).toBeInTheDocument();
   });
 
@@ -84,8 +82,8 @@ describe('Integration: Homepage hero + navigation', () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    const sections = await screen.findAllByTestId('year-section');
-    const firstSectionCards = within(sections[0]).getAllByTestId('location-card');
+    const sections = await screen.findAllByTestId('animated-year-section');
+    const firstSectionCards = within(sections[0]).getAllByTestId('animated-location-card');
     expect(firstSectionCards).toHaveLength(1);
     expect(within(firstSectionCards[0]).getByText('Summit Lines')).toBeInTheDocument();
 

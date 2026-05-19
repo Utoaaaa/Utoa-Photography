@@ -53,24 +53,21 @@ describe('Integration: Homepage hero + navigation states', () => {
 
   const loadPage = async () => (await import('../../src/app/(site)/page')).default;
 
-  it('renders fixed brand header in banner landmark', async () => {
+  it('renders fixed animated brand link', async () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    const header = screen.getByRole('banner');
-    expect(header).toHaveClass('fixed');
-    expect(header).toHaveClass('top-0');
-    expect(header).toHaveClass('left-0');
-    expect(within(header).getByText('Utoa')).toBeInTheDocument();
-    expect(within(header).getByText('Photography')).toBeInTheDocument();
+    const brand = screen.getByRole('link', { name: 'Utoa Photography' });
+    expect(brand).toHaveClass('animated-home-brand');
+    expect(brand).toHaveClass('fixed');
+    expect(brand).toHaveAttribute('href', '/');
   });
 
   it('shows hero headline with fade-in wrapper and camera animation', async () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    expect(screen.getByRole('heading', { level: 2, name: /Moments in/i })).toBeInTheDocument();
-    expect(screen.getByTestId('fade-in-text')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Moment in Focus' })).toBeInTheDocument();
     expect(screen.getByTestId('camera-wire-animation')).toBeInTheDocument();
   });
 
@@ -78,8 +75,8 @@ describe('Integration: Homepage hero + navigation states', () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    const sections = await screen.findAllByTestId('year-section');
-    const headings = sections.map((section) => within(section).getByRole('heading', { level: 2 }).textContent);
+    const sections = await screen.findAllByTestId('animated-year-section');
+    const headings = sections.map((section) => within(section).getByRole('heading', { level: 3 }).textContent);
 
     expect(headings).toEqual(['2026', '2025']);
   });
@@ -88,7 +85,7 @@ describe('Integration: Homepage hero + navigation states', () => {
     const HomePage = await loadPage();
     render(await HomePage());
 
-    const sections = await screen.findAllByTestId('year-section');
+    const sections = await screen.findAllByTestId('animated-year-section');
     const emptyState = within(sections[1]).getByTestId('empty-locations');
     expect(emptyState).toHaveTextContent('敬請期待');
   });
