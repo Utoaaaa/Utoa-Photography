@@ -18,6 +18,7 @@ jest.mock('../../src/lib/db', () => {
   const mock = {
     year: { findUnique: jest.fn() },
     collection: {
+      findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -85,6 +86,7 @@ describe('Collection routes audit integration (T025)', () => {
   });
 
   test('DELETE /api/collections/{id} logs delete audit', async () => {
+  collectionsPrismaMock.collection.findUnique.mockResolvedValue({ id: '33333333-3333-3333-3333-333333333333', year_id: 'y1' });
   collectionsPrismaMock.collection.delete.mockResolvedValue({ id: '33333333-3333-3333-3333-333333333333' });
     (dbMod.logAudit as jest.Mock).mockResolvedValue(undefined);
   const req = makeReq({}, 'http://localhost/api/collections/33333333-3333-3333-3333-333333333333');

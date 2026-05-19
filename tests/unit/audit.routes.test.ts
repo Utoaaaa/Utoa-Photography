@@ -35,6 +35,18 @@ jest.mock('../../src/lib/db', () => {
   };
 });
 
+jest.mock('@/lib/cache', () => ({
+  __esModule: true,
+  invalidateCache: jest.fn().mockResolvedValue(undefined),
+  CACHE_TAGS: {
+    ASSETS: 'assets',
+    asset: (id: string) => `assets:${id}`,
+    collectionAssets: (id: string) => `assets:collection:${id}`,
+    collection: (id: string) => `collection:${id}`,
+    yearCollections: (id: string) => `collections:year:${id}`,
+  },
+}));
+
 // A handle to prismaMock for resets (will be db.prisma after import)
 let prismaMock: any;
 
@@ -50,7 +62,7 @@ describe('Route audit integration (T025)', () => {
   beforeAll(async () => {
     // Ensure Node has fetch/Request polyfills before importing Next route modules
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
       const undici = require('undici');
       if (typeof globalThis.fetch === 'undefined') globalThis.fetch = undici.fetch;
       if (typeof globalThis.Request === 'undefined') globalThis.Request = undici.Request;

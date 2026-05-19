@@ -11,7 +11,7 @@ function getClient(): PrismaClient {
   try {
     const d1 = getD1Database();
     if (d1) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { PrismaD1 } = require('@prisma/adapter-d1');
       let client = d1ClientCache.get(d1);
       if (!client) {
@@ -100,29 +100,37 @@ export async function logAudit(options: {
     }
 
     // Always write to audit_logs table (FR-009)
-    await prisma.auditLog.create({
-      data: {
-        actor: options.who,
-        actor_type: 'system', // Could be extended to support 'user', 'api'
-        entity_type,
-        entity_id,
-        action: options.action,
-        meta: JSON.stringify({
-          payload: options.payload,
-          metadata: options.metadata
-        })
-      }
-    });
+    try {
+      await prisma.auditLog.create({
+        data: {
+          actor: options.who,
+          actor_type: 'system', // Could be extended to support 'user', 'api'
+          entity_type,
+          entity_id,
+          action: options.action,
+          meta: JSON.stringify({
+            payload: options.payload,
+            metadata: options.metadata
+          })
+        }
+      });
+    } catch (error) {
+      console.error('Audit table logging failed:', error);
+    }
 
     // Also call the legacy audit sink if configured
-    await writeAudit({
-      timestamp: new Date().toISOString(),
-      who: options.who,
-      action: options.action,
-      entity: options.entity,
-      payload: options.payload,
-      metadata: options.metadata,
-    });
+    try {
+      await writeAudit({
+        timestamp: new Date().toISOString(),
+        who: options.who,
+        action: options.action,
+        entity: options.entity,
+        payload: options.payload,
+        metadata: options.metadata,
+      });
+    } catch (error) {
+      console.error('Audit sink logging failed:', error);
+    }
   } catch (error) {
     console.error('Audit logging failed:', error);
     // Don't throw - audit failures shouldn't break business logic

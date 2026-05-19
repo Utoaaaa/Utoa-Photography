@@ -1,3 +1,5 @@
+export {};
+
 jest.mock('next/server', () => {
   class ResponseStub {
     status: number;
@@ -82,8 +84,8 @@ describe('admin locations API route', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    Object.values(prismaMock.year).forEach((fn) => fn.mockReset());
-    Object.values(prismaMock.location).forEach((fn) => fn.mockReset());
+    Object.values(prismaMock.year).forEach((fn) => (fn as jest.Mock).mockReset());
+    Object.values(prismaMock.location).forEach((fn) => (fn as jest.Mock).mockReset());
     prismaMock.year.findUnique.mockResolvedValue(null);
     prismaMock.year.findFirst.mockResolvedValue(mockYear());
     prismaMock.location.findFirst.mockResolvedValue(null);
@@ -317,7 +319,7 @@ describe('admin locations API route', () => {
 
       expect(res.status).toBe(200);
       expect(prismaMock.location.update).toHaveBeenCalledTimes(2);
-      expect(logAudit).toHaveBeenCalledWith(expect.objectContaining({ action: 'sort', entity: 'year/year-1' }));
+      expect(logAudit).toHaveBeenCalledWith(expect.objectContaining({ action: 'sort', entity: `location/${LOCATION_ID}` }));
       expect(invalidateCache).toHaveBeenCalled();
       expect(res.body).toEqual([
         expect.objectContaining({ id: otherLocationId, orderIndex: '1.0' }),
