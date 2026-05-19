@@ -47,12 +47,14 @@ export function PhotoViewer({
   const photoRefs = useRef<(HTMLElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRootRef = useRef<HTMLDivElement | null>(null);
+  const activePhotoIndexRef = useRef(0);
+  const preloadedImageHrefsRef = useRef<Set<string>>(new Set());
+  const preloadedImageLinksRef = useRef<Map<string, HTMLLinkElement>>(new Map());
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const initialCenteringDone = useRef(false);
   const snapTimeoutRef = useRef<number | null>(null);
   const lastSnappedIndexRef = useRef<number | null>(null);
-  const hasCenteredAfterLoadRef = useRef(false);
   const autoScrollingRef = useRef(false);
   const autoScrollReleaseRef = useRef<number | null>(null);
   const hideNavTimeoutRef = useRef<number | null>(null);
@@ -67,6 +69,16 @@ export function PhotoViewer({
   }, []);
 
   const cloudflareConfigured = useMemo(() => isCloudflareConfigured(), []);
+
+  useEffect(() => {
+    activePhotoIndexRef.current = activePhotoIndex;
+  }, [activePhotoIndex]);
+
+  const setActivePhotoIndexIfChanged = useCallback((index: number) => {
+    if (activePhotoIndexRef.current === index) return;
+    activePhotoIndexRef.current = index;
+    setActivePhotoIndex(index);
+  }, []);
 
   const triggerDotNavVisibility = useCallback(
     (duration = 1600) => {
@@ -90,7 +102,7 @@ export function PhotoViewer({
 
       triggerDotNavVisibility();
       setIsTransitioning(true);
-      setActivePhotoIndex(index);
+      setActivePhotoIndexIfChanged(index);
 
       if (!prefersReducedMotion) {
         setTimeout(() => setIsTransitioning(false), 300);
@@ -98,7 +110,7 @@ export function PhotoViewer({
         setIsTransitioning(false);
       }
     },
-    [photos.length, prefersReducedMotion]
+    [photos.length, prefersReducedMotion, setActivePhotoIndexIfChanged, triggerDotNavVisibility]
   );
 
   // T027: Touch/swipe support
@@ -185,8 +197,8 @@ export function PhotoViewer({
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
             const index = photoRefs.current.indexOf(entry.target as HTMLElement);
-            if (index !== -1) {
-              setActivePhotoIndex(index);
+            if (index !== -1 && activePhotoIndexRef.current !== index) {
+              setActivePhotoIndexIfChanged(index);
             }
           }
         });
@@ -202,7 +214,7 @@ export function PhotoViewer({
     });
 
     return () => observer.disconnect();
-  }, [photos, singleScreen]);
+  }, [photos, singleScreen, setActivePhotoIndexIfChanged]);
 
   const centerPhoto = useCallback((index: number, behavior: ScrollBehavior) => {
     if (typeof window === 'undefined') return;
@@ -403,13 +415,7 @@ export function PhotoViewer({
       }
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [
-    activePhotoIndex,
-    singleScreen,
-    prefersReducedMotion,
-    scrollToPhoto,
-    triggerDotNavVisibility,
-  ]);
+  }, [singleScreen, triggerDotNavVisibility]);
 
   // T027: Preload adjacent images (reduced count and size)
   const preloadImages = useMemo(() => {
@@ -438,23 +444,43 @@ export function PhotoViewer({
     }
     const head = document.head;
     const preferredVariant = getPhotoViewerPreferredVariant(isDesktopViewport);
-    const links = preloadImages.map((photo) => {
+    preloadImages.forEach((photo) => {
+      const href = getR2VariantDirectUrl(photo.id, preferredVariant);
+      if (preloadedImageHrefsRef.current.has(href)) return;
+
+      const existingLink = Array.from(
+        head.querySelectorAll<HTMLLinkElement>('link[rel="preload"][as="image"]')
+      ).find((link) => link.href === href);
+      if (existingLink) {
+        preloadedImageHrefsRef.current.add(href);
+        return;
+      }
+
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = getR2VariantDirectUrl(photo.id, preferredVariant);
+      link.href = href;
       head.appendChild(link);
-      return link;
+      preloadedImageHrefsRef.current.add(href);
+      preloadedImageLinksRef.current.set(href, link);
     });
 
-    return () => {
-      links.forEach((link) => {
+    return undefined;
+  }, [preloadImages, singleScreen, cloudflareConfigured, isDesktopViewport]);
+
+  useEffect(
+    () => () => {
+      const head = document.head;
+      preloadedImageLinksRef.current.forEach((link) => {
         if (link.parentNode === head) {
           head.removeChild(link);
         }
       });
-    };
-  }, [preloadImages, singleScreen, cloudflareConfigured, isDesktopViewport]);
+      preloadedImageLinksRef.current.clear();
+      preloadedImageHrefsRef.current.clear();
+    },
+    []
+  );
 
   photoRefs.current.length = photos.length;
 
@@ -575,8 +601,6 @@ export function PhotoViewer({
         className="mx-auto w-full max-w-[120rem] px-0 sm:px-2 md:px-8 lg:px-12"
       >
         {photos.map((photo, index) => {
-          const isActive = index === activePhotoIndex;
-          const isNearActive = Math.abs(index - activePhotoIndex) <= 1;
           const isFirst = index === 0;
           const isLandscape = photo.width >= photo.height;
           const photoWrapperClassName = isLandscape
@@ -617,9 +641,9 @@ export function PhotoViewer({
                       width={photo.width}
                       height={photo.height}
                       className="h-full w-full object-contain"
-                      loading={isFirst || isActive ? 'eager' : 'lazy'}
-                      decoding={isFirst || isActive ? 'auto' : 'async'}
-                      fetchPriority={isFirst ? 'high' : isNearActive ? 'auto' : 'low'}
+                      loading={isFirst ? 'eager' : 'lazy'}
+                      decoding={isFirst ? 'auto' : 'async'}
+                      fetchPriority={isFirst ? 'high' : 'low'}
                       onLoad={handlePhotoLoad}
                     />
                   </div>
