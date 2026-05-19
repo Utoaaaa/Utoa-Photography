@@ -1,13 +1,48 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
+import { AnimatedCollectionShell } from '@/components/site/animated';
 import { fetchCollectionForViewer } from '@/lib/viewer/collection';
-
-import CollectionViewer from './CollectionViewer';
 
 export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ year: string; location: string; collection: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const decodedYearLabel = decodeURIComponent(resolvedParams.year);
+  const decodedLocationSlug = decodeURIComponent(resolvedParams.location);
+  const decodedCollectionSlug = decodeURIComponent(resolvedParams.collection);
+
+  const data = await fetchCollectionForViewer({ yearLabel: decodedYearLabel, slug: decodedCollectionSlug });
+  if (!data || (data.location?.slug && data.location.slug !== decodedLocationSlug)) {
+    return {
+      title: '找不到作品集 | UTOA Photography',
+    };
+  }
+
+  const description = data.collection.summary ?? '探索這組攝影作品與故事。';
+  const locationSlug = data.location?.slug ?? decodedLocationSlug;
+  const canonical = `/${encodeURIComponent(data.year.label)}/${encodeURIComponent(locationSlug)}/${encodeURIComponent(data.collection.slug)}`;
+
+  return {
+    title: `${data.collection.title} — ${data.year.label} | UTOA Photography`,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: `${data.collection.title} — ${data.year.label} | UTOA Photography`,
+      description,
+      url: canonical,
+    },
+    twitter: {
+      title: `${data.collection.title} — ${data.year.label} | UTOA Photography`,
+      description,
+    },
+  };
 }
 
 export default async function CollectionPage({ params }: PageProps) {
@@ -21,9 +56,9 @@ export default async function CollectionPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <CollectionViewer data={data} fallbackLocationSlug={decodedLocationSlug} />
-    </div>
-  );
+  if (data.location?.slug && data.location.slug !== decodedLocationSlug) {
+    notFound();
+  }
+
+  return <AnimatedCollectionShell data={data} fallbackLocationSlug={decodedLocationSlug} />;
 }
