@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
+import { buildYearHref } from '@/lib/site-paths';
 import { getYearByLabel } from '@/lib/queries/years';
 
 interface YearPageProps {
@@ -16,7 +17,5 @@ export default async function YearPage({ params }: YearPageProps) {
     notFound();
   }
 
-  const anchorSafeLabel = decodedYearLabel.replace(/\s+/g, '-');
-
-  redirect(`/#year-${encodeURIComponent(anchorSafeLabel)}`);
+  redirect(buildYearHref(year.label));
 }
