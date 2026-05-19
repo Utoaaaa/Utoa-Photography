@@ -1,22 +1,29 @@
 // Run BEFORE the Jest test framework and test files are evaluated.
 // Ensure Web Fetch API and encoders exist so Next.js route modules can import safely.
 
-// Polyfill TextEncoder/TextDecoder required by Next cache/streams
-if (typeof global.TextEncoder === 'undefined' || typeof global.TextDecoder === 'undefined') {
-  const { TextEncoder, TextDecoder } = require('util');
-  // eslint-disable-next-line no-global-assign
-  global.TextEncoder = TextEncoder;
-  // eslint-disable-next-line no-global-assign
-  global.TextDecoder = TextDecoder;
-}
+const { TextEncoder, TextDecoder } = require('util');
+const { ReadableStream, TransformStream } = require('stream/web');
+const { Blob, File } = require('buffer');
+const { MessageChannel, MessagePort } = require('worker_threads');
 
-// Polyfill fetch/Request/Response/Headers using undici for Node
-try {
-  const undici = require('undici');
-  if (typeof globalThis.fetch === 'undefined') globalThis.fetch = undici.fetch;
-  if (typeof globalThis.Request === 'undefined') globalThis.Request = undici.Request;
-  if (typeof globalThis.Response === 'undefined') globalThis.Response = undici.Response;
-  if (typeof globalThis.Headers === 'undefined') globalThis.Headers = undici.Headers;
-} catch {
-  // undici not available; tests that require fetch may fail, but avoid crashing here.
-}
+Object.defineProperties(globalThis, {
+  TextEncoder: { value: globalThis.TextEncoder ?? TextEncoder, writable: true },
+  TextDecoder: { value: globalThis.TextDecoder ?? TextDecoder, writable: true },
+  ReadableStream: { value: globalThis.ReadableStream ?? ReadableStream, writable: true },
+  TransformStream: { value: globalThis.TransformStream ?? TransformStream, writable: true },
+  Blob: { value: globalThis.Blob ?? Blob, writable: true },
+  File: { value: globalThis.File ?? File, writable: true },
+  MessageChannel: { value: globalThis.MessageChannel ?? MessageChannel, writable: true },
+  MessagePort: { value: globalThis.MessagePort ?? MessagePort, writable: true },
+});
+
+const undici = require('undici');
+
+// Polyfill browser/Fetch globals before Next route modules are imported.
+Object.defineProperties(globalThis, {
+  fetch: { value: undici.fetch, writable: true },
+  Headers: { value: undici.Headers, writable: true },
+  Request: { value: undici.Request, writable: true },
+  Response: { value: undici.Response, writable: true },
+  FormData: { value: undici.FormData, writable: true },
+});

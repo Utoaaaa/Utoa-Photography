@@ -21,6 +21,7 @@ const config: Config = {
     '<rootDir>/tests/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.test.{js,jsx,ts,tsx}',
   ],
+  testPathIgnorePatterns: ['<rootDir>/tests/contract/'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

@@ -1,23 +1,7 @@
 import '@testing-library/jest-dom';
 import 'jest-axe/extend-expect';
 
-// Polyfill TextEncoder/TextDecoder required by Next cache/streams
-if (typeof global.TextEncoder === 'undefined' || typeof global.TextDecoder === 'undefined') {
-	const { TextEncoder, TextDecoder } = require('util');
-	// eslint-disable-next-line no-global-assign
-	global.TextEncoder = TextEncoder;
-	// eslint-disable-next-line no-global-assign
-	global.TextDecoder = TextDecoder;
-}
-
-// Polyfill fetch/Request/Response/Headers for Next internals in tests
-try {
-	const undici = require('undici');
-	if (typeof globalThis.fetch === 'undefined') globalThis.fetch = undici.fetch;
-	if (typeof globalThis.Request === 'undefined') globalThis.Request = undici.Request;
-	if (typeof globalThis.Response === 'undefined') globalThis.Response = undici.Response;
-	if (typeof globalThis.Headers === 'undefined') globalThis.Headers = undici.Headers;
-} catch {}
+require('./jest.setup.pre-env.js');
 
 // Polyfill matchMedia used by components
 Object.defineProperty(window, 'matchMedia', {
