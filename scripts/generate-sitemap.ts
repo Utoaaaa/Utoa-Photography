@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { getSiteUrl } from '../src/lib/site-url';
 import { loadYearLocationData } from '../src/lib/year-location';
 
 interface LocationCollectionSummary {
@@ -48,13 +49,6 @@ interface SitemapEntry {
 }
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
-
-function getBaseUrl() {
-  const envUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.SITE_URL;
-  const fallback = 'https://utoa.photography';
-  const normalized = (envUrl ?? fallback).replace(/\/$/, '');
-  return normalized;
-}
 
 function formatDateForSitemap(value?: string | null) {
   if (!value) return undefined;
@@ -161,24 +155,20 @@ function createSitemapEntries(baseUrl: string, payload: YearLocationPayload): Si
     const year = yearAggregation.get(label);
     if (!year) return;
 
-    const yearLoc = buildUrl(baseUrl, year.label);
-    const latestLocationUpdate = year.locations
-      .map((location) => computeLatestCollectionUpdate(location))
-      .filter((value): value is string => Boolean(value))
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
-
-    entries.push({
-      loc: yearLoc,
-      lastmod: formatDateForSitemap(latestLocationUpdate ?? payload.generatedAt),
-      priority: '0.8',
-    });
-
     year.locations.forEach((location) => {
       const locationLastMod = computeLatestCollectionUpdate(location) ?? payload.generatedAt;
       entries.push({
         loc: buildUrl(baseUrl, year.label, location.slug),
         lastmod: formatDateForSitemap(locationLastMod),
-        priority: '0.7',
+        priority: '0.8',
+      });
+
+      location.collections.forEach((collection) => {
+        entries.push({
+          loc: buildUrl(baseUrl, year.label, location.slug, collection.slug),
+          lastmod: formatDateForSitemap(collection.updatedAt ?? collection.publishedAt ?? payload.generatedAt),
+          priority: '0.7',
+        });
       });
     });
   });
@@ -220,7 +210,7 @@ async function writeSitemap(xml: string) {
 
 async function main() {
   try {
-    const baseUrl = getBaseUrl();
+    const baseUrl = getSiteUrl();
     const payload = await readYearLocationPayload();
     const entries = createSitemapEntries(baseUrl, payload);
     const xml = toSitemapXml(entries);
