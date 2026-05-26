@@ -38,8 +38,15 @@ export interface Asset {
  */
 export function shouldUseD1Direct(): boolean {
   const isProd = process.env.NODE_ENV === 'production';
-  const db = getD1Database();
-  return isProd && !!db;
+  if (!isProd) {
+    return false;
+  }
+
+  try {
+    return !!getD1Database();
+  } catch {
+    return false;
+  }
 }
 
 /**

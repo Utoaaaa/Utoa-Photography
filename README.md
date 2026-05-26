@@ -7,7 +7,7 @@
 - **年份 / 地點階層**：首頁於伺服器端直接以 Prisma 查詢「年份 → 地點 → 作品集」階層資料，每次請求皆可取得最新排序與狀態，遠離手動重建靜態 JSON 的落差。
 - **地點詳情頁**：`/[year]/[location]` 路由改為動態讀取同一份資料樹，隨著後台調整即時呈現正確的麵包屑與作品集列表。
 - **資料來源生成**：若需要預先快照或在離線環境備份資料，可執行 `npm run generate:data:year-location`（呼叫 `tools/year-location/generate-year-location.js`）將資料輸出為 `public/data/year-location.json`。此步驟已非前台更新所必須，但仍可做為部署前檢查或靜態備援用途。
-- **站點地圖**：`npm run generate:sitemap`（已納入 `npm run build` 預設 prebuild 流程）會在 `public/sitemap.xml` 輸出僅含 `/[year]/[location]` 等現行路由。
+- **站點地圖**：`/sitemap.xml` 由 App Router runtime 直接讀取目前公開資料產生，部署後會跟 D1/Prisma 的最新公開路由同步。`npm run generate:sitemap` 僅輸出 `public/sitemap-static.xml`，供離線檢查或快照備援使用。
 
 ### Slug 與命名規範
 

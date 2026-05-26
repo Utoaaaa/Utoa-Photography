@@ -6,10 +6,11 @@ export function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development';
   const bypass = isDev && process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
   const host = request.headers.get('host') || '';
+  const hostname = host.split(':')[0]?.toLowerCase() ?? '';
 
   // Enforce apex domain in production (redirect www -> apex)
   if (!isDev) {
-    if (host.startsWith('www.utoa.studio')) {
+    if (hostname === 'www.utoa.studio') {
       const url = new URL(request.url);
       url.hostname = 'utoa.studio';
       return NextResponse.redirect(url, { status: 308 });

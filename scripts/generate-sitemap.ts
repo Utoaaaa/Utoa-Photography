@@ -2,86 +2,16 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { getSiteUrl } from '../src/lib/site-url';
+import { createSitemapEntries, toSitemapXml } from '../src/lib/sitemap';
 import { loadYearLocationData } from '../src/lib/year-location';
-
-interface LocationCollectionSummary {
-  id: string;
-  slug: string;
-  title: string;
-  summary: string | null;
-  coverAssetWidth: number | null;
-  coverAssetHeight: number | null;
-  coverAssetId: string | null;
-  orderIndex: string;
-  publishedAt: string | null;
-  updatedAt: string | null;
-}
-
-interface LocationEntry {
-  id: string;
-  yearId: string;
-  slug: string;
-  name: string;
-  summary: string | null;
-  coverAssetId: string | null;
-  orderIndex: string;
-  collectionCount: number;
-  collections: LocationCollectionSummary[];
-}
-
-interface YearEntry {
-  id: string;
-  label: string;
-  orderIndex: string;
-  status: string;
-  locations: LocationEntry[];
-}
-
-interface YearLocationPayload {
-  generatedAt: string;
-  years: YearEntry[];
-}
-
-interface SitemapEntry {
-  loc: string;
-  lastmod?: string;
-  priority?: string;
-}
+import type { YearLocationPayload } from '../src/lib/year-location';
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
-function formatDateForSitemap(value?: string | null) {
-  if (!value) return undefined;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return date.toISOString().split('T')[0];
-}
-
-function computeLatestCollectionUpdate(location: LocationEntry): string | undefined {
-  const timestamps = location.collections
-    .map((collection) => collection.updatedAt ?? collection.publishedAt)
-    .filter((value): value is string => Boolean(value));
-
-  if (timestamps.length === 0) return undefined;
-
-  const latest = timestamps.reduce((acc, current) => {
-    return new Date(current).getTime() > new Date(acc).getTime() ? current : acc;
-  });
-
-  return latest;
-}
-
-function buildUrl(baseUrl: string, ...segments: string[]) {
-  if (segments.length === 0) {
-    return `${baseUrl}/`;
-  }
-
-  const encodedPath = segments.map((segment) => encodeURIComponent(segment)).join('/');
-  return `${baseUrl}/${encodedPath}`;
-}
-
 async function readYearLocationPayload(): Promise<YearLocationPayload> {
   const dataPath = path.resolve(process.cwd(), 'public', 'data', 'year-location.json');
+  let snapshot: YearLocationPayload | null = null;
+
   try {
     const fileContent = await readFile(dataPath, 'utf-8');
     const parsed = JSON.parse(fileContent) as YearLocationPayload;
@@ -94,116 +24,56 @@ async function readYearLocationPayload(): Promise<YearLocationPayload> {
       throw new Error('Invalid year-location payload: generatedAt must be ISO string');
     }
 
-    if (parsed.years.length > 0) {
-      return parsed;
-    }
-
-    console.warn('[generate-sitemap] year-location.json is empty, checking live data before using it.');
-    const livePayload = await loadYearLocationData();
-    if (livePayload.years.length > 0) {
-      console.warn('[generate-sitemap] Using live year-location data instead of empty snapshot.');
-      return livePayload;
-    }
-
-    return parsed;
+    snapshot = parsed;
   } catch (error) {
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code !== 'ENOENT') {
       throw error;
     }
 
-    console.warn('[generate-sitemap] year-location.json not found, falling back to live data.');
-    return loadYearLocationData();
+    console.warn('[generate-sitemap] year-location.json not found, using live data.');
   }
-}
 
-function createSitemapEntries(baseUrl: string, payload: YearLocationPayload): SitemapEntry[] {
-  const entries: SitemapEntry[] = [];
-  const generatedDate = formatDateForSitemap(payload.generatedAt);
-
-  entries.push({
-    loc: buildUrl(baseUrl),
-    lastmod: generatedDate,
-    priority: '1.0',
-  });
-
-  const yearOrder: string[] = [];
-  const yearAggregation = new Map<string, YearEntry & { locations: LocationEntry[] }>();
-
-  payload.years
-    .filter((year) => year.status === 'published')
-    .forEach((year) => {
-      if (!yearAggregation.has(year.label)) {
-        yearAggregation.set(year.label, { ...year, locations: [...year.locations] });
-        yearOrder.push(year.label);
-        return;
+  try {
+    const livePayload = await loadYearLocationData();
+    if (livePayload.years.length > 0) {
+      if (snapshot) {
+        console.warn('[generate-sitemap] Using live year-location data instead of snapshot.');
       }
-
-      const existing = yearAggregation.get(year.label)!;
-      const mergedLocations = [...existing.locations];
-      year.locations.forEach((location) => {
-        const alreadyExists = mergedLocations.some((existingLocation) => existingLocation.slug === location.slug);
-        if (!alreadyExists) {
-          mergedLocations.push(location);
-        }
-      });
-
-      yearAggregation.set(year.label, { ...existing, locations: mergedLocations });
-    });
-
-  yearOrder.forEach((label) => {
-    const year = yearAggregation.get(label);
-    if (!year) return;
-
-    year.locations.forEach((location) => {
-      const locationLastMod = computeLatestCollectionUpdate(location) ?? payload.generatedAt;
-      entries.push({
-        loc: buildUrl(baseUrl, year.label, location.slug),
-        lastmod: formatDateForSitemap(locationLastMod),
-        priority: '0.8',
-      });
-
-      location.collections.forEach((collection) => {
-        entries.push({
-          loc: buildUrl(baseUrl, year.label, location.slug, collection.slug),
-          lastmod: formatDateForSitemap(collection.updatedAt ?? collection.publishedAt ?? payload.generatedAt),
-          priority: '0.7',
-        });
-      });
-    });
-  });
-
-  return entries;
-}
-
-function toSitemapXml(entries: SitemapEntry[]) {
-  const lines = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-  ];
-
-  entries.forEach((entry) => {
-    lines.push('  <url>');
-    lines.push(`    <loc>${entry.loc}</loc>`);
-    if (entry.lastmod) {
-      lines.push(`    <lastmod>${entry.lastmod}</lastmod>`);
+      return livePayload;
     }
-    if (entry.priority) {
-      lines.push(`    <priority>${entry.priority}</priority>`);
+  } catch (error) {
+    if (!snapshot) {
+      throw error;
     }
-    lines.push('  </url>');
-  });
+    console.warn(
+      '[generate-sitemap] Failed to load live year-location data, falling back to snapshot:',
+      error instanceof Error ? error.message : error
+    );
+  }
 
-  lines.push('</urlset>');
-  lines.push('');
+  if (snapshot) {
+    if (snapshot.years.length === 0) {
+      console.warn('[generate-sitemap] Live data and snapshot are empty; writing homepage-only sitemap.');
+    }
+    return snapshot;
+  }
 
-  return lines.join('\n');
+  try {
+    return await loadYearLocationData();
+  } catch {
+    console.warn('[generate-sitemap] Failed to load live data; writing homepage-only sitemap.');
+    return {
+      generatedAt: new Date().toISOString(),
+      years: [],
+    };
+  }
 }
 
 async function writeSitemap(xml: string) {
   const outputDir = path.resolve(process.cwd(), 'public');
   await mkdir(outputDir, { recursive: true });
-  const outputPath = path.join(outputDir, 'sitemap.xml');
+  const outputPath = path.join(outputDir, 'sitemap-static.xml');
   await writeFile(outputPath, xml, 'utf-8');
   return outputPath;
 }

@@ -4,7 +4,7 @@
 
 ### 靜態輸出前置作業
 
-部署前建議重新產出站點地圖並執行自動化檢查；若需要離線備份也可以同步匯出資料樹：
+部署前建議執行自動化檢查；若需要離線備份也可以同步匯出資料樹與站點地圖快照：
 
 ```bash
 npm run generate:sitemap
@@ -12,7 +12,7 @@ npm run ci:link-check
 npm run lighthouse
 ```
 
-若需要快照備援，可額外執行 `npm run generate:data:year-location` 將年份 / 地點 / 作品集資料輸出為 JSON；前台現已直接透過 Prisma 讀取資料庫，因此未匯出時也會即時呈現最新狀態。`npm run generate:sitemap` 仍會更新 `public/sitemap.xml` 以利搜尋引擎索引。
+若需要快照備援，可額外執行 `npm run generate:data:year-location` 將年份 / 地點 / 作品集資料輸出為 JSON；前台現已直接透過 Prisma 讀取資料庫，因此未匯出時也會即時呈現最新狀態。正式站點的 `/sitemap.xml` 由 App Router runtime 產生，會直接讀取目前公開資料；`npm run generate:sitemap` 只輸出 `public/sitemap-static.xml`，用於離線檢查或快照備援。
 
 ### 方案一：Cloudflare Access（推薦）
 
