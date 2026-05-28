@@ -1,6 +1,6 @@
 # Admin CLI
 
-`tools/admin-cli` is a local TypeScript CLI for importing and updating photography data through the same protected admin APIs used by the dashboard.
+`tools/admin-cli` is a local TypeScript CLI for importing and updating photography data. Metadata and hierarchy changes go through the same protected admin APIs used by the dashboard; large image bytes can be uploaded directly to R2 from the CLI to keep the website Worker out of the hot path.
 
 ## Scope
 
@@ -46,7 +46,8 @@ Apply a plan:
 
 ```bash
 npm run admin-cli -- apply ./.utoa/plans/kyoto-in-autumn.json \
-  --base-url https://admin-api.example.com
+  --base-url https://utoa.studio \
+  --upload-mode auto
 ```
 
 Inspect a run state file:
@@ -68,6 +69,34 @@ Before using the fallback, log in once:
 ```bash
 cloudflared access login https://admin-api.example.com
 ```
+
+## Upload modes
+
+`apply` accepts `--upload-mode auto|direct-r2|admin-api`.
+
+- `auto` (default): use direct R2 upload when R2 S3 credentials are configured, otherwise fall back to the admin API upload endpoint.
+- `direct-r2`: require direct R2 upload and fail fast when credentials are missing.
+- `admin-api`: force the legacy upload endpoint, which sends multipart image bytes through the website Worker.
+
+Direct R2 mode needs:
+
+```bash
+export CF_ACCOUNT_ID="..."
+export R2_ACCESS_KEY_ID="..."
+export R2_SECRET_ACCESS_KEY="..."
+# Optional overrides:
+export UTOA_R2_BUCKET="utoa-photography-assets"
+export UTOA_R2_PUBLIC_BASE_ORIGIN="https://images.utoa.studio"
+export UTOA_R2_OBJECT_PREFIX="images"
+export UTOA_R2_VARIANT_EXT="webp"
+```
+
+In direct R2 mode the CLI writes `images/<id>/original.<ext>` to R2, fetches
+`/cdn-cgi/image/.../original.<ext>` from the public image origin, and writes
+`thumb`, `medium`, and `large` variants back to R2. This avoids parsing large
+multipart uploads and running variant generation inside the website Worker.
+Only set `UTOA_ADMIN_CLI_SKIP_VARIANTS=true` for recovery/debug runs where
+missing thumbnails are acceptable.
 
 ## Plan format
 

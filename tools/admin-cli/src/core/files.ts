@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { createReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -62,7 +63,12 @@ export function detectMimeType(filePath: string): string {
 }
 
 export async function computeStableAssetId(filePath: string): Promise<string> {
-  const buffer = await fs.readFile(filePath);
-  const digest = crypto.createHash('sha1').update(buffer).digest('hex').slice(0, 16);
-  return `r2-cli-${digest}`;
+  const hash = crypto.createHash('sha1');
+  await new Promise<void>((resolve, reject) => {
+    const stream = createReadStream(filePath);
+    stream.on('data', (chunk) => hash.update(chunk));
+    stream.on('error', reject);
+    stream.on('end', resolve);
+  });
+  return `r2-cli-${hash.digest('hex').slice(0, 16)}`;
 }

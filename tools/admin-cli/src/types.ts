@@ -112,6 +112,8 @@ export interface RunAssetState {
   assetId?: string;
   width?: number;
   height?: number;
+  uploadMode?: 'admin-api' | 'direct-r2';
+  variantsGenerated?: boolean;
   uploaded?: boolean;
   assetCreated?: boolean;
   attached?: boolean;

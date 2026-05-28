@@ -13,6 +13,7 @@ import { resolveAccessToken } from './auth';
 import { AdminApiClient } from './api';
 import { computeStableAssetId, ensureFileExists, getImageSize } from './files';
 import { pushStep, saveRunState, upsertRunAsset } from './state';
+import { AssetUploadService, type UploadModePreference } from './upload';
 
 type ApplyOptions = {
   baseUrl: string;
@@ -20,6 +21,7 @@ type ApplyOptions = {
   planDir: string;
   plan: AdminCliPlan;
   accessToken?: string;
+  uploadMode?: UploadModePreference;
   run: RunState;
 };
 
@@ -129,6 +131,7 @@ function buildAssetAlt(asset: AssetPlan): string {
 
 async function applyAsset(
   client: AdminApiClient,
+  uploader: AssetUploadService,
   asset: AssetPlan,
   locationId: string | undefined,
   planDir: string,
@@ -143,41 +146,22 @@ async function applyAsset(
       ? { width: asset.width, height: asset.height }
       : await getImageSize(absoluteFilePath);
 
-  await client.uploadOriginal(absoluteFilePath, assetId);
+  const uploadResult = await uploader.uploadOriginal(absoluteFilePath, assetId);
   upsertRunAsset(run, {
     file: asset.file,
     absoluteFilePath,
     assetId,
     width: size.width,
     height: size.height,
+    uploadMode: uploadResult.mode,
+    variantsGenerated: uploadResult.variantsGenerated,
     uploaded: true,
-    message: 'uploaded original image',
+    message: uploadResult.message,
   });
+  pushStep(run, `${uploadResult.message}: ${assetId}`);
   await saveRunState(run);
 
-  try {
-    await client.createAsset({
-      id: assetId,
-      alt: buildAssetAlt(asset),
-      caption: asset.caption ?? null,
-      description: asset.description ?? null,
-      title: asset.title ?? null,
-      photographer: asset.photographer ?? null,
-      location: asset.location ?? null,
-      tags: asset.tags ?? null,
-      width: size.width,
-      height: size.height,
-      metadata_json: asset.metadata_json ?? null,
-      location_id: locationId,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (!message.includes('409')) {
-      throw error;
-    }
-  }
-
-  await client.updateAsset(assetId, {
+  const assetPayload = {
     alt: buildAssetAlt(asset),
     caption: asset.caption ?? null,
     description: asset.description ?? null,
@@ -189,7 +173,24 @@ async function applyAsset(
     height: size.height,
     metadata_json: asset.metadata_json ?? null,
     location_id: locationId,
-  });
+  };
+  let createdAsset = false;
+  try {
+    await client.createAsset({
+      id: assetId,
+      ...assetPayload,
+    });
+    createdAsset = true;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes('409')) {
+      throw error;
+    }
+  }
+
+  if (!createdAsset) {
+    await client.updateAsset(assetId, assetPayload);
+  }
 
   upsertRunAsset(run, {
     file: asset.file,
@@ -211,9 +212,11 @@ export async function applyPlan(
   const { baseUrl, plan, planDir, planPath, accessToken, run } = options;
   const { token, source } = await resolveAccessToken(baseUrl, accessToken);
   const client = new AdminApiClient(baseUrl, token);
+  const uploader = new AssetUploadService(client, options.uploadMode ?? 'auto');
 
   try {
     pushStep(run, `Starting apply for ${planPath}`);
+    pushStep(run, `Image upload mode: ${uploader.describe()}`);
     const year = await resolveYear(client, plan, run);
     await saveRunState(run);
 
@@ -228,7 +231,7 @@ export async function applyPlan(
     let coverAssetId: string | undefined;
 
     for (const asset of plan.assets) {
-      const assetId = await applyAsset(client, asset, location?.id, planDir, run);
+      const assetId = await applyAsset(client, uploader, asset, location?.id, planDir, run);
       assetIdsByFile.set(asset.file, assetId);
       if (asset.attach !== false) {
         attachableAssets.push(assetId);

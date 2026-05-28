@@ -36,8 +36,14 @@ type DirectUploadResult = {
   result?: { id?: string };
 };
 
+type BatchDeleteFailure = {
+  id: string;
+  reason: 'not_found' | 'referenced' | 'error';
+  details?: unknown;
+};
+
 type BatchDeleteResponse = {
-  failed?: Array<{ id: string; reason: 'not_found' | 'referenced' | 'error'; details?: unknown }>;
+  failed?: BatchDeleteFailure[];
 };
 
 type Feedback = { type: 'success' | 'error' | 'info'; text: string } | null;
@@ -166,6 +172,37 @@ const isBatchDeleteResponse = (value: unknown): value is BatchDeleteResponse => 
           (entry.reason === 'not_found' || entry.reason === 'referenced' || entry.reason === 'error'),
       ))
   );
+};
+
+const getReferencedCollections = (failure: BatchDeleteFailure): string[] => {
+  const details = failure.details;
+  if (!details || typeof details !== 'object') return [];
+  const referencedBy = (details as { referenced_by?: unknown }).referenced_by;
+  if (!Array.isArray(referencedBy)) return [];
+  return referencedBy.filter((value): value is string => typeof value === 'string');
+};
+
+const formatBatchDeleteFailure = (failed: BatchDeleteFailure[], total: number): string => {
+  const referenced = failed.filter((entry) => entry.reason === 'referenced');
+  if (referenced.length > 0) {
+    const examples = referenced.slice(0, 3).map((entry) => {
+      const collections = getReferencedCollections(entry);
+      return collections.length > 0
+        ? `${entry.id}（作品集 ${collections.slice(0, 2).join(', ')}）`
+        : entry.id;
+    });
+    const suffix = examples.length > 0 ? `：${examples.join('、')}${referenced.length > 3 ? '…' : ''}` : '';
+    return `有 ${referenced.length}/${total} 張素材仍在作品集中，請先從作品集移除後再刪除${suffix}`;
+  }
+
+  const notFound = failed.filter((entry) => entry.reason === 'not_found').length;
+  const errored = failed.filter((entry) => entry.reason === 'error').length;
+  const parts: string[] = [];
+  if (notFound > 0) parts.push(`${notFound} 張不存在`);
+  if (errored > 0) parts.push(`${errored} 張系統錯誤`);
+  return parts.length > 0
+    ? `部分素材刪除失敗（${parts.join('、')}）`
+    : `部分素材刪除失敗（${failed.length}/${total}）`;
 };
 
 const isR2CleanupResponse = (value: unknown): value is R2CleanupResponse => {
@@ -872,9 +909,9 @@ export default function AdminUploadsPage() {
         setFeedback({ type: 'error', text: '批次刪除失敗，請稍後再試。' });
       } else {
         const json = await safeJson<BatchDeleteResponse>(res, {}, isBatchDeleteResponse);
-        const failed = json.failed?.length ?? 0;
-        if (failed > 0) {
-          setFeedback({ type: 'info', text: `部分素材刪除失敗（${failed}/${ids.length}）` });
+        const failed = json.failed ?? [];
+        if (failed.length > 0) {
+          setFeedback({ type: 'info', text: formatBatchDeleteFailure(failed, ids.length) });
         } else {
           setFeedback({ type: 'success', text: '素材已刪除。' });
         }

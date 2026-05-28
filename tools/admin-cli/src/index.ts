@@ -12,7 +12,7 @@ function printHelp() {
   console.log('  init-plan <directory> --year 2024 --collection-title "Title" [--output path]');
   console.log('  validate-plan <plan.json>');
   console.log(
-    '  apply <plan.json> [--base-url https://admin.example.com] [--token <cf-access-token>]'
+    '  apply <plan.json> [--base-url https://admin.example.com] [--token <cf-access-token>] [--upload-mode auto|direct-r2|admin-api]'
   );
   console.log('  status <run-state.json>');
   console.log('');

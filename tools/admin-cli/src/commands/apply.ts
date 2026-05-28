@@ -2,6 +2,20 @@ import type { ParsedArgs } from '../core/args';
 import { applyPlan } from '../core/executor';
 import { loadPlan, summarizePlan } from '../core/plan';
 import { createRunState, getRunStatePath } from '../core/state';
+import type { UploadModePreference } from '../core/upload';
+
+function parseUploadMode(value: string | boolean | undefined): UploadModePreference {
+  if (value === undefined || value === false) {
+    return 'auto';
+  }
+  if (value === true) {
+    throw new Error('Usage: --upload-mode must be one of auto, direct-r2, admin-api');
+  }
+  if (value === 'auto' || value === 'direct-r2' || value === 'admin-api') {
+    return value;
+  }
+  throw new Error('Usage: --upload-mode must be one of auto, direct-r2, admin-api');
+}
 
 export async function runApplyCommand(args: ParsedArgs): Promise<void> {
   const planPath = args.positionals[0];
@@ -32,6 +46,7 @@ export async function runApplyCommand(args: ParsedArgs): Promise<void> {
     planDir,
     plan,
     accessToken: typeof args.options.token === 'string' ? String(args.options.token) : undefined,
+    uploadMode: parseUploadMode(args.options['upload-mode']),
     run,
   });
 
