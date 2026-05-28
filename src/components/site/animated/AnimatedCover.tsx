@@ -53,7 +53,6 @@ export function AnimatedCover({
           aria-label={alt}
         />
       )}
-      <div className="animated-cover-flare" aria-hidden="true" />
     </div>
   );
 }

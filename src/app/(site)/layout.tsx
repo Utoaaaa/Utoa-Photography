@@ -44,6 +44,12 @@ export default async function SiteLayout({
             --animated-shell-gutter: max(3rem, calc((100vw - 80rem) / 2));
           }
         }
+
+        @media (min-width: 1536px) {
+          .animated-site-shell:has(.animated-collection-viewer) {
+            --animated-shell-gutter: max(3rem, calc((100vw - 128rem) / 2));
+          }
+        }
       `}</style>
     </div>
   );

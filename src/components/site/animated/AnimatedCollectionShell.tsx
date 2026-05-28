@@ -26,7 +26,7 @@ export function AnimatedCollectionShell({
     : yearHref;
 
   return (
-    <main className="animated-archive-home relative min-h-screen overflow-hidden bg-background px-6 py-8 text-foreground sm:px-8 md:px-12">
+    <main className="animated-archive-home animated-collection-viewer relative min-h-screen overflow-hidden bg-background px-6 py-8 text-foreground sm:px-8 md:px-12">
       <div className="pointer-events-none fixed inset-0 z-0 animated-exposure-field" aria-hidden="true" />
 
       <div className="relative z-10">

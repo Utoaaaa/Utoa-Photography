@@ -143,17 +143,6 @@ export function AnimatedArchiveStyles() {
       .animated-cover-fallback[data-tone='4'] { --animated-cover-a: #451a03; --animated-cover-b: #ea580c; --animated-cover-c: #facc15; --animated-cover-glow: rgb(255 255 255 / 0.42); }
       .animated-cover-fallback[data-tone='5'] { --animated-cover-a: #0f2f2f; --animated-cover-b: #5aa0a0; --animated-cover-c: #dce6d3; --animated-cover-glow: rgb(220 252 231 / 0.48); }
 
-      .animated-cover-flare {
-        position: absolute;
-        inset: auto -18% 10% 20%;
-        height: 45%;
-        border-radius: 999px;
-        background: rgb(255 255 255 / 0.22);
-        filter: blur(30px);
-        transform: rotate(-9deg);
-        animation: animated-cover-breathe 5s ease-in-out infinite;
-      }
-
       @media (min-width: 1280px) {
         .animated-year-panel::before {
           display: block;
@@ -198,19 +187,12 @@ export function AnimatedArchiveStyles() {
         42%, 58%, 74%, 90%, 100% { opacity: 0; }
       }
 
-      @keyframes animated-cover-breathe {
-        0%, 100% { opacity: 0.45; transform: translateX(-3%) rotate(-9deg); }
-        50% { opacity: 0.9; transform: translateX(7%) rotate(-9deg); }
-      }
-
       @media (prefers-reduced-motion: reduce) {
         .animated-archive-home .animated-reveal,
         .animated-archive-home .animated-title-reveal,
         .animated-archive-home .animated-exposure-field,
-        .animated-archive-home .animated-cover-flare,
         .animated-reveal,
-        .animated-exposure-field,
-        .animated-cover-flare {
+        .animated-exposure-field {
           animation: none !important;
         }
 
