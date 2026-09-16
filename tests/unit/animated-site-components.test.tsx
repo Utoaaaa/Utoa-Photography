@@ -110,8 +110,8 @@ describe('animated site components', () => {
 
     const coverImage = screen.getByAltText('Taipei Rain cover visual');
     expect(coverImage.tagName).toBe('IMG');
-    expect(coverImage).toHaveAttribute('src', '/images/location-cover-asset/medium');
-    expect(coverImage).toHaveAttribute(
+    expect(coverImage).toHaveAttribute('src', '/images/location-cover-asset/thumb');
+    expect(coverImage.parentElement?.querySelector('img[aria-hidden]')).toHaveAttribute(
       'srcset',
       '/images/location-cover-asset/thumb 300w, /images/location-cover-asset/medium 1200w, /images/location-cover-asset/large 3840w'
     );
@@ -171,10 +171,10 @@ describe('animated site components', () => {
 
     const photo = screen.getByAltText('Lantern in rain');
     expect(photo.tagName).toBe('IMG');
-    expect(photo).toHaveAttribute('src', '/images/photo-asset-1/medium');
-    expect(photo).toHaveAttribute(
+    expect(photo).toHaveAttribute('src', '/images/photo-asset-1/thumb');
+    expect(photo.parentElement?.querySelector('img[aria-hidden]')).toHaveAttribute(
       'srcset',
-      '/images/photo-asset-1/medium 1200w, /images/photo-asset-1/large 3840w'
+      '/images/photo-asset-1/thumb 300w, /images/photo-asset-1/small 960w, /images/photo-asset-1/medium 1200w, /images/photo-asset-1/desktop 1600w'
     );
   });
 

@@ -34,6 +34,8 @@ export interface LocationEntry {
   name: string;
   summary: string | null;
   coverAssetId: string | null;
+  coverAssetWidth?: number | null;
+  coverAssetHeight?: number | null;
   orderIndex: string;
   collectionCount: number;
   collections: LocationCollectionSummary[];
@@ -95,6 +97,8 @@ type LocationRecord = {
   name: string;
   summary: string | null;
   cover_asset_id: string | null;
+  cover_asset_width?: number | null;
+  cover_asset_height?: number | null;
   order_index: string;
   collections: CollectionRecord[];
 };
@@ -157,6 +161,8 @@ function mapLocation(record: LocationRecord): LocationEntry {
     name: record.name,
     summary: record.summary ?? null,
     coverAssetId: record.cover_asset_id ?? null,
+    coverAssetWidth: record.cover_asset_width ?? null,
+    coverAssetHeight: record.cover_asset_height ?? null,
     orderIndex: record.order_index,
     collectionCount: collections.length,
     collections,
@@ -172,6 +178,20 @@ function mapYear(record: YearRecord): YearEntry {
     status: record.status,
     locations,
   };
+}
+
+async function attachCoverDimensions(years: YearRecord[], prisma: PrismaClient): Promise<YearRecord[]> {
+  const covers = years.flatMap(year => year.locations.flatMap(location => [location, ...location.collections]));
+  const ids = [...new Set(covers.map(item => item.cover_asset_id).filter((id): id is string => Boolean(id)))];
+  if (!ids.length) return years;
+  const assets = await prisma.asset.findMany({ where: { id: { in: ids } }, select: { id: true, width: true, height: true } });
+  const dimensions = new Map(assets.map(asset => [asset.id, asset]));
+  for (const cover of covers) {
+    const asset = dimensions.get(cover.cover_asset_id || '');
+    cover.cover_asset_width = asset?.width ?? null;
+    cover.cover_asset_height = asset?.height ?? null;
+  }
+  return years;
 }
 
 async function fetchYears(where: YearWhereInput): Promise<YearRecord[]> {
@@ -206,7 +226,7 @@ async function fetchYears(where: YearWhereInput): Promise<YearRecord[]> {
     },
   });
 
-  return years as unknown as YearRecord[];
+  return attachCoverDimensions(years as unknown as YearRecord[], prisma);
 }
 
 async function fetchSingleYear(where: YearWhereInput): Promise<YearRecord | null> {
@@ -245,7 +265,7 @@ async function fetchSingleYear(where: YearWhereInput): Promise<YearRecord | null
     return null;
   }
 
-  return year as unknown as YearRecord;
+  return (await attachCoverDimensions([year as unknown as YearRecord], prisma))[0];
 }
 
 type D1YearRow = {
@@ -262,6 +282,8 @@ type D1LocationRow = {
   name: string;
   summary: string | null;
   cover_asset_id: string | null;
+  cover_asset_width?: number | null;
+  cover_asset_height?: number | null;
   order_index: string;
 };
 
@@ -291,6 +313,8 @@ type D1LocationWithYearRow = {
   location_name: string;
   location_summary: string | null;
   location_cover_asset_id: string | null;
+  location_cover_asset_width: number | null;
+  location_cover_asset_height: number | null;
   location_order_index: string;
 };
 
@@ -348,10 +372,12 @@ async function fetchLocationsForYearD1(db: D1Database, yearId: string): Promise<
   const result = await db
     .prepare(
       `
-      SELECT id, year_id, slug, name, summary, cover_asset_id, order_index
-      FROM locations
-      WHERE year_id = ?1
-      ORDER BY order_index ASC
+      SELECT l.id, l.year_id, l.slug, l.name, l.summary, l.cover_asset_id, l.order_index,
+             a.width AS cover_asset_width, a.height AS cover_asset_height
+      FROM locations l
+      LEFT JOIN assets a ON a.id = l.cover_asset_id
+      WHERE l.year_id = ?1
+      ORDER BY l.order_index ASC
     `
     )
     .bind(yearId)
@@ -369,6 +395,8 @@ async function fetchLocationsForYearD1(db: D1Database, yearId: string): Promise<
         name: String(row.name),
         summary: row.summary ?? null,
         coverAssetId: row.cover_asset_id ?? null,
+        coverAssetWidth: row.cover_asset_width ?? null,
+        coverAssetHeight: row.cover_asset_height ?? null,
         orderIndex: String(row.order_index),
         collectionCount: collections.length,
         collections,
@@ -513,9 +541,12 @@ async function fetchLocationBySlugD1(
         l.name AS location_name,
         l.summary AS location_summary,
         l.cover_asset_id AS location_cover_asset_id,
+        a.width AS location_cover_asset_width,
+        a.height AS location_cover_asset_height,
         l.order_index AS location_order_index
       FROM years y
       INNER JOIN locations l ON l.year_id = y.id
+      LEFT JOIN assets a ON a.id = l.cover_asset_id
       WHERE y.label = ?1 AND y.status = 'published' AND l.slug = ?2
       LIMIT 1
     `
@@ -536,6 +567,8 @@ async function fetchLocationBySlugD1(
     name: String(row.location_name),
     summary: row.location_summary ?? null,
     coverAssetId: row.location_cover_asset_id ?? null,
+    coverAssetWidth: row.location_cover_asset_width ?? null,
+    coverAssetHeight: row.location_cover_asset_height ?? null,
     orderIndex: String(row.location_order_index),
     collectionCount: collections.length,
     collections,

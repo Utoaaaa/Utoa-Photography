@@ -11,10 +11,12 @@ const DEFAULT_OBJECT_PREFIX = 'images';
 const DEFAULT_VARIANT_EXT = 'webp';
 const IMAGE_VARIANT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
-type VariantName = 'thumb' | 'medium' | 'large';
+type VariantName = 'thumb' | 'small' | 'medium' | 'desktop' | 'large';
 
 const VARIANT_CONFIG: Record<VariantName, string> = {
   thumb: 'w=300,q=85,fit=cover',
+  small: 'w=960,h=960,q=85,fit=scale-down',
+  desktop: 'w=1920,h=1920,q=85,fit=scale-down',
   medium: 'w=1200,q=85,fit=contain',
   large: 'w=3840,q=85,fit=contain',
 };

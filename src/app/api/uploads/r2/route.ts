@@ -8,8 +8,8 @@ function randomId() {
 }
 
 const ALLOWED_EXTS = ['jpg','jpeg','png','webp','avif'];
-const ALLOWED_VARIANTS = new Set(['thumb', 'medium', 'large', 'original']);
-const CACHEABLE_IMAGE_VARIANTS = new Set(['thumb', 'medium', 'large']);
+const ALLOWED_VARIANTS = new Set(['thumb', 'small', 'medium', 'desktop', 'large', 'original']);
+const CACHEABLE_IMAGE_VARIANTS = new Set(['thumb', 'small', 'medium', 'desktop', 'large']);
 const IMAGE_VARIANT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 export async function POST(request: NextRequest) {
@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
     if (!variant) {
       after(async () => {
         try {
-          await regenerateR2Variants(imageId, { originalExtHint: ext });
+          const result = await regenerateR2Variants(imageId, { originalExtHint: ext });
+          if (result.errors.length) console.error('[uploads/r2] incomplete image variants', { imageId, errors: result.errors });
         } catch (error) {
           console.error('[uploads/r2] variant regeneration failed', error);
         }

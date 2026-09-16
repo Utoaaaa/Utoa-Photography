@@ -1,6 +1,6 @@
 import { getR2Bucket } from '@/lib/cloudflare';
 
-const R2_VARIANTS = ['thumb', 'medium', 'large'] as const;
+const R2_VARIANTS = ['thumb', 'small', 'medium', 'desktop', 'large'] as const;
 const R2_EXTS = ['webp', 'avif', 'jpg', 'jpeg', 'png'] as const;
 
 type R2Bucket = {
@@ -45,7 +45,7 @@ export async function deleteR2ObjectsForAsset(assetId: string): Promise<void> {
 }
 
 export function extractImageIdFromKey(key: string): string | null {
-  const match = /^images\/([^/]+)\/(original|thumb|medium|large)\./.exec(key);
+  const match = /^images\/([^/]+)\/(original|thumb|small|medium|desktop|large)\./.exec(key);
   return match ? match[1] : null;
 }
 

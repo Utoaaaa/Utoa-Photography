@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationCollectionSummary } from '@/lib/year-location';
-import { getR2VariantDirectUrl, generateSrcSet } from '@/lib/images';
+import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 import { buildCollectionHref } from '@/lib/site-paths';
 import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
@@ -86,15 +86,6 @@ function CollectionCard({ yearLabel, locationSlug, collection, priority = false,
     return () => observer.disconnect();
   }, []);
 
-  const coverImageSrc = useMemo(() => {
-    if (!collection.coverAssetId) return null;
-    return getR2VariantDirectUrl(collection.coverAssetId, 'medium');
-  }, [collection.coverAssetId]);
-
-  const coverSrcSet = useMemo(() => {
-    if (!collection.coverAssetId) return '';
-    return generateSrcSet(collection.coverAssetId);
-  }, [collection.coverAssetId]);
 
   const coverOrientation = useMemo<'portrait' | 'landscape'>(() => {
     const width = collection.coverAssetWidth ?? null;
@@ -114,7 +105,6 @@ function CollectionCard({ yearLabel, locationSlug, collection, priority = false,
   );
 
   // Always cover: portrait fills width (crop top/bottom), landscape fills height (crop sides), centered.
-  const imageClass = 'object-cover object-center';
 
   const formattedDate = useMemo(() => formatCollectionDate(collection), [collection]);
 
@@ -136,16 +126,12 @@ function CollectionCard({ yearLabel, locationSlug, collection, priority = false,
       >
         <div className="relative m-5 overflow-hidden rounded-[2rem]">
           <div className={imageWrapperClass}>
-            {coverImageSrc ? (
-              <img
-                src={coverImageSrc}
-                srcSet={coverSrcSet}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            {collection.coverAssetId ? (
+              <ProgressiveImage
+                assetId={collection.coverAssetId}
+                width={collection.coverAssetWidth} height={collection.coverAssetHeight}
                 alt={`${collection.title} 封面視覺`}
-                className={`h-full w-full ${imageClass}`}
-                loading={priority ? 'eager' : 'lazy'}
-                fetchPriority={priority ? 'high' : undefined}
-                decoding="async"
+                className="h-full w-full" priority={priority}
               />
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-[#01AFF6]/60 via-[#F20085]/45 to-[#FFD036]/65" />

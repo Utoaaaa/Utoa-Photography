@@ -1,5 +1,6 @@
 "use client";
 
+import { VariantBackfill } from '@/components/admin/VariantBackfill';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 import AdminPageLayout from '@/components/admin/AdminPageLayout';
@@ -56,7 +57,7 @@ type R2CleanupResponse = {
   dryRun: boolean;
 };
 
-type VariantKey = 'thumb' | 'medium' | 'large';
+type VariantKey = 'thumb' | 'small' | 'medium' | 'desktop' | 'large';
 type VariantStatusEntry = Partial<Record<VariantKey, boolean>>;
 type VariantStatusState = Record<string, VariantStatusEntry>;
 
@@ -347,7 +348,9 @@ function AssetCard({
 
   const variantBadges = ([
     ['T', 'thumb'],
-    ['M', 'medium'],
+    ['960', 'small'],
+    ['1200', 'medium'],
+    ['1920', 'desktop'],
     ['L', 'large'],
   ] as const).map(([label, key]) => (
     <span
@@ -842,44 +845,6 @@ export default function AdminUploadsPage() {
     }
   }
 
-  async function regenerateSelectedVariants() {
-    const ids = Array.from(selectedIds);
-    if (ids.length === 0) {
-      setFeedback({ type: 'info', text: '請先選擇素材。' });
-      return;
-    }
-    setFeedback({ type: 'info', text: '開始重產變體…' });
-    try {
-      for (const id of ids) {
-        try {
-          const res = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { method: 'POST' });
-          if (!res.ok) throw new Error('variant regeneration failed');
-        } catch (e) {
-          console.warn('[admin/uploads] regenerate failed for', id, e);
-        }
-      }
-      // Refresh variant status for affected ids
-      try {
-        const updates: Record<string, VariantStatusEntry> = {};
-        await Promise.all(Array.from(selectedIds).map(async (id) => {
-          const r = await fetch(`/api/admin/uploads/r2/variants/${encodeURIComponent(id)}`, { cache: 'no-store' });
-          if (r.ok) {
-            const j = await safeJson<{ variants?: Record<string, boolean> }>(
-              r,
-              {} as { variants?: Record<string, boolean> },
-              isVariantStatusResponse,
-            );
-            updates[id] = j.variants ?? {};
-          }
-        }));
-        setVariantStatus(prev => ({ ...prev, ...updates }));
-      } catch {}
-      setFeedback({ type: 'success', text: '重產變體完成。' });
-    } catch {
-      setFeedback({ type: 'error', text: '重產變體失敗，請稍後再試。' });
-    }
-  }
-
   function toggleSelected(id: string) {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -1096,6 +1061,7 @@ export default function AdminUploadsPage() {
         )}
         headerExtra={(
           <div className="space-y-3">
+            <VariantBackfill selectedIds={Array.from(selectedIds)} onUpdated={(id) => { if (assets.some(asset => asset.id === id)) void loadVariantStatusForAsset(id); }} />
             <div
               role="status"
               aria-live="polite"
@@ -1396,16 +1362,7 @@ export default function AdminUploadsPage() {
               >
                 加入作品集
               </button>
-              <button
-                data-testid="bulk-regenerate-variants-btn"
-                className="inline-flex items-center rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={() => void regenerateSelectedVariants()}
-                aria-disabled={!hasSelection}
-                disabled={!hasSelection}
-                title={hasSelection ? '重產所選素材的變體' : '請先選擇素材'}
-              >
-                重產變體
-              </button>
+
               <button
                 data-testid="confirm-bulk-delete-toolbar-btn"
                 className={((process.env.NODE_ENV !== 'production') ? '' : 'hidden ') + 'inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700'}

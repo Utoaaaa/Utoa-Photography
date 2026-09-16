@@ -1,3 +1,4 @@
+import { RESIZE_VARIANTS, RESIZE_VARIANT_NAMES, type ResizeVariant } from './image-variants';
 import { getR2Bucket } from '@/lib/cloudflare';
 
 const R2_PUBLIC_BASE = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
@@ -11,20 +12,16 @@ const IMAGE_VARIANT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 const ORIGINAL_EXTS = ['avif', 'webp', 'jpg', 'jpeg', 'png'] as const;
 
-type VariantName = 'thumb' | 'medium' | 'large';
+type VariantName = ResizeVariant;
 
 type ImageResizeConfig = {
   width: number;
-  fit: 'cover' | 'contain';
+  height?: number;
+  fit: 'cover' | 'contain' | 'scale-down';
   quality?: number;
   format?: 'webp' | 'auto' | 'avif' | 'jpeg' | 'png';
 };
 
-const VARIANT_CONFIG: Record<VariantName, ImageResizeConfig> = {
-  thumb: { width: 300, fit: 'cover', quality: 85, format: 'webp' },
-  medium: { width: 1200, fit: 'contain', quality: 85, format: 'webp' },
-  large: { width: 3840, fit: 'contain', quality: 85, format: 'webp' },
-};
 
 type OriginalExt = typeof ORIGINAL_EXTS[number];
 
@@ -58,8 +55,9 @@ async function resolveOriginalExt(bucket: R2Bucket, imageId: string, hint?: stri
 
 async function objectExists(bucket: R2Bucket, imageId: string, ext: OriginalExt): Promise<boolean> {
   try {
-    const key = `images/${imageId}/original.${ext}`;
+    const key = `${OBJECT_PREFIX}/${imageId}/original.${ext}`;
     const res = await bucket.get(key, { range: { offset: 0, length: 1 } });
+    if (res?.body) await res.body.cancel();
     return Boolean(res);
   } catch {
     return false;
@@ -77,20 +75,24 @@ async function fetchVariantFromResizing(imageId: string, originalExt: OriginalEx
   }
   const encodedId = encodeURIComponent(imageId);
   const sourcePath = `${OBJECT_PREFIX}/${encodedId}/original.${originalExt}`;
-  const cfg = VARIANT_CONFIG[variant];
+  const cfg = RESIZE_VARIANTS[variant];
   const url = `${R2_PUBLIC_BASE}/${sourcePath}`;
-  const cfImage = {
-    width: cfg.width,
-    fit: cfg.fit,
-    quality: cfg.quality,
-    format: cfg.format,
+  const cfImage: ImageResizeConfig = {
+    ...cfg,
+    quality: 85,
+    format: (VARIANT_EXT === 'jpg' ? 'jpeg' : VARIANT_EXT) as ImageResizeConfig['format'],
   };
   const res = await fetch(url, {
+    signal: AbortSignal.timeout(25000),
     headers: { 'Cache-Control': 'no-cache' },
     cf: { image: cfImage },
   } as RequestInit & { cf?: { image: ImageResizeConfig } });
   if (!res.ok) {
     throw new Error(`Failed to resize ${variant}: ${res.status}`);
+  }
+  if (!(res.headers.get('content-type') || '').startsWith('image/')) {
+    await res.body?.cancel();
+    throw new Error('Resizing did not return an image');
   }
   const body = res.body;
   if (!body) {
@@ -102,36 +104,48 @@ async function fetchVariantFromResizing(imageId: string, originalExt: OriginalEx
   };
 }
 
-export async function regenerateR2Variants(imageId: string, options?: { originalExtHint?: string | null }): Promise<{ errors: string[] }> {
-  if (!imageId) {
-    throw new Error('imageId is required');
-  }
+export async function regenerateR2Variants(imageId: string, options?: {
+  originalExtHint?: string | null;
+  onlyMissing?: boolean;
+  variants?: ResizeVariant[];
+}): Promise<{ errors: string[]; generated: string[]; skipped: string[] }> {
+  if (!imageId || /[\/\\]/.test(imageId)) throw new Error('Invalid imageId');
   const bucket = getBucket();
-  const originalExt = await resolveOriginalExt(bucket, imageId, options?.originalExtHint);
-  if (!originalExt) {
-    throw new Error('Original image not found');
-  }
   const errors: string[] = [];
-  const variants = Object.keys(VARIANT_CONFIG) as VariantName[];
-
-  await Promise.allSettled(
-    variants.map(async (variant) => {
-      try {
-        const { body, contentType } = await fetchVariantFromResizing(imageId, originalExt, variant);
-        const key = `images/${imageId}/${variant}.${VARIANT_EXT}`;
-        await bucket.put(key, body, {
-          httpMetadata: {
-            contentType: contentType || VARIANT_CONTENT_TYPE,
-            cacheControl: IMAGE_VARIANT_CACHE_CONTROL,
-          },
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error('[r2-variants] failed to generate variant', { imageId, variant, message });
-        errors.push(`${variant}:${message}`);
+  const generated: string[] = [];
+  const skipped: string[] = [];
+  let originalPromise: Promise<OriginalExt | null> | undefined;
+  const generate = async (variant: ResizeVariant) => {
+    try {
+      const key = `${OBJECT_PREFIX}/${imageId}/${variant}.${VARIANT_EXT}`;
+      if (options?.onlyMissing !== false) {
+        const existing = await bucket.get(key, { range: { offset: 0, length: 1 } });
+        if (existing) {
+          await existing.body?.cancel();
+          skipped.push(variant);
+          return;
+        }
       }
-    }),
-  );
-
-  return { errors };
+      originalPromise ??= resolveOriginalExt(bucket, imageId, options?.originalExtHint);
+      const originalExt = await originalPromise;
+      if (!originalExt) throw new Error('Original image not found');
+      const { body, contentType } = await fetchVariantFromResizing(imageId, originalExt, variant);
+      await bucket.put(key, body, { httpMetadata: {
+        contentType: contentType || VARIANT_CONTENT_TYPE,
+        cacheControl: IMAGE_VARIANT_CACHE_CONTROL,
+      } });
+      generated.push(variant);
+    } catch (error) {
+      errors.push(`${variant}:${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+  if (options?.variants) {
+    // The backfill endpoint processes only two sizes, one photo per request.
+    for (const variant of options.variants) await generate(variant);
+  } else {
+    // Uploads run inside Next after()/waitUntil: avoid serial transform
+    // timeouts consuming the entire background execution window.
+    await Promise.all(RESIZE_VARIANT_NAMES.map(generate));
+  }
+  return { errors, generated, skipped };
 }

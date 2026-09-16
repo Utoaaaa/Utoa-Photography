@@ -1,4 +1,4 @@
-import { generateSrcSet, getR2VariantDirectUrl } from '@/lib/images';
+import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 
 const FALLBACK_TONE_COUNT = 6;
 
@@ -32,17 +32,9 @@ export function AnimatedCover({
   return (
     <div className="animated-cover-panel" style={{ aspectRatio: '3 / 4', minHeight: 0 }}>
       {assetId ? (
-        <img
-          src={getR2VariantDirectUrl(assetId, 'medium')}
-          srcSet={generateSrcSet(assetId)}
-          sizes={sizes}
-          alt={alt}
-          width={width ?? 1200}
-          height={height ?? 1600}
-          className="h-full w-full object-cover object-center"
-          loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : undefined}
-          decoding="async"
+        <ProgressiveImage
+          assetId={assetId} alt={alt} width={width} height={height}
+          sizes={sizes} priority={priority} className="h-full w-full"
         />
       ) : (
         <div

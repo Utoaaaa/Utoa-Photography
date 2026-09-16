@@ -140,6 +140,7 @@ export function AnimatedArchiveHome({ years, brandHref = buildHomeHref() }: Anim
                                       <div className="relative m-4 overflow-hidden rounded-[1.45rem]">
                                         <AnimatedCover
                                           assetId={location.coverAssetId}
+                                          width={location.coverAssetWidth} height={location.coverAssetHeight}
                                           alt={`${location.name} cover visual`}
                                           priority={location.id === firstPriorityLocationId}
                                           seed={`${year.label}-${location.slug}-${location.name}`}

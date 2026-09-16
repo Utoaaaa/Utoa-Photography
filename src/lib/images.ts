@@ -1,11 +1,14 @@
+import { RESIZE_VARIANT_NAMES, variantPixelWidth } from './image-variants';
 // Image variants configuration (R2-backed)
 export const IMAGE_VARIANTS = {
   // Thumbnail variants
-  thumb: 'thumb', // 300x300 (for admin previews)
+  small: 'small', // 960px longest edge
+  desktop: 'desktop', // 1920px longest edge
+  thumb: 'thumb', // 300px width (for previews)
   
   // Display variants
-  medium: 'medium', // 1200px (longest edge)
-  large: 'large', // 3840px (longest edge)
+  medium: 'medium', // legacy 1200px width
+  large: 'large', // legacy 3840px width
   
   original: 'original', // Original upload
 } as const;
@@ -35,6 +38,7 @@ const R2_VARIANT_EXT = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replac
 
 export function getImageUrl(imageId: string, variant: ImageVariant = 'medium'): string {
   if (!imageId) return FALLBACK_PLACEHOLDER;
+  if (variant === 'small' || variant === 'desktop') return `/images/${encodeURIComponent(imageId)}/${variant}`;
 
   // 1) Cloudflare Images direct delivery
   if (IMAGE_ORIGIN === 'cf_images' && CF_IMAGES_ACCOUNT_HASH) {
@@ -67,7 +71,9 @@ export function cloudflareImageLoader({
 }): string {
   let variant: ImageVariant = 'medium';
   if (width <= 320) variant = 'thumb';
+  else if (width <= 960) variant = 'small';
   else if (width <= 1280) variant = 'medium';
+  else if (width <= 1920) variant = 'desktop';
   else variant = 'large';
   return getImageUrl(src, variant);
 }
@@ -76,6 +82,10 @@ export function getResponsiveSizes(variant: ImageVariant): string {
   switch (variant) {
     case 'thumb':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw';
+    case 'small':
+      return '960px';
+    case 'desktop':
+      return '1920px';
     case 'medium':
       return '(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px';
     case 'large':
@@ -87,13 +97,20 @@ export function getResponsiveSizes(variant: ImageVariant): string {
   }
 }
 
-export function generateSrcSet(imageId: string): string {
+export function generateSrcSet(imageId: string, width?: number | null, height?: number | null): string {
   if (!imageId) return '';
-  return [
-    `${getImageUrl(imageId, 'thumb')} 300w`,
-    `${getImageUrl(imageId, 'medium')} 1200w`,
-    `${getImageUrl(imageId, 'large')} 3840w`,
-  ].join(', ');
+  // Without original dimensions the new longest-edge variants cannot have an
+  // honest width descriptor. Keep the known legacy widths in that case.
+  const variants = width && height ? RESIZE_VARIANT_NAMES : (['thumb', 'medium', 'large'] as const);
+  const candidates = new Map<number, string>();
+  for (const variant of variants) {
+    const pixels = variantPixelWidth(variant, width || 1200, height || 1200);
+    // Legacy contain variants may have been upscaled: do not download more
+    // pixels than the original can actually resolve.
+    if (width && pixels > width && variant !== 'thumb') continue;
+    if (!candidates.has(pixels)) candidates.set(pixels, getImageUrl(imageId, variant));
+  }
+  return [...candidates].sort(([a], [b]) => a - b).map(([pixels, url]) => `${url} ${pixels}w`).join(', ');
 }
 
 export interface OptimizedImageProps {
@@ -111,6 +128,10 @@ export function getImageDimensions(variant: ImageVariant): { width: number; heig
   switch (variant) {
     case 'thumb':
       return { width: 300, height: 300 };
+    case 'small':
+      return { width: 960, height: 960 };
+    case 'desktop':
+      return { width: 1920, height: 1920 };
     case 'medium':
       return { width: 1200, height: 1200 };
     case 'large':
@@ -176,6 +197,10 @@ function getResizeParamsForVariant(variant: ImageVariant): string | null {
   switch (variant) {
     case 'thumb':
       return 'w=300,q=85,fit=cover,f=auto';
+    case 'small':
+      return 'w=960,h=960,q=85,fit=scale-down,f=auto';
+    case 'desktop':
+      return 'w=1920,h=1920,q=85,fit=scale-down,f=auto';
     case 'medium':
       return 'w=1200,q=85,fit=contain,f=auto';
     case 'large':
@@ -218,6 +243,7 @@ export function getR2VariantUrl(imageId: string, variant: ImageVariant): string 
 
 export function getR2VariantDirectUrl(imageId: string, variant: ImageVariant): string {
   if (!imageId) return '/placeholder.svg';
+  if (variant === 'small' || variant === 'desktop') return getImageUrl(imageId, variant);
   const base = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
   const prefix = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
   const ext = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');

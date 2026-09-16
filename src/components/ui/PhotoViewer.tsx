@@ -1,17 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import Head from 'next/head';
-import { getR2VariantDirectUrl, isCloudflareConfigured } from '@/lib/images';
+import { ProgressiveImage } from './ProgressiveImage';
+import { getR2VariantDirectUrl } from '@/lib/images';
 import { DotNavigation } from './DotNavigation';
-
-function getPhotoViewerSrcSet(photoId: string): string {
-  return `${getR2VariantDirectUrl(photoId, 'medium')} 1200w, ${getR2VariantDirectUrl(photoId, 'large')} 3840w`;
-}
-
-function getPhotoViewerPreferredVariant(isDesktopViewport: boolean): 'medium' | 'large' {
-  return isDesktopViewport ? 'large' : 'medium';
-}
 
 type Asset = {
   id: string;
@@ -40,16 +32,12 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isDesktopViewport, setIsDesktopViewport] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(min-width: 1024px)').matches;
-  });
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const photoRefs = useRef<(HTMLElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRootRef = useRef<HTMLDivElement | null>(null);
   const activePhotoIndexRef = useRef(0);
-  const preloadedImageHrefsRef = useRef<Set<string>>(new Set());
-  const preloadedImageLinksRef = useRef<Map<string, HTMLLinkElement>>(new Map());
+  const [readyPhotoIds, setReadyPhotoIds] = useState<Set<string>>(() => new Set());
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const initialCenteringDone = useRef(false);
@@ -68,7 +56,6 @@ export function PhotoViewer({
     return false;
   }, []);
 
-  const cloudflareConfigured = useMemo(() => isCloudflareConfigured(), []);
 
   useEffect(() => {
     activePhotoIndexRef.current = activePhotoIndex;
@@ -434,53 +421,25 @@ export function PhotoViewer({
   }, [activePhotoIndex, photos]);
 
   useEffect(() => {
-    if (
-      singleScreen ||
-      !cloudflareConfigured ||
-      preloadImages.length === 0 ||
-      typeof document === 'undefined'
-    ) {
-      return undefined;
-    }
-    const head = document.head;
-    const preferredVariant = getPhotoViewerPreferredVariant(isDesktopViewport);
-    preloadImages.forEach((photo) => {
-      const href = getR2VariantDirectUrl(photo.id, preferredVariant);
-      if (preloadedImageHrefsRef.current.has(href)) return;
-
-      const existingLink = Array.from(
-        head.querySelectorAll<HTMLLinkElement>('link[rel="preload"][as="image"]')
-      ).find((link) => link.href === href);
-      if (existingLink) {
-        preloadedImageHrefsRef.current.add(href);
-        return;
-      }
-
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = href;
-      head.appendChild(link);
-      preloadedImageHrefsRef.current.add(href);
-      preloadedImageLinksRef.current.set(href, link);
-    });
-
-    return undefined;
-  }, [preloadImages, singleScreen, cloudflareConfigured, isDesktopViewport]);
-
-  useEffect(
-    () => () => {
-      const head = document.head;
-      preloadedImageLinksRef.current.forEach((link) => {
-        if (link.parentNode === head) {
-          head.removeChild(link);
-        }
+    if (!readyPhotoIds.has(photos[activePhotoIndex]?.id)) return;
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || '')) return;
+    // Only warm the same tiny preview used by the next slide, after the current
+    // high-quality image has decoded. Never preload a competing full-size URL.
+    const links: HTMLLinkElement[] = [];
+    const timer = window.setTimeout(() => {
+      preloadImages.forEach(photo => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = getR2VariantDirectUrl(photo.id, 'thumb');
+        link.setAttribute('fetchpriority', 'low');
+        document.head.appendChild(link);
+        links.push(link);
       });
-      preloadedImageLinksRef.current.clear();
-      preloadedImageHrefsRef.current.clear();
-    },
-    []
-  );
+    }, 250);
+    return () => { window.clearTimeout(timer); links.forEach(link => link.remove()); };
+  }, [readyPhotoIds, activePhotoIndex, photos, preloadImages]);
 
   photoRefs.current.length = photos.length;
 
@@ -495,11 +454,6 @@ export function PhotoViewer({
 
   // T027: Single-screen viewer render
   if (singleScreen) {
-    const cfConfigured = cloudflareConfigured;
-    const preferredVariant = getPhotoViewerPreferredVariant(isDesktopViewport);
-    const currentSrc = cfConfigured
-      ? getR2VariantDirectUrl(currentPhoto.id, preferredVariant)
-      : '/placeholder.svg';
 
     return (
       <div
@@ -512,17 +466,6 @@ export function PhotoViewer({
         aria-label={`${collectionTitle} photo viewer`}
         aria-live="polite"
       >
-        {/* Preload adjacent images for smoother navigation */}
-        <Head>
-          {preloadImages.slice(0, 2).map((p) => (
-            <link
-              key={p.id}
-              rel="preload"
-              as="image"
-              href={cfConfigured ? getR2VariantDirectUrl(p.id, preferredVariant) : undefined}
-            />
-          ))}
-        </Head>
         <div data-testid="photo-viewer-single-screen" className="hidden" />
         {/* Main photo container */}
         <div
@@ -531,25 +474,18 @@ export function PhotoViewer({
           }`}
         >
           <div
-            className="relative max-w-full max-h-full"
+            className="relative w-full"
+            style={{ maxWidth: `min(100vw, ${100 * currentPhoto.width / currentPhoto.height}vh)` }}
             data-testid="current-photo"
             id={`photo-${activePhotoIndex + 1}`}
           >
-            <img
-              src={currentSrc}
-              srcSet={
-                cfConfigured
-                  ? getPhotoViewerSrcSet(currentPhoto.id)
-                  : undefined
-              }
-              sizes="100vw"
-              alt={currentPhoto.alt || 'placeholder image'}
-              width={currentPhoto.width}
-              height={currentPhoto.height}
-              className="max-w-full max-h-screen object-contain"
-              loading="eager"
-              decoding="auto"
-              fetchPriority="high"
+            <ProgressiveImage
+              assetId={currentPhoto.id}
+              alt={currentPhoto.alt || 'Photo'}
+              width={currentPhoto.width} height={currentPhoto.height}
+              priority fit="contain" className="w-full"
+              style={{ aspectRatio: `${currentPhoto.width} / ${currentPhoto.height}` }}
+              onReady={() => setReadyPhotoIds(ids => new Set(ids).add(currentPhoto.id))}
             />
           </div>
         </div>
@@ -621,30 +557,13 @@ export function PhotoViewer({
                   data-testid="current-photo"
                   id={`photo-${index + 1}`}
                 >
-                  <div className={photoWrapperClassName}>
-                    <img
-                      src={
-                        cloudflareConfigured
-                          ? getR2VariantDirectUrl(
-                              photo.id,
-                              getPhotoViewerPreferredVariant(isDesktopViewport)
-                            )
-                          : '/placeholder.svg'
-                      }
-                      srcSet={
-                        cloudflareConfigured
-                          ? getPhotoViewerSrcSet(photo.id)
-                          : undefined
-                      }
-                      sizes="100vw"
-                      alt={photo.alt || 'placeholder image'}
-                      width={photo.width}
-                      height={photo.height}
-                      className="h-full w-full object-contain"
-                      loading={isFirst ? 'eager' : 'lazy'}
-                      decoding={isFirst ? 'auto' : 'async'}
-                      fetchPriority={isFirst ? 'high' : 'low'}
-                      onLoad={handlePhotoLoad}
+                  <div className={photoWrapperClassName} style={{ maxWidth: `min(100%, ${84 * photo.width / photo.height}vh)` }}>
+                    <ProgressiveImage
+                      assetId={photo.id} alt={photo.alt || 'Photo'}
+                      width={photo.width} height={photo.height}
+                      priority={isFirst} fit="contain" className="w-full"
+                      style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+                      onReady={() => { handlePhotoLoad(); setReadyPhotoIds(ids => new Set(ids).add(photo.id)); }}
                     />
                   </div>
                 </div>

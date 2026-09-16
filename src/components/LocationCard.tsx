@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LocationEntry } from '@/lib/year-location';
-import { getR2VariantDirectUrl, generateSrcSet } from '@/lib/images';
+import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 import { buildLocationHref } from '@/lib/site-paths';
 import { useAutoShrinkText } from '@/hooks/useAutoShrinkText';
 
@@ -43,15 +43,6 @@ export function LocationCard({ yearLabel, location, priority = false, basePath }
     return () => observer.disconnect();
   }, []);
 
-  const posterImage = useMemo(() => {
-    if (!location.coverAssetId) return null;
-    return getR2VariantDirectUrl(location.coverAssetId, 'medium');
-  }, [location.coverAssetId]);
-
-  const posterSrcSet = useMemo(() => {
-    if (!location.coverAssetId) return '';
-    return generateSrcSet(location.coverAssetId);
-  }, [location.coverAssetId]);
 
   const lastUpdated = useMemo(() => {
     return location.collections.reduce<string | null>((oldest, collection) => {
@@ -92,18 +83,15 @@ export function LocationCard({ yearLabel, location, priority = false, basePath }
         <div className="relative m-5 overflow-hidden rounded-[2rem]">
           {/* Revert to original portrait container; keep object-cover for cropping behavior */}
           <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem]">
-            {posterImage ? (
+            {location.coverAssetId ? (
               <>
-                <img
-                  src={posterImage}
-                  srcSet={posterSrcSet}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  alt={`${location.name} 封面視覺`}
-                  className="h-full w-full object-cover object-center"
-                  loading={priority ? 'eager' : 'lazy'}
-                  fetchPriority={priority ? 'high' : undefined}
-                  decoding="async"
-                />
+              <ProgressiveImage
+                assetId={location.coverAssetId}
+                width={location.coverAssetWidth}
+                height={location.coverAssetHeight}
+                alt={`${location.name} 封面視覺`}
+                className="h-full w-full" priority={priority}
+              />
               </>
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-[#01AFF6]/60 via-[#F20085]/45 to-[#FFD036]/65" />

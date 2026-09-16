@@ -78,6 +78,39 @@ export async function GET(
     });
   }
 
+  // New variants are served through a stable URL during backfill. Never cache
+  // a fallback as immutable, or it would hide a subsequently generated size.
+  if (variant === 'small' || variant === 'desktop') {
+    try {
+      const prefix = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
+      const ext = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');
+      const bucket: R2Bucket | undefined = getR2Bucket();
+      if (!bucket) return new Response('Storage unavailable', { status: 503, headers: { 'Cache-Control': 'no-store' } });
+      const cache = typeof caches !== 'undefined' ? (caches as CacheStorageWithDefault).default : undefined;
+      const cacheKey = new Request(request.url);
+      const cached = await cache?.match(cacheKey);
+      if (cached) return cached;
+      const fallback = variant === 'small' ? 'medium' : 'large';
+      for (const candidate of [variant, fallback]) {
+        const object = await bucket.get(`${prefix}/${id}/${candidate}.${ext}`);
+        if (!object) continue;
+        const exact = candidate === variant;
+        const response = new Response(object.body, { headers: {
+          'Content-Type': object.httpMetadata?.contentType || CONTENT_TYPES[ext] || 'image/webp',
+          'Cache-Control': exact ? 'public, max-age=31536000, immutable' : 'no-store',
+          'X-Image-Variant': candidate,
+        } });
+        if (exact && cache) {
+          try { await cache.put(cacheKey, response.clone()); } catch { /* delivery still succeeds */ }
+        }
+        return response;
+      }
+      return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
+    } catch {
+      return new Response('Image unavailable', { status: 503, headers: { 'Cache-Control': 'no-store' } });
+    }
+  }
+
   // If R2 public origin is configured, redirect to direct R2 variant URL to bypass Worker
   const R2_BASE = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
   const R2_PREFIX = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';

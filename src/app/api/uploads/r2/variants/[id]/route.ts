@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getR2Bucket } from '@/lib/cloudflare';
 
-const VARIANTS = ['thumb','medium','large','original'] as const;
+const VARIANTS = ['thumb','small','medium','desktop','large','original'] as const;
 const EXTS = ['webp','avif','jpg','jpeg','png'] as const;
 
 type R2Bucket = {
@@ -24,11 +24,14 @@ export async function GET(
     const result: Record<string, boolean> = {};
     for (const v of VARIANTS) {
       let exists = false;
-      for (const ext of EXTS) {
-        const key = `images/${id}/${v}.${ext}`;
+      const extensions = v === 'small' || v === 'desktop'
+        ? [(process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '')]
+        : EXTS;
+      for (const ext of extensions) {
+        const key = `${process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images'}/${id}/${v}.${ext}`;
         try {
           const obj = await bucket.get(key, { range: { offset: 0, length: 1 } });
-          if (obj) { exists = true; break; }
+          if (obj) { await obj.body?.cancel(); exists = true; break; }
         } catch {
           // ignore and try next
         }

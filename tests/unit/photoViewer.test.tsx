@@ -30,6 +30,7 @@ describe('PhotoViewer', () => {
   });
 
   beforeEach(() => {
+    window.scrollTo = jest.fn();
     process.env.NEXT_PUBLIC_CLOUDFLARE_ACCOUNT_HASH = 'TEST';
     window.matchMedia = jest.fn().mockImplementation((query) => ({
       matches: query === '(min-width: 1024px)',
@@ -70,12 +71,16 @@ describe('PhotoViewer', () => {
     ).toBeInTheDocument();
   });
 
-  it('preloads adjacent images without crashing', async () => {
+  it('preloads only adjacent previews after the current image is ready', async () => {
     const photos = [genPhoto('1'), genPhoto('2'), genPhoto('3')];
     render(<PhotoViewer photos={photos} collectionTitle="C" singleScreen={false} />);
+    expect(document.querySelectorAll('link[rel="preload"]')).toHaveLength(0);
+    fireEvent.load(document.querySelector('img[aria-hidden="true"]')!);
     await waitFor(() => {
       const links = document.querySelectorAll('link[rel="preload"]');
       expect(links.length).toBeGreaterThan(0);
+      expect(links[0].getAttribute('href')).toContain('thumb');
+      expect(links[0]).toHaveAttribute('fetchpriority', 'low');
     });
   });
 });
