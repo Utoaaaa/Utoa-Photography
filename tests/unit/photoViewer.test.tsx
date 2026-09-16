@@ -44,6 +44,25 @@ describe('PhotoViewer', () => {
     }));
   });
 
+  it('corrects a portrait stored with landscape EXIF dimensions from its preview', () => {
+    const photo = { ...genPhoto('rotated'), width: 7008, height: 4672 };
+    render(<PhotoViewer photos={[photo]} collectionTitle="C" />);
+    const preview = screen.getByAltText('alt-rotated');
+    Object.defineProperties(preview, { naturalWidth: { value: 300 }, naturalHeight: { value: 450 } });
+    fireEvent.load(preview);
+    expect(preview.parentElement).toHaveStyle({ aspectRatio: '4672 / 7008' });
+    expect(preview.parentElement?.parentElement).not.toHaveStyle({ maxWidth: 'min(100%, 56vh)' });
+  });
+
+  it('does not turn a correctly recorded portrait into a square from a cropped preview', () => {
+    const photo = { ...genPhoto('portrait'), width: 4672, height: 7008 };
+    render(<PhotoViewer photos={[photo]} collectionTitle="C" />);
+    const preview = screen.getByAltText('alt-portrait');
+    Object.defineProperties(preview, { naturalWidth: { value: 300 }, naturalHeight: { value: 300 } });
+    fireEvent.load(preview);
+    expect(preview.parentElement).toHaveStyle({ aspectRatio: '4672 / 7008' });
+  });
+
   it('renders traditional scroll viewer and dots', () => {
     const photos = [genPhoto('1'), genPhoto('2'), genPhoto('3')];
     render(

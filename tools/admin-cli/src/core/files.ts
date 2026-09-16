@@ -55,7 +55,12 @@ export async function getImageSize(filePath: string): Promise<{ width: number; h
   if (!metadata.width || !metadata.height) {
     throw new Error(`Unable to read image dimensions: ${filePath}`);
   }
-  return { width: metadata.width, height: metadata.height };
+  // Metadata dimensions precede EXIF auto-orientation; CDN/browser rendering
+  // rotates orientations 5–8 and swaps the visible width and height.
+  const orientation = metadata.orientation ?? 1;
+  return orientation >= 5 && orientation <= 8
+    ? { width: metadata.height, height: metadata.width }
+    : { width: metadata.width, height: metadata.height };
 }
 
 export function detectMimeType(filePath: string): string {

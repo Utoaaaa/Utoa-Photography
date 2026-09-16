@@ -9,15 +9,6 @@ const CONTENT_TYPES: Record<string, string> = {
   png: 'image/png',
 };
 
-type EdgeCache = {
-  match(request: Request): Promise<Response | undefined | null>;
-  put(request: Request, response: Response): Promise<void>;
-};
-
-type CacheStorageWithDefault = CacheStorage & {
-  default?: EdgeCache;
-};
-
 function escapeSvgText(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -78,32 +69,37 @@ export async function GET(
     });
   }
 
-  // New variants are served through a stable URL during backfill. Never cache
-  // a fallback as immutable, or it would hide a subsequently generated size.
+  // Compatibility for previously shipped /images/:id/{small,desktop} links.
+  // Public R2 delivery uses metadata-only checks and redirects: image bytes
+  // must never be buffered/cloned through the Next.js Worker during backfill.
   if (variant === 'small' || variant === 'desktop') {
     try {
       const prefix = process.env.NEXT_PUBLIC_R2_OBJECT_PREFIX || 'images';
       const ext = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replace(/^\./, '');
+      const publicBase = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN ||
+        (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST ? `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST}` : undefined);
       const bucket: R2Bucket | undefined = getR2Bucket();
       if (!bucket) return new Response('Storage unavailable', { status: 503, headers: { 'Cache-Control': 'no-store' } });
-      const cache = typeof caches !== 'undefined' ? (caches as CacheStorageWithDefault).default : undefined;
-      const cacheKey = new Request(request.url);
-      const cached = await cache?.match(cacheKey);
-      if (cached) return cached;
       const fallback = variant === 'small' ? 'medium' : 'large';
       for (const candidate of [variant, fallback]) {
-        const object = await bucket.get(`${prefix}/${id}/${candidate}.${ext}`);
+        const key = `${prefix}/${id}/${candidate}.${ext}`;
+        if (publicBase) {
+          if (!await bucket.head(key)) continue;
+          return new Response(null, { status: 302, headers: {
+            Location: `${publicBase.replace(/\/$/, '')}/${prefix}/${encodeURIComponent(id)}/${candidate}.${ext}`,
+            'Cache-Control': 'no-store',
+            'X-Image-Variant': candidate,
+          } });
+        }
+        // Non-public buckets retain a single streaming response, with no
+        // response.clone()/await cache.put() that could queue the entire body.
+        const object = await bucket.get(key);
         if (!object) continue;
-        const exact = candidate === variant;
-        const response = new Response(object.body, { headers: {
+        return new Response(object.body, { headers: {
           'Content-Type': object.httpMetadata?.contentType || CONTENT_TYPES[ext] || 'image/webp',
-          'Cache-Control': exact ? 'public, max-age=31536000, immutable' : 'no-store',
+          'Cache-Control': candidate === variant ? 'public, max-age=31536000, immutable' : 'no-store',
           'X-Image-Variant': candidate,
         } });
-        if (exact && cache) {
-          try { await cache.put(cacheKey, response.clone()); } catch { /* delivery still succeeds */ }
-        }
-        return response;
       }
       return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
     } catch {
@@ -143,17 +139,6 @@ export async function GET(
       return new Response('Storage not configured', { status: 500 });
     }
 
-    // Edge cache: serve from caches.default when available
-    const runtimeCaches = typeof caches === 'undefined'
-      ? undefined
-      : (caches as CacheStorageWithDefault);
-    const cache = runtimeCaches?.default;
-    const cacheKey = new Request(new URL(request.url), request as unknown as Request);
-    if (cache) {
-      const cached = await cache.match(cacheKey);
-      if (cached) return cached;
-    }
-
     // Choose a single best extension from Accept header to avoid multiple R2 reads
     const accept = request.headers.get('accept') || '';
     const prefersAvif = /image\/avif/.test(accept);
@@ -186,14 +171,6 @@ export async function GET(
         if (obj.httpMetadata?.cacheControl) headers.set('Cache-Control', obj.httpMetadata.cacheControl);
 
         const response = new Response(obj.body, { status: 200, headers });
-        // Store to edge cache for future hits
-        if (cache) {
-          try {
-            await cache.put(cacheKey, response.clone());
-          } catch (cacheError) {
-            console.warn('[images] failed to store edge cache entry', cacheError);
-          }
-        }
         return response;
       }
     }
@@ -206,6 +183,7 @@ export async function GET(
 }
 
 type R2Bucket = {
+  head(key: string): Promise<{ key?: string } | null>;
   get(key: string): Promise<{
     body: ReadableStream;
     httpMetadata?: { contentType?: string; contentLanguage?: string; contentDisposition?: string; cacheControl?: string };

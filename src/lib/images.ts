@@ -21,7 +21,10 @@ const FALLBACK_PLACEHOLDER = '/placeholder.svg';
 const RESOLVED_R2_BASE = (() => {
   if (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN) return process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
   if (process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST) return `https://${process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST}`;
-  return undefined;
+  // NEXT_PUBLIC values must be present at build time. Wrangler runtime vars
+  // alone do not reach browser bundles: keep this app's public CDN as the
+  // production default instead of silently proxying every image through Next.
+  return process.env.NODE_ENV === 'production' ? 'https://images.utoa.studio' : undefined;
 })();
 
 const IMAGE_ORIGIN = (process.env.NEXT_PUBLIC_IMAGE_ORIGIN || (RESOLVED_R2_BASE ? 'r2_resize' : 'worker')) as 'worker' | 'cf_images' | 'r2_resize';
@@ -38,7 +41,6 @@ const R2_VARIANT_EXT = (process.env.NEXT_PUBLIC_R2_VARIANT_EXT || 'webp').replac
 
 export function getImageUrl(imageId: string, variant: ImageVariant = 'medium'): string {
   if (!imageId) return FALLBACK_PLACEHOLDER;
-  if (variant === 'small' || variant === 'desktop') return `/images/${encodeURIComponent(imageId)}/${variant}`;
 
   // 1) Cloudflare Images direct delivery
   if (IMAGE_ORIGIN === 'cf_images' && CF_IMAGES_ACCOUNT_HASH) {
@@ -97,17 +99,17 @@ export function getResponsiveSizes(variant: ImageVariant): string {
   }
 }
 
-export function generateSrcSet(imageId: string, width?: number | null, height?: number | null): string {
+export function generateSrcSet(imageId: string, width?: number | null, height?: number | null, includeNewVariants = true): string {
   if (!imageId) return '';
   // Without original dimensions the new longest-edge variants cannot have an
   // honest width descriptor. Keep the known legacy widths in that case.
-  const variants = width && height ? RESIZE_VARIANT_NAMES : (['thumb', 'medium', 'large'] as const);
+  const variants = includeNewVariants && width && height ? RESIZE_VARIANT_NAMES : (['thumb', 'medium', 'large'] as const);
   const candidates = new Map<number, string>();
   for (const variant of variants) {
     const pixels = variantPixelWidth(variant, width || 1200, height || 1200);
     // Legacy contain variants may have been upscaled: do not download more
     // pixels than the original can actually resolve.
-    if (width && pixels > width && variant !== 'thumb') continue;
+    if (includeNewVariants && width && pixels > width && variant !== 'thumb') continue;
     if (!candidates.has(pixels)) candidates.set(pixels, getImageUrl(imageId, variant));
   }
   return [...candidates].sort(([a], [b]) => a - b).map(([pixels, url]) => `${url} ${pixels}w`).join(', ');

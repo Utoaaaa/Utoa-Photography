@@ -14,6 +14,7 @@ interface Props {
   sizes?: string;
   style?: CSSProperties;
   onReady?: () => void;
+  onDimensions?: (width: number, height: number, source: 'preview' | 'full') => void;
 }
 
 // Key the inner component so a changed photo cannot reveal the previous image
@@ -23,17 +24,21 @@ export function ProgressiveImage(props: Props) {
 }
 
 function ImageLayers({ assetId, alt, width, height, priority = false, className = '',
-  fit = 'cover', sizes = '100vw', style, onReady }: Props) {
+  fit = 'cover', sizes = '100vw', style, onReady, onDimensions }: Props) {
   const root = useRef<HTMLSpanElement>(null);
   const alive = useRef(true);
   const [enhance, setEnhance] = useState(false);
   const [near, setNear] = useState(priority);
   const [measuredSize, setMeasuredSize] = useState<string>();
   const [ready, setReady] = useState(false);
-  const [failed, setFailed] = useState(false);
+  // Missing backfill variants fail on the CDN, never through the site Worker.
+  // Retry the legacy responsive set, then one final large image (bounded).
+  const [failureStage, setFailureStage] = useState(0);
   const [previewFailed, setPreviewFailed] = useState(false);
   const readyCallback = useRef(onReady);
   readyCallback.current = onReady;
+  const dimensionsCallback = useRef(onDimensions);
+  dimensionsCallback.current = onDimensions;
 
   useEffect(() => {
     alive.current = true;
@@ -74,25 +79,35 @@ function ImageLayers({ assetId, alt, width, height, priority = false, className 
         loading={priority || near ? 'eager' : 'lazy'} decoding="async"
         fetchPriority={priority ? 'high' : 'low'}
         onError={() => setPreviewFailed(true)}
-        className={`${imageClass} transition-opacity duration-300 motion-reduce:transition-none ${ready ? 'opacity-0' : 'opacity-100'}`}
+        onLoad={event => {
+          const image = event.currentTarget;
+          if (!previewFailed && dimensionsCallback.current && image.naturalWidth && image.naturalHeight) {
+            dimensionsCallback.current(image.naturalWidth, image.naturalHeight, 'preview');
+          }
+        }}
+        className={`${imageClass} opacity-100`}
       />
       {near && enhance && (
         <img
-          src={getR2VariantDirectUrl(assetId, failed ? 'large' : 'medium')}
-          srcSet={failed ? undefined : generateSrcSet(assetId, width, height)}
+          src={getR2VariantDirectUrl(assetId, failureStage >= 2 ? 'large' : 'medium')}
+          srcSet={failureStage >= 2 ? undefined : generateSrcSet(assetId, width, height, failureStage === 0)}
           sizes={measuredSize || sizes}
           alt="" aria-hidden="true"
           width={width || undefined} height={height || undefined}
           loading="eager" decoding="async" fetchPriority={priority ? 'high' : 'low'}
-          onError={() => { if (!failed) setFailed(true); }}
+          onError={() => { setReady(false); setFailureStage(stage => Math.min(stage + 1, 2)); }}
           onLoad={async event => {
             const image = event.currentTarget;
+            const decodedSrc = image.currentSrc || image.src;
             try { if (image.decode) await image.decode(); } catch { return; }
-            if (!alive.current) return;
+            if (!alive.current || (image.currentSrc || image.src) !== decodedSrc) return;
+            if (dimensionsCallback.current && image.naturalWidth && image.naturalHeight) {
+              dimensionsCallback.current(image.naturalWidth, image.naturalHeight, 'full');
+            }
             setReady(true);
             if (readyCallback.current) readyCallback.current();
           }}
-          className={`${imageClass} transition-opacity duration-300 motion-reduce:transition-none ${ready ? 'opacity-100' : 'opacity-0'}`}
+          className={`${imageClass} transition-opacity duration-300 ease-out motion-reduce:transition-none ${ready ? 'opacity-100' : 'opacity-0'}`}
         />
       )}
     </span>

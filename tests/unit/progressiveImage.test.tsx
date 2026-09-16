@@ -29,6 +29,8 @@ describe('responsive progressive images', () => {
     await act(async () => { decode(); });
     expect(container.firstChild).toHaveAttribute('data-image-ready', 'true');
     expect(onReady).toHaveBeenCalledTimes(1);
+    expect(screen.getByAltText('A photo')).toHaveClass('opacity-100');
+    expect(screen.getByAltText('A photo')).not.toHaveClass('opacity-0');
     expect(screen.getByAltText('A photo')).toBeInTheDocument();
   });
 
@@ -50,13 +52,21 @@ describe('responsive progressive images', () => {
     expect(onReady).not.toHaveBeenCalled();
   });
 
-  it('removes srcset on failure so a legacy fallback can be requested', async () => {
+  it('falls back to legacy responsive images, then a bounded final attempt', async () => {
     const { container } = render(<ProgressiveImage assetId="one" alt="One" width={3000} height={2000} priority />);
     const full = container.querySelector('img[aria-hidden]')!;
     fireEvent.error(full);
+    await waitFor(() => expect(full.getAttribute('srcset')).not.toContain('/small'));
+    expect(full.getAttribute('srcset')).not.toContain('/desktop');
+    expect(full.getAttribute('srcset')).toContain('/medium 1200w');
+    fireEvent.error(full);
     await waitFor(() => expect(full).not.toHaveAttribute('srcset'));
     expect(full.getAttribute('src')).toContain('large');
+    fireEvent.error(full);
+    expect(full).not.toHaveAttribute('srcset');
+    expect(container.firstChild).toHaveAttribute('data-image-ready', 'false');
   });
+
 });
 
 // The test runtime exposes MessageChannel; release React scheduler ports.

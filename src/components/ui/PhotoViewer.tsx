@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, type CSSProperties } from 'react';
 import { ProgressiveImage } from './ProgressiveImage';
 import { getR2VariantDirectUrl } from '@/lib/images';
 import { DotNavigation } from './DotNavigation';
@@ -31,7 +31,39 @@ export function PhotoViewer({
   slideTexts = [],
 }: PhotoViewerProps) {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<Record<string, { width: number; height: number }>>({});
+  const fullDimensionsKnown = useRef(new Set<string>());
+  const rememberImageDimensions = useCallback((photo: Asset, width: number, height: number, source: 'preview' | 'full') => {
+    if (!width || !height || !photo.width || !photo.height) return;
+    if (source === 'preview' && fullDimensionsKnown.current.has(photo.id)) return;
+    if (source === 'full') fullDimensionsKnown.current.add(photo.id);
+    const actualRatio = width / height;
+    const recordedRatio = photo.width / photo.height;
+    if (Math.abs(actualRatio / recordedRatio - 1) < 0.02) {
+      if (source === 'full') setImageDimensions(previous => {
+        if (!previous[photo.id]) return previous;
+        const next = { ...previous };
+        delete next[photo.id];
+        return next;
+      });
+      return;
+    }
+    // Legacy thumbnails can be cropped. Only use a preview to correct a clear
+    // EXIF width/height transposition; the decoded full image is authoritative.
+    const transposed = Math.abs(actualRatio * recordedRatio - 1) < 0.02;
+    if (source === 'preview' && !transposed) return;
+    const scale = Math.max(photo.width, photo.height) / Math.max(width, height);
+    // srcset density correction can round naturalWidth/Height slightly. Keep
+    // the exact source dimensions when this is just an orientation swap.
+    const corrected = transposed
+      ? { width: photo.height, height: photo.width }
+      : { width: Math.round(width * scale), height: Math.round(height * scale) };
+    setImageDimensions(previous => {
+      const current = previous[photo.id];
+      if (current?.width === corrected.width && current?.height === corrected.height) return previous;
+      return { ...previous, [photo.id]: corrected };
+    });
+  }, []);
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const photoRefs = useRef<(HTMLElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,16 +120,11 @@ export function PhotoViewer({
       if (index < 0 || index >= photos.length) return;
 
       triggerDotNavVisibility();
-      setIsTransitioning(true);
       setActivePhotoIndexIfChanged(index);
 
-      if (!prefersReducedMotion) {
-        setTimeout(() => setIsTransitioning(false), 300);
-      } else {
-        setIsTransitioning(false);
-      }
+
     },
-    [photos.length, prefersReducedMotion, setActivePhotoIndexIfChanged, triggerDotNavVisibility]
+    [photos.length, setActivePhotoIndexIfChanged, triggerDotNavVisibility]
   );
 
   // T027: Touch/swipe support
@@ -451,6 +478,7 @@ export function PhotoViewer({
 
   const currentPhoto = photos[activePhotoIndex];
   const currentText = slideTexts[activePhotoIndex];
+  const currentDimensions = imageDimensions[currentPhoto.id] || currentPhoto;
 
   // T027: Single-screen viewer render
   if (singleScreen) {
@@ -468,23 +496,20 @@ export function PhotoViewer({
       >
         <div data-testid="photo-viewer-single-screen" className="hidden" />
         {/* Main photo container */}
-        <div
-          className={`h-full w-full flex items-center justify-center transition-opacity duration-300 ${
-            isTransitioning && !prefersReducedMotion ? 'opacity-60' : 'opacity-100'
-          }`}
-        >
+        <div className="h-full w-full flex items-center justify-center">
           <div
             className="relative w-full"
-            style={{ maxWidth: `min(100vw, ${100 * currentPhoto.width / currentPhoto.height}vh)` }}
+            style={{ maxWidth: `min(100vw, ${100 * currentDimensions.width / currentDimensions.height}vh)` }}
             data-testid="current-photo"
             id={`photo-${activePhotoIndex + 1}`}
           >
             <ProgressiveImage
               assetId={currentPhoto.id}
               alt={currentPhoto.alt || 'Photo'}
-              width={currentPhoto.width} height={currentPhoto.height}
+              width={currentDimensions.width} height={currentDimensions.height}
               priority fit="contain" className="w-full"
-              style={{ aspectRatio: `${currentPhoto.width} / ${currentPhoto.height}` }}
+              style={{ aspectRatio: `${currentDimensions.width} / ${currentDimensions.height}` }}
+              onDimensions={(width, height, source) => rememberImageDimensions(currentPhoto, width, height, source)}
               onReady={() => setReadyPhotoIds(ids => new Set(ids).add(currentPhoto.id))}
             />
           </div>
@@ -538,10 +563,10 @@ export function PhotoViewer({
       >
         {photos.map((photo, index) => {
           const isFirst = index === 0;
-          const isLandscape = photo.width >= photo.height;
-          const photoWrapperClassName = isLandscape
-            ? 'relative mx-auto h-auto max-h-[84vh] w-full max-w-[120rem] px-0 sm:px-2 md:px-4'
-            : 'relative mx-auto h-auto max-h-[84vh] w-full max-w-6xl px-0 sm:px-2 md:px-4';
+          const dimensions = imageDimensions[photo.id] || photo;
+          // Scrollable narrow layouts prioritize photo width. Only desktop
+          // constrains photos to viewport height; CSS avoids hydration jumps.
+          const photoWrapperClassName = 'relative mx-auto w-full lg:max-w-[var(--photo-max-width)] lg:px-4';
           return (
             <article
               key={photo.id}
@@ -557,12 +582,13 @@ export function PhotoViewer({
                   data-testid="current-photo"
                   id={`photo-${index + 1}`}
                 >
-                  <div className={photoWrapperClassName} style={{ maxWidth: `min(100%, ${84 * photo.width / photo.height}vh)` }}>
+                  <div className={photoWrapperClassName} style={{ '--photo-max-width': `min(100%, ${84 * dimensions.width / dimensions.height}vh)` } as CSSProperties}>
                     <ProgressiveImage
                       assetId={photo.id} alt={photo.alt || 'Photo'}
-                      width={photo.width} height={photo.height}
+                      width={dimensions.width} height={dimensions.height}
                       priority={isFirst} fit="contain" className="w-full"
-                      style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+                      style={{ aspectRatio: `${dimensions.width} / ${dimensions.height}` }}
+                      onDimensions={(width, height, source) => rememberImageDimensions(photo, width, height, source)}
                       onReady={() => { handlePhotoLoad(); setReadyPhotoIds(ids => new Set(ids).add(photo.id)); }}
                     />
                   </div>
