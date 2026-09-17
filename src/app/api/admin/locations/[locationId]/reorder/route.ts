@@ -1,3 +1,4 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { CACHE_TAGS, invalidateCache } from '@/lib/cache';
@@ -170,6 +171,9 @@ async function invalidateYear(yearId: string) {
 }
 
 async function postImpl(request: NextRequest, context: RouteContextLike) {
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
   try {
     const resolvedParams = await Promise.resolve(context.params);
     const rawValue = resolvedParams?.locationId;

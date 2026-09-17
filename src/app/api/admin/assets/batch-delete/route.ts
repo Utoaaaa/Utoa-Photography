@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
+import { adminAuthError } from '@/lib/auth';
+import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-  }
-  const mod = await import('@/app/api/assets/batch-delete/route');
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
+  const mod = await import('@/lib/api-handlers/assets-batch-delete');
   return mod.POST(request);
 }

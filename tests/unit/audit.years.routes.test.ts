@@ -1,3 +1,7 @@
+// Business behavior tests use an explicitly authenticated administrator.
+// Real JWT rejection and route coverage live in tests/security/auth.test.mjs.
+jest.mock('@/lib/auth', () => ({ adminAuthError: jest.fn().mockResolvedValue(null) }));
+
 // Audit tests for /api/years and /api/years/[id]
 // Mirrors style of audit.routes.test.ts with local mocks
 
@@ -91,8 +95,8 @@ describe('Year routes audit integration (T025)', () => {
   beforeAll(async () => {
     yearsDbMod = await import('../../src/lib/db');
     yearsPrismaMock = yearsDbMod.prisma;
-    yearsRoot = await import('../../src/app/api/years/route');
-    yearIdRoute = await import('../../src/app/api/years/[year_id]/route');
+    yearsRoot = await import('../../src/lib/api-handlers/years');
+    yearIdRoute = await import('../../src/lib/api-handlers/year');
   });
 
   afterEach(() => {

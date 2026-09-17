@@ -1,20 +1,18 @@
-import { isAuthenticated } from '@/lib/auth';
-import { NextRequest, NextResponse } from 'next/server';
+import { adminAuthError } from '@/lib/auth';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
 
-  const mod = await import('@/app/api/years/route');
+  const mod = await import('@/lib/api-handlers/years');
   return mod.GET(request);
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
 
-  const mod = await import('@/app/api/years/route');
+  const mod = await import('@/lib/api-handlers/years');
   return mod.POST(request);
 }

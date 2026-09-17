@@ -1,38 +1,8 @@
-export default {
-  default: {
-    appPath: './',
-    packageJsonPath: './package.json',
-    buildCommand: 'npm run build',
-    command: 'npm run build',
-    // Cloudflare overrides for the default server function
-    override: {
-      wrapper: 'cloudflare-node',
-      converter: 'edge',
-      proxyExternalRequest: 'fetch',
-      incrementalCache: 'dummy',
-      tagCache: 'dummy',
-      queue: 'dummy',
-    },
-  },
-  // Externalize node:crypto for Workers compatibility if needed by Next 15
-  edgeExternals: ['node:crypto'],
-  // Middleware runs at the edge in CF
-  middleware: {
-    external: true,
-    override: {
-      wrapper: 'cloudflare-edge',
-      converter: 'edge',
-      proxyExternalRequest: 'fetch',
-      incrementalCache: 'dummy',
-      tagCache: 'dummy',
-      queue: 'dummy',
-    },
-  },
-  // Disable image optimization - we use Cloudflare Images and R2 directly
-  imageOptimization: {
-    arch: 'x64',
-  },
-  experimental: {
-    disableIncrementalCache: false,
-  },
-};
+import { defineCloudflareConfig } from '@opennextjs/cloudflare';
+
+// Preserve the existing no-persistent-cache setup; no new remote bindings required.
+export default defineCloudflareConfig({
+  incrementalCache: 'dummy',
+  tagCache: 'dummy',
+  queue: 'dummy',
+});

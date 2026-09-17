@@ -1,9 +1,9 @@
 import { describe, expect, test, beforeAll } from '@jest/globals';
 
-describe('POST /api/revalidate Contract Tests', () => {
-  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api';
+describe('POST /api/admin/revalidate Contract Tests', () => {
+  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api/admin';
 
-  test('POST /api/revalidate - should revalidate with cache tags', async () => {
+  test('POST /api/admin/revalidate - should revalidate with cache tags', async () => {
     const requestData = {
       tags: ['years', 'collections:year:123', 'collection:456:assets']
     };
@@ -29,7 +29,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     ]));
   });
 
-  test('POST /api/revalidate - should revalidate with specific paths', async () => {
+  test('POST /api/admin/revalidate - should revalidate with specific paths', async () => {
     const requestData = {
       tags: ['years'],
       paths: ['/', '/2024', '/2024/spring-collection']
@@ -53,7 +53,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     expect(result.revalidated.length).toBeGreaterThan(0);
   });
 
-  test('POST /api/revalidate - should validate required tags field', async () => {
+  test('POST /api/admin/revalidate - should validate required tags field', async () => {
     const requestData = {
       // missing tags
       paths: ['/']
@@ -74,7 +74,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     });
   });
 
-  test('POST /api/revalidate - should validate empty tags array', async () => {
+  test('POST /api/admin/revalidate - should validate empty tags array', async () => {
     const requestData = {
       tags: [] // empty array
     };
@@ -94,7 +94,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     });
   });
 
-  test('POST /api/revalidate - should validate tags array contains strings', async () => {
+  test('POST /api/admin/revalidate - should validate tags array contains strings', async () => {
     const requestData = {
       tags: ['valid-tag', 123, null, 'another-valid-tag'] // mixed types
     };
@@ -114,7 +114,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     });
   });
 
-  test('POST /api/revalidate - should validate paths array contains strings', async () => {
+  test('POST /api/admin/revalidate - should validate paths array contains strings', async () => {
     const requestData = {
       tags: ['years'],
       paths: ['/valid-path', 123, '/another-valid-path'] // mixed types
@@ -135,7 +135,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     });
   });
 
-  test('POST /api/revalidate - should handle common cache tag patterns', async () => {
+  test('POST /api/admin/revalidate - should handle common cache tag patterns', async () => {
     const requestData = {
       tags: [
         'years:published',
@@ -160,7 +160,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     expect(result.revalidated).toEqual(expect.arrayContaining(requestData.tags));
   });
 
-  test('POST /api/revalidate - should handle hierarchy revalidation', async () => {
+  test('POST /api/admin/revalidate - should handle hierarchy revalidation', async () => {
     const requestData = {
       tags: ['years'], // Should trigger revalidation of year-related caches
       paths: ['/'] // Homepage cache
@@ -181,7 +181,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     expect(result.revalidated.length).toBeGreaterThan(0);
   });
 
-  test('POST /api/revalidate - should return specific error for invalid path format', async () => {
+  test('POST /api/admin/revalidate - should return specific error for invalid path format', async () => {
     const requestData = {
       tags: ['years'],
       paths: ['invalid-path-without-slash', '/valid-path']
@@ -202,7 +202,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     });
   });
 
-  test('POST /api/revalidate - should handle edge case with maximum tag count', async () => {
+  test('POST /api/admin/revalidate - should handle edge case with maximum tag count', async () => {
     // Test with many tags to ensure no performance issues
     const manyTags = Array.from({ length: 100 }, (_, i) => `tag-${i}`);
     const requestData = {
@@ -225,7 +225,7 @@ describe('POST /api/revalidate Contract Tests', () => {
     expect(result.revalidated.length).toBeGreaterThan(0);
   });
 
-  test('POST /api/revalidate - should handle partial revalidation failures gracefully', async () => {
+  test('POST /api/admin/revalidate - should handle partial revalidation failures gracefully', async () => {
     const requestData = {
       tags: ['valid-tag', 'another-valid-tag'],
       paths: ['/valid-path', '/another-valid-path']

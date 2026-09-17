@@ -1,3 +1,4 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logAudit, type AuditAction } from '@/lib/db';
@@ -199,6 +200,9 @@ function validationError(message: string, field?: string) {
 }
 
 async function getImpl(_request: NextRequest, context: RouteContextLike) {
+  const authError = await adminAuthError(_request);
+  if (authError) return authError;
+
   try {
     const useD1 = shouldUseD1Direct();
     const { year } = await resolveYear(context, useD1);
@@ -217,6 +221,9 @@ async function getImpl(_request: NextRequest, context: RouteContextLike) {
 }
 
 async function postImpl(request: NextRequest, context: RouteContextLike) {
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
   try {
     const useD1 = shouldUseD1Direct();
     const { year } = await resolveYear(context, useD1);
@@ -247,6 +254,9 @@ async function postImpl(request: NextRequest, context: RouteContextLike) {
 }
 
 async function putImpl(request: NextRequest, context: RouteContextLike) {
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
   try {
     const useD1 = shouldUseD1Direct();
     const { year } = await resolveYear(context, useD1);
@@ -285,6 +295,9 @@ async function putImpl(request: NextRequest, context: RouteContextLike) {
 }
 
 async function deleteImpl(request: NextRequest, context: RouteContextLike) {
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
   try {
     const useD1 = shouldUseD1Direct();
     const { year } = await resolveYear(context, useD1);

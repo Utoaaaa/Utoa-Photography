@@ -40,6 +40,8 @@ npm run lighthouse
    保護以下路徑：
    - /admin
    - /admin/*
+   - /api/admin/*
+   - 所有管理 API 的舊路徑（依 HTTP method 保護，保留必要的公開 GET）
    ```
 
 3. **設置身份驗證策略**
@@ -58,7 +60,8 @@ npm run lighthouse
    ```bash
    # .env.production
    NODE_ENV=production
-   BYPASS_ACCESS_FOR_TESTS=false  # 生產環境必須設為 false
+   CF_ACCESS_TEAM_DOMAIN=https://YOUR-TEAM.cloudflareaccess.com
+   CF_ACCESS_AUD=YOUR-APPLICATION-AUD
    ADMIN_EMAILS=your-email@example.com,another-admin@example.com
    ```
 
@@ -71,69 +74,13 @@ npm run lighthouse
 
 ---
 
-### 方案二：簡單 Token 驗證（適合快速部署）
+### 驗證契約（2026-09-17 更新）
 
-如果你想要更簡單的方案，可以用環境變數中的固定 token。
+所有寫入 API（包括非 `/api/admin` 舊路徑及 `/api/revalidate`）都必須通過 Access JWT 簽章、issuer、AUD、有效期與管理員白名單驗證。任意 Bearer 字串、email 標頭、舊 `REVALIDATE_SECRET` 不再提供權限；開發／測試環境與 `BYPASS_ACCESS_FOR_TESTS` 都不會自動放行。
 
-#### 修改代碼
+CLI 可繼續使用 `cloudflared access token` 取得使用者 JWT，透過 `cf-access-token` 傳送；瀏覽器由 Access 注入 `cf-access-jwt-assertion`。這兩者都會驗證簽章。無 email claim 的機器 service token 目前不授予管理權限。
 
-創建一個新的輔助函數：
-
-```typescript
-// src/lib/simple-auth.ts
-export function validateSimpleToken(request: Request): boolean {
-  const bypass = process.env.BYPASS_ACCESS_FOR_TESTS === 'true' || 
-                 process.env.NODE_ENV === 'development';
-  
-  if (bypass) return true;
-  
-  // 從環境變數讀取 API token
-  const validToken = process.env.API_TOKEN;
-  if (!validToken) {
-    console.warn('API_TOKEN not set in production');
-    return false;
-  }
-  
-  const auth = request.headers.get('authorization');
-  if (!auth || !auth.startsWith('Bearer ')) {
-    return false;
-  }
-  
-  const token = auth.split(' ')[1];
-  return token === validToken;
-}
-```
-
-#### 前端發送請求時帶上 token
-
-```typescript
-// 在前端代碼中（例如 admin/collections/page.tsx）
-const response = await fetch('/api/collections', {
-  method: 'PUT',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_API_TOKEN}`
-  },
-  body: JSON.stringify(data)
-});
-```
-
-#### 環境變數設置
-
-```bash
-# .env.production
-NODE_ENV=production
-API_TOKEN=your-super-secret-token-here-generate-a-long-random-string
-NEXT_PUBLIC_API_TOKEN=your-super-secret-token-here-generate-a-long-random-string
-```
-
-**生成安全的 token：**
-```bash
-# 在終端機執行
-openssl rand -base64 32
-# 或
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-```
+詳細設定、錯誤碼、測試與尚未部署的限制，見 [登入修補說明](security/2026-09-17/auth-remediation.md)。請勿把管理憑證放入 `NEXT_PUBLIC_*`。
 
 ---
 
@@ -179,7 +126,7 @@ NODE_ENV=production npm start
 
 部署前請確認：
 
-- [ ] `BYPASS_ACCESS_FOR_TESTS` 設為 `false`
+- [ ] `CF_ACCESS_TEAM_DOMAIN`、`CF_ACCESS_AUD` 與 `ADMIN_EMAILS` 已配置且與 Access 應用程式一致
 - [ ] `NODE_ENV` 設為 `production`
 - [ ] 資料庫使用生產環境的 URL
 - [ ] API tokens 不要 commit 到 Git
@@ -234,8 +181,7 @@ A: 使用不同的 `.env` 檔案：
 
 ### Q: 如何添加新的管理員
 A: 
-- 方案一：在 Cloudflare Access 添加新的 email
-- 方案二：更新 `ADMIN_EMAILS` 環境變數
+在 Cloudflare Access policy 允許該 email，並同步加入 `ADMIN_EMAILS`；兩層授權都必須滿足。
 
 ---
 

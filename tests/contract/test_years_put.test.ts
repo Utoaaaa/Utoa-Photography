@@ -1,11 +1,11 @@
 /**
- * Contract Test: PUT /api/years/{id}
+ * Contract Test: PUT /api/admin/years/{id}
  * 
  * Tests the API contract for updating years according to OpenAPI spec.
  * This test MUST FAIL until the API endpoint is implemented.
  */
 
-describe('Contract: PUT /api/years/{id}', () => {
+describe('Contract: PUT /api/admin/years/{id}', () => {
   const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3000';
   const MOCK_YEAR_ID = '550e8400-e29b-41d4-a716-446655440000';
 
@@ -21,7 +21,7 @@ describe('Contract: PUT /api/years/{id}', () => {
       status: 'published' as const,
     };
 
-    const response = await fetch(`${BASE_URL}/api/years/${MOCK_YEAR_ID}`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years/${MOCK_YEAR_ID}`, {
       method: 'PUT',
       headers: mockAuthHeader,
       body: JSON.stringify(updateData),
@@ -41,7 +41,7 @@ describe('Contract: PUT /api/years/{id}', () => {
   it('should allow partial updates', async () => {
     const partialUpdate = { label: 'Partial Update' };
 
-    const response = await fetch(`${BASE_URL}/api/years/${MOCK_YEAR_ID}`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years/${MOCK_YEAR_ID}`, {
       method: 'PUT',
       headers: mockAuthHeader,
       body: JSON.stringify(partialUpdate),
@@ -56,7 +56,7 @@ describe('Contract: PUT /api/years/{id}', () => {
     const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const updateData = { label: 'Should not work' };
 
-    const response = await fetch(`${BASE_URL}/api/years/${nonExistentId}`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years/${nonExistentId}`, {
       method: 'PUT',
       headers: mockAuthHeader,
       body: JSON.stringify(updateData),
@@ -69,7 +69,7 @@ describe('Contract: PUT /api/years/{id}', () => {
     const invalidId = 'not-a-uuid';
     const updateData = { label: 'Test' };
 
-    const response = await fetch(`${BASE_URL}/api/years/${invalidId}`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years/${invalidId}`, {
       method: 'PUT',
       headers: mockAuthHeader,
       body: JSON.stringify(updateData),
@@ -79,7 +79,7 @@ describe('Contract: PUT /api/years/{id}', () => {
   });
 
   it('should return 401 without authentication', async () => {
-    const response = await fetch(`${BASE_URL}/api/years/${MOCK_YEAR_ID}`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years/${MOCK_YEAR_ID}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ label: 'Test' }),
@@ -91,7 +91,7 @@ describe('Contract: PUT /api/years/{id}', () => {
   it('should validate status field values', async () => {
     const invalidStatus = { status: 'invalid_status' };
 
-    const response = await fetch(`${BASE_URL}/api/years/${MOCK_YEAR_ID}`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years/${MOCK_YEAR_ID}`, {
       method: 'PUT',
       headers: mockAuthHeader,
       body: JSON.stringify(invalidStatus),

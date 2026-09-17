@@ -1,7 +1,7 @@
 import { describe, expect, test, beforeAll, afterAll } from '@jest/globals';
 
-describe('DELETE /api/collections/{id} Contract Tests', () => {
-  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api';
+describe('DELETE /api/admin/collections/{id} Contract Tests', () => {
+  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api/admin';
   let testYearId: string;
   let testCollectionId: string;
   let collectionWithAssetsId: string;
@@ -81,7 +81,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     await fetch(`${API_BASE}/years/${testYearId}?force=true`, { method: 'DELETE' });
   });
 
-  test('DELETE /api/collections/{id} - should delete collection successfully', async () => {
+  test('DELETE /api/admin/collections/{id} - should delete collection successfully', async () => {
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
       method: 'DELETE'
     });
@@ -93,7 +93,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     expect(getResponse.status).toBe(404);
   });
 
-  test('DELETE /api/collections/{id} - should delete collection and cleanup asset relationships', async () => {
+  test('DELETE /api/admin/collections/{id} - should delete collection and cleanup asset relationships', async () => {
     const response = await fetch(`${API_BASE}/collections/${collectionWithAssetsId}`, {
       method: 'DELETE'
     });
@@ -109,7 +109,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     expect(assetResponse.status).toBe(200); // Asset should still exist
   });
 
-  test('DELETE /api/collections/{id} - should return 404 for non-existent collection', async () => {
+  test('DELETE /api/admin/collections/{id} - should return 404 for non-existent collection', async () => {
     const response = await fetch(`${API_BASE}/collections/non-existent-id`, {
       method: 'DELETE'
     });
@@ -121,7 +121,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('DELETE /api/collections/{id} - should require valid UUID format', async () => {
+  test('DELETE /api/admin/collections/{id} - should require valid UUID format', async () => {
     const response = await fetch(`${API_BASE}/collections/invalid-uuid`, {
       method: 'DELETE'
     });
@@ -133,7 +133,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('DELETE /api/collections/{id} - should handle concurrent deletion gracefully', async () => {
+  test('DELETE /api/admin/collections/{id} - should handle concurrent deletion gracefully', async () => {
     // Create collection for concurrent deletion test
     const collectionResponse = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
       method: 'POST',
@@ -161,7 +161,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     expect(secondResponse.status).toBe(404);
   });
 
-  test('DELETE /api/collections/{id} - should remove collection from year\'s collection list', async () => {
+  test('DELETE /api/admin/collections/{id} - should remove collection from year\'s collection list', async () => {
     // Create collection to verify removal from year
     const collectionResponse = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
       method: 'POST',
@@ -195,7 +195,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     expect(foundAfter).toBeUndefined();
   });
 
-  test('DELETE /api/collections/{id} - should handle published collection deletion', async () => {
+  test('DELETE /api/admin/collections/{id} - should handle published collection deletion', async () => {
     // Create published collection
     const collectionResponse = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
       method: 'POST',
@@ -217,7 +217,7 @@ describe('DELETE /api/collections/{id} Contract Tests', () => {
     expect(deleteResponse.status).toBe(204);
   });
 
-  test('DELETE /api/collections/{id} - should cleanup SEO metadata if exists', async () => {
+  test('DELETE /api/admin/collections/{id} - should cleanup SEO metadata if exists', async () => {
     // Create collection that might have SEO metadata
     const collectionResponse = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
       method: 'POST',

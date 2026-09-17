@@ -1,3 +1,4 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { AuditAction } from '@/lib/db';
@@ -164,6 +165,9 @@ async function invalidateCaches(yearId: string, collectionId: string) {
 }
 
 async function postImpl(request: NextRequest, context: RouteContextLike): Promise<PostResult> {
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
   try {
     const resolvedParams = await Promise.resolve(context.params);
     const raw = resolvedParams?.collectionId;

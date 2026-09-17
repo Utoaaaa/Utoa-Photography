@@ -1,7 +1,7 @@
 import { describe, expect, test, beforeAll, afterAll } from '@jest/globals';
 
-describe('PUT /api/collections/{id} Contract Tests', () => {
-  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api';
+describe('PUT /api/admin/collections/{id} Contract Tests', () => {
+  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api/admin';
   let testYearId: string;
   let testCollectionId: string;
 
@@ -42,7 +42,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     await fetch(`${API_BASE}/years/${testYearId}?force=true`, { method: 'DELETE' });
   });
 
-  test('PUT /api/collections/{id} - should update collection title', async () => {
+  test('PUT /api/admin/collections/{id} - should update collection title', async () => {
     const updateData = {
       title: 'Updated Title',
     };
@@ -67,7 +67,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('PUT /api/collections/{id} - should update multiple fields', async () => {
+  test('PUT /api/admin/collections/{id} - should update multiple fields', async () => {
     const updateData = {
       title: 'Multi Update Title',
       summary: 'Updated summary with new content',
@@ -98,7 +98,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('PUT /api/collections/{id} - should clear captured_at when set to null', async () => {
+  test('PUT /api/admin/collections/{id} - should clear captured_at when set to null', async () => {
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
       method: 'PUT',
       headers: {
@@ -113,7 +113,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     expect(collection.captured_at).toBeNull();
   });
 
-  test('PUT /api/collections/{id} - should update cover_asset_id', async () => {
+  test('PUT /api/admin/collections/{id} - should update cover_asset_id', async () => {
     const updateData = {
       cover_asset_id: 'new-cover-asset-id',
     };
@@ -132,7 +132,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     expect(collection.cover_asset_id).toBe('new-cover-asset-id');
   });
 
-  test('PUT /api/collections/{id} - should clear cover_asset_id when set to null', async () => {
+  test('PUT /api/admin/collections/{id} - should clear cover_asset_id when set to null', async () => {
     const updateData = {
       cover_asset_id: null,
     };
@@ -151,7 +151,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     expect(collection.cover_asset_id).toBeNull();
   });
 
-  test('PUT /api/collections/{id} - should validate title length', async () => {
+  test('PUT /api/admin/collections/{id} - should validate title length', async () => {
     const updateData = {
       title: 'x'.repeat(201), // exceeds 200 character limit
     };
@@ -171,7 +171,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('PUT /api/collections/{id} - should validate summary length', async () => {
+  test('PUT /api/admin/collections/{id} - should validate summary length', async () => {
     const updateData = {
       summary: 'x'.repeat(501), // exceeds 500 character limit
     };
@@ -191,7 +191,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('PUT /api/collections/{id} - should validate status enum', async () => {
+  test('PUT /api/admin/collections/{id} - should validate status enum', async () => {
     const updateData = {
       status: 'invalid-status',
     };
@@ -211,7 +211,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('PUT /api/collections/{id} - should return 404 for non-existent collection', async () => {
+  test('PUT /api/admin/collections/{id} - should return 404 for non-existent collection', async () => {
     const updateData = {
       title: 'Update Non-Existent',
     };
@@ -231,7 +231,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('PUT /api/collections/{id} - should require valid UUID format', async () => {
+  test('PUT /api/admin/collections/{id} - should require valid UUID format', async () => {
     const updateData = {
       title: 'Update Invalid UUID',
     };
@@ -251,7 +251,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     });
   });
 
-  test('PUT /api/collections/{id} - should handle empty update (no changes)', async () => {
+  test('PUT /api/admin/collections/{id} - should handle empty update (no changes)', async () => {
     const updateData = {};
 
     const response = await fetch(`${API_BASE}/collections/${testCollectionId}`, {
@@ -270,7 +270,7 @@ describe('PUT /api/collections/{id} Contract Tests', () => {
     expect(collection.updated_at).toBeDefined();
   });
 
-  test('PUT /api/collections/{id} - should maintain referential integrity', async () => {
+  test('PUT /api/admin/collections/{id} - should maintain referential integrity', async () => {
     // Get original data for comparison
     const getResponse = await fetch(`${API_BASE}/collections/${testCollectionId}`);
     const originalCollection = await getResponse.json();

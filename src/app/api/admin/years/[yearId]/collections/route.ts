@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { adminAuthError } from '@/lib/auth';
+import { NextRequest } from 'next/server';
 
-import { isAuthenticated } from '@/lib/auth';
-import { GET as baseGET, POST as basePOST } from '@/app/api/years/[year_id]/collections/route';
+import { GET as baseGET, POST as basePOST } from '@/lib/api-handlers/year-collections';
 
 type AdminParams = { params: Promise<{ yearId: string }> };
 
@@ -14,24 +14,18 @@ function toSharedContext(context: AdminParams) {
 }
 
 export async function GET(request: NextRequest, context: AdminParams) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: 'Unauthorized', message: 'Authentication required' },
-      { status: 401 },
-    );
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
 
   const shared = await toSharedContext(context);
   return baseGET(request, shared as Parameters<typeof baseGET>[1]);
 }
 
 export async function POST(request: NextRequest, context: AdminParams) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json(
-      { error: 'Unauthorized', message: 'Authentication required' },
-      { status: 401 },
-    );
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
 
   const shared = await toSharedContext(context);
   return basePOST(request, shared as Parameters<typeof basePOST>[1]);

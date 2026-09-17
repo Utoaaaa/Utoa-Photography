@@ -1,0 +1,110 @@
+[
+  {
+    "route": "/api/years",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": true,
+    "handler": "years"
+  },
+  {
+    "route": "/api/years/[year_id]",
+    "methods": [
+      "PUT",
+      "DELETE"
+    ],
+    "getPreserved": true,
+    "handler": "year"
+  },
+  {
+    "route": "/api/years/[year_id]/collections",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": true,
+    "handler": "year-collections"
+  },
+  {
+    "route": "/api/assets",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": true,
+    "handler": "assets"
+  },
+  {
+    "route": "/api/assets/[asset_id]",
+    "methods": [
+      "DELETE",
+      "PUT"
+    ],
+    "getPreserved": true,
+    "handler": "asset"
+  },
+  {
+    "route": "/api/assets/batch-delete",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": false,
+    "handler": "assets-batch-delete"
+  },
+  {
+    "route": "/api/assets/r2-reconcile",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": false,
+    "handler": "assets-r2-reconcile"
+  },
+  {
+    "route": "/api/collections/[collection_id]",
+    "methods": [
+      "PUT",
+      "DELETE"
+    ],
+    "getPreserved": true,
+    "handler": "collection"
+  },
+  {
+    "route": "/api/collections/[collection_id]/assets",
+    "methods": [
+      "POST",
+      "PUT"
+    ],
+    "getPreserved": false,
+    "handler": "collection-assets"
+  },
+  {
+    "route": "/api/collections/[collection_id]/assets/[asset_id]",
+    "methods": [
+      "DELETE"
+    ],
+    "getPreserved": false,
+    "handler": "collection-asset"
+  },
+  {
+    "route": "/api/uploads/r2",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": false,
+    "handler": "r2-upload"
+  },
+  {
+    "route": "/api/images/direct-upload",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": false,
+    "handler": "direct-upload"
+  },
+  {
+    "route": "/api/revalidate",
+    "methods": [
+      "POST"
+    ],
+    "getPreserved": false,
+    "handler": "revalidate"
+  }
+]

@@ -1,3 +1,4 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { shouldUseD1Direct } from '@/lib/d1-queries';
@@ -45,19 +46,10 @@ const querySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  try {
-    // Admin-only endpoint
-    const bypassAuth = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
-    const authHeader = request.headers.get('authorization');
-    const cfAccessToken = request.headers.get('cf-access-token');
-    
-    if (!bypassAuth && !authHeader && !cfAccessToken) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
 
+  try {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());

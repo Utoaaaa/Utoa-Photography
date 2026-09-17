@@ -1,0 +1,295 @@
+{
+  "generatedAt": "2026-09-17T14:58:22.922Z",
+  "note": "Source inventory compared with Cloudflare application destinations and policy returned by authenticated read-only API. Original token read access verified after user saved permissions. No policy edits or deployment.",
+  "routes": [
+    {
+      "route": "/api/admin/assets/[asset_id]",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/assets/batch-delete",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/assets/r2-reconcile",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/assets",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/collections/[collectionId]/assets/[assetId]",
+      "methods": [
+        "DELETE"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/collections/[collectionId]/assets",
+      "methods": [
+        "POST",
+        "PUT"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/collections/[collectionId]/location",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/collections/[collectionId]",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/locations/[locationId]/reorder",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/uploads/r2",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/uploads/r2/variants/[id]",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/years/[yearId]/collections",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/years/[yearId]/locations",
+      "methods": [
+        "POST",
+        "PUT",
+        "DELETE"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/years/[yearId]",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/admin/years",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": true,
+      "localGuard": "direct",
+      "configuredPathCoverage": "covered by api/admin/*"
+    },
+    {
+      "route": "/api/assets/[asset_id]",
+      "methods": [
+        "DELETE",
+        "PUT"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/assets/batch-delete",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/assets/r2-reconcile",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/assets",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/collections/[collection_id]/assets/[asset_id]",
+      "methods": [
+        "DELETE"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/collections/[collection_id]/assets",
+      "methods": [
+        "POST",
+        "PUT"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/collections/[collection_id]",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/images/direct-upload",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/revalidate",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/uploads/r2",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/years/[year_id]/collections",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/years/[year_id]",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    },
+    {
+      "route": "/api/years",
+      "methods": [
+        "POST"
+      ],
+      "adminPrefix": false,
+      "localGuard": "direct",
+      "configuredPathCoverage": "not covered by visible destinations"
+    }
+  ],
+  "accessApplication": {
+    "name": "Utoa Admin",
+    "id": "c27a0690-efe7-469c-a509-d585ed45fd2c",
+    "evidence": "Cloudflare One visible destination settings, read-only via computer use",
+    "host": "utoa.studio",
+    "paths": [
+      "admin",
+      "api/admin/*",
+      "collections/*/assets*",
+      "admin/*"
+    ],
+    "policyName": "utoa",
+    "policyAction": "Allow",
+    "policyId": "4d7e0db4-cfd8-4fa3-8256-ab9e7997cf67",
+    "policyInclude": {
+      "email": "nick940624@gmail.com"
+    },
+    "sessionDuration": "24 hours"
+  },
+  "apiVerifiedAt": "2026-09-17T15:10:47.498361+00:00",
+  "apiVerification": {
+    "tokenStatus": "active",
+    "applicationListStatus": 200,
+    "applicationPoliciesStatus": 200,
+    "applicationCount": 1,
+    "matchesUI": true
+  }
+}

@@ -1,3 +1,4 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { getR2Bucket } from '@/lib/cloudflare';
 
@@ -14,6 +15,9 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = await adminAuthError(_request);
+  if (authError) return authError;
+
   const { id } = await params;
   try {
     const bucket: R2Bucket | undefined = getR2Bucket();

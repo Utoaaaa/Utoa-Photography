@@ -1,0 +1,50 @@
+{
+  "next": {
+    "before": "15.5.7",
+    "after": "15.5.25"
+  },
+  "react": {
+    "before": "19.1.0",
+    "after": "19.1.9"
+  },
+  "react-dom": {
+    "before": "19.1.0",
+    "after": "19.1.9"
+  },
+  "@opennextjs/cloudflare": {
+    "before": "1.11.0",
+    "after": "1.20.6"
+  },
+  "wrangler": {
+    "before": "4.43.0",
+    "after": "4.132.0"
+  },
+  "sharp": {
+    "before": "0.33.5",
+    "after": "0.35.4"
+  },
+  "undici": {
+    "before": "7.16.0",
+    "after": "7.29.1"
+  },
+  "@cloudflare/workers-types": {
+    "before": "4.20251011.0",
+    "after": "5.20260916.1"
+  },
+  "@next/bundle-analyzer": {
+    "before": "15.5.7",
+    "after": "15.5.25"
+  },
+  "eslint-config-next": {
+    "before": "15.5.7",
+    "after": "15.5.25"
+  },
+  "zod": {
+    "before": "3.23.8",
+    "after": "3.25.76"
+  },
+  "esbuild": {
+    "before": "0.19.2",
+    "after": "0.28.2"
+  }
+}

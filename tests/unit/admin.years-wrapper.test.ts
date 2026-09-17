@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
-import { POST as sharedPost } from '@/app/api/years/route';
+import { adminAuthError } from '@/lib/auth';
+import { POST as sharedPost } from '@/lib/api-handlers/years';
 import { POST } from '@/app/api/admin/years/route';
-jest.mock('@/lib/auth', () => ({ isAuthenticated: jest.fn() }));
-jest.mock('@/app/api/years/route', () => ({ POST: jest.fn() }));
+jest.mock('@/lib/auth', () => ({ adminAuthError: jest.fn() }));
+jest.mock('@/lib/api-handlers/years', () => ({ POST: jest.fn() }));
 
 test('admin year creation delegates to the existing audited D1/Prisma implementation', async () => {
-  (isAuthenticated as jest.Mock).mockReturnValue(true);
+  (adminAuthError as jest.Mock).mockResolvedValue(null);
   const result = { status: 201 };
   (sharedPost as jest.Mock).mockResolvedValue(result);
   const request = { method: 'POST' } as NextRequest;
@@ -16,7 +16,8 @@ test('admin year creation delegates to the existing audited D1/Prisma implementa
 
 test('unauthorized creation stops before accessing shared data logic', async () => {
   (sharedPost as jest.Mock).mockClear();
-  (isAuthenticated as jest.Mock).mockReturnValue(false);
-  expect((await POST({ method: 'POST' } as NextRequest)).status).toBe(401);
+  const denied = { status: 401 };
+  (adminAuthError as jest.Mock).mockResolvedValue(denied);
+  expect(await POST({ method: 'POST' } as NextRequest)).toBe(denied);
   expect(sharedPost).not.toHaveBeenCalled();
 });

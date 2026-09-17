@@ -1,3 +1,7 @@
+// Business behavior tests use an explicitly authenticated administrator.
+// Real JWT rejection and route coverage live in tests/security/auth.test.mjs.
+jest.mock('@/lib/auth', () => ({ adminAuthError: jest.fn().mockResolvedValue(null) }));
+
 // We'll dynamically import after setting mocks
 let db: any;
 let assetsRoute: any;
@@ -73,10 +77,10 @@ describe('Route audit integration (T025)', () => {
   db = await import('../../src/lib/db');
   prismaMock = db.prisma;
     // Then import routes
-    assetsRoute = await import('../../src/app/api/assets/route');
-    assetIdRoute = await import('../../src/app/api/assets/[asset_id]/route');
-    colAssetsRoute = await import('../../src/app/api/collections/[collection_id]/assets/route');
-    colAssetIdRoute = await import('../../src/app/api/collections/[collection_id]/assets/[asset_id]/route');
+    assetsRoute = await import('../../src/lib/api-handlers/assets');
+    assetIdRoute = await import('../../src/lib/api-handlers/asset');
+    colAssetsRoute = await import('../../src/lib/api-handlers/collection-assets');
+    colAssetIdRoute = await import('../../src/lib/api-handlers/collection-asset');
   });
   afterEach(() => {
     // reset mocks between tests

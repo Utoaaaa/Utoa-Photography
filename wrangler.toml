@@ -37,6 +37,8 @@ routes = [
 
 # Persisted environment variables for production
 [env.production.vars]
+CF_ACCESS_TEAM_DOMAIN = "https://utoa.cloudflareaccess.com"
+CF_ACCESS_AUD = "0fab3f334a4b56b8beecc28b822b46629c99d004fc1dcfe4392057235bf82183"
 NODE_ENV = "production"
 BYPASS_ACCESS_FOR_TESTS = "false"
 NEXT_PUBLIC_IMAGE_ORIGIN = "r2_resize"

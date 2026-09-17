@@ -1,3 +1,7 @@
+// Business behavior tests use an explicitly authenticated administrator.
+// Real JWT rejection and route coverage live in tests/security/auth.test.mjs.
+jest.mock('@/lib/auth', () => ({ adminAuthError: jest.fn().mockResolvedValue(null) }));
+
 // Audit tests for collections routes (T025): create via year nested POST, update via /collections/{id} PUT, delete via /collections/{id} DELETE
 
 let dbMod: any;
@@ -56,8 +60,8 @@ describe('Collection routes audit integration (T025)', () => {
   beforeAll(async () => {
     dbMod = await import('../../src/lib/db');
   collectionsPrismaMock = dbMod.prisma;
-    yearCollectionsRoute = await import('../../src/app/api/years/[year_id]/collections/route');
-    collectionIdRoute = await import('../../src/app/api/collections/[collection_id]/route');
+    yearCollectionsRoute = await import('../../src/lib/api-handlers/year-collections');
+    collectionIdRoute = await import('../../src/lib/api-handlers/collection');
   });
 
   afterEach(() => {

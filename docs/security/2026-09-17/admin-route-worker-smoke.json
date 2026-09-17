@@ -1,0 +1,417 @@
+{
+  "passed": 83,
+  "checks": [
+    {
+      "name": "PUT /api/admin/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/assets/batch-delete",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/assets/batch-delete",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/assets/r2-reconcile",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/assets/r2-reconcile",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/assets",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/assets",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/collections/11111111-1111-4111-8111-111111111111/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/collections/11111111-1111-4111-8111-111111111111/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/collections/11111111-1111-4111-8111-111111111111/location",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/collections/11111111-1111-4111-8111-111111111111/location",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/images/direct-upload",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/images/direct-upload",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/locations/11111111-1111-4111-8111-111111111111/reorder",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/locations/11111111-1111-4111-8111-111111111111/reorder",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/revalidate",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/revalidate",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/uploads/r2",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/uploads/r2",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/uploads/r2/variants/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/uploads/r2/variants/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/years/11111111-1111-4111-8111-111111111111/collections",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/years/11111111-1111-4111-8111-111111111111/collections",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/years/11111111-1111-4111-8111-111111111111/locations",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/years/11111111-1111-4111-8111-111111111111/locations",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/years/11111111-1111-4111-8111-111111111111/locations",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/years/11111111-1111-4111-8111-111111111111/locations",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/years/11111111-1111-4111-8111-111111111111/locations",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/years/11111111-1111-4111-8111-111111111111/locations",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "PUT /api/admin/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/admin/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/years",
+      "credentials": "none",
+      "status": 401
+    },
+    {
+      "name": "POST /api/admin/years",
+      "credentials": "fake",
+      "status": 401
+    },
+    {
+      "name": "DELETE /api/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "DELETE /api/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/assets/batch-delete",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/assets/batch-delete",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/assets/r2-reconcile",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/assets/r2-reconcile",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/assets",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/assets",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "DELETE /api/collections/11111111-1111-4111-8111-111111111111/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "DELETE /api/collections/11111111-1111-4111-8111-111111111111/assets/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/collections/11111111-1111-4111-8111-111111111111/assets",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "DELETE /api/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "DELETE /api/collections/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/images/direct-upload",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/images/direct-upload",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/revalidate",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/revalidate",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/uploads/r2",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/uploads/r2",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/years/11111111-1111-4111-8111-111111111111/collections",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/years/11111111-1111-4111-8111-111111111111/collections",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "PUT /api/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "DELETE /api/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "DELETE /api/years/11111111-1111-4111-8111-111111111111",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "POST /api/years",
+      "credentials": "none",
+      "status": 405
+    },
+    {
+      "name": "POST /api/years",
+      "credentials": "fake",
+      "status": 405
+    },
+    {
+      "name": "/admin",
+      "status": 401
+    },
+    {
+      "name": "/api/admin/years/2026.0/locations",
+      "status": 401
+    },
+    {
+      "name": "/api/audit",
+      "status": 401
+    }
+  ]
+}

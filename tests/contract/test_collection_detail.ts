@@ -8,7 +8,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
 
   beforeAll(async () => {
     // Create test year
-    const yearResponse = await fetch(`${API_BASE}/years`, {
+    const yearResponse = await fetch(`${API_BASE}/admin/years`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
     testYearId = year.id;
 
     // Create test collection
-    const collectionResponse = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
+    const collectionResponse = await fetch(`${API_BASE}/admin/years/${testYearId}/collections`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
     testCollectionId = collection.id;
 
     // Create test asset
-    const assetResponse = await fetch(`${API_BASE}/assets`, {
+    const assetResponse = await fetch(`${API_BASE}/admin/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
     testAssetId = asset.id;
 
     // Add asset to collection
-    await fetch(`${API_BASE}/collections/${testCollectionId}/assets`, {
+    await fetch(`${API_BASE}/admin/collections/${testCollectionId}/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
 
   afterAll(async () => {
     // Cleanup test data
-    await fetch(`${API_BASE}/years/${testYearId}?force=true`, { method: 'DELETE' });
+    await fetch(`${API_BASE}/admin/years/${testYearId}?force=true`, { method: 'DELETE' });
   });
 
   test('GET /api/collections/{id} - should return collection without assets by default', async () => {
@@ -152,7 +152,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
 
   test('GET /api/collections/{id} - should return collection with cover asset reference', async () => {
     // Update collection to have cover asset
-    await fetch(`${API_BASE}/collections/${testCollectionId}`, {
+    await fetch(`${API_BASE}/admin/collections/${testCollectionId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -172,7 +172,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
 
   test('GET /api/collections/{id} - should handle empty collection (no assets)', async () => {
     // Create collection without assets
-    const emptyCollectionResponse = await fetch(`${API_BASE}/years/${testYearId}/collections`, {
+    const emptyCollectionResponse = await fetch(`${API_BASE}/admin/years/${testYearId}/collections`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
 
   test('GET /api/collections/{id} - should return assets in correct order', async () => {
     // Create multiple assets and add them to collection
-    const asset2Response = await fetch(`${API_BASE}/assets`, {
+    const asset2Response = await fetch(`${API_BASE}/admin/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -211,7 +211,7 @@ describe('GET /api/collections/{id} Contract Tests', () => {
     });
 
     // Add second asset to collection
-    await fetch(`${API_BASE}/collections/${testCollectionId}/assets`, {
+    await fetch(`${API_BASE}/admin/collections/${testCollectionId}/assets`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

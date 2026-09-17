@@ -1,3 +1,7 @@
+// Business behavior tests use an explicitly authenticated administrator.
+// Real JWT rejection and route coverage live in tests/security/auth.test.mjs.
+jest.mock('@/lib/auth', () => ({ adminAuthError: jest.fn().mockResolvedValue(null) }));
+
 // Unit tests for /api/assets/batch-delete
 let route: any;
 let db: any;
@@ -25,7 +29,7 @@ function makeJsonRequest(body: any) {
 describe('POST /api/assets/batch-delete', () => {
   beforeAll(async () => {
     db = await import('../../src/lib/db');
-    route = await import('../../src/app/api/assets/batch-delete/route');
+    route = await import('../../src/lib/api-handlers/assets-batch-delete');
   });
   afterEach(() => {
     Object.values(db.prisma.asset).forEach((fn: any) => fn.mockReset && fn.mockReset());

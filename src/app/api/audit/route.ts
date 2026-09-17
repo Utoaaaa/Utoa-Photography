@@ -1,6 +1,6 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAdminAuth } from '@/lib/auth';
 import { queryAudit } from '@/lib/queries/audit';
 import { prisma } from '@/lib/db';
 
@@ -22,16 +22,10 @@ const querySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  try {
-    // Auth: admin-only (or test bypass)
-    const bypassAuth = process.env.BYPASS_ACCESS_FOR_TESTS === 'true';
-    const authHeader = request.headers.get('authorization');
-    const cfAccessToken = request.headers.get('cf-access-token');
-    
-    if (!bypassAuth && !authHeader && !cfAccessToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
 
+  try {
     const sp = request.nextUrl.searchParams;
     const parsed = querySchema.safeParse({
       entity: sp.get('entity') ?? sp.get('entity_type') ?? undefined,

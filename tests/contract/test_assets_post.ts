@@ -1,7 +1,7 @@
 import { describe, expect, test, afterAll } from '@jest/globals';
 
-describe('POST /api/assets Contract Tests', () => {
-  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api';
+describe('POST /api/admin/assets Contract Tests', () => {
+  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api/admin';
   const testAssetIds: string[] = [];
 
   afterAll(async () => {
@@ -11,7 +11,7 @@ describe('POST /api/assets Contract Tests', () => {
     }
   });
 
-  test('POST /api/assets - should create asset with required fields', async () => {
+  test('POST /api/admin/assets - should create asset with required fields', async () => {
     const assetData = {
       id: 'test-asset-minimal',
       alt: 'Minimal test asset',
@@ -41,7 +41,7 @@ describe('POST /api/assets Contract Tests', () => {
     testAssetIds.push(asset.id);
   });
 
-  test('POST /api/assets - should create asset with all fields', async () => {
+  test('POST /api/admin/assets - should create asset with all fields', async () => {
     const assetData = {
       id: 'test-asset-full',
       alt: 'Complete test asset with all fields',
@@ -91,7 +91,7 @@ describe('POST /api/assets Contract Tests', () => {
     testAssetIds.push(asset.id);
   });
 
-  test('POST /api/assets - should validate required id field', async () => {
+  test('POST /api/admin/assets - should validate required id field', async () => {
     const assetData = {
       // missing id
       alt: 'Asset without ID',
@@ -114,7 +114,7 @@ describe('POST /api/assets Contract Tests', () => {
     });
   });
 
-  test('POST /api/assets - should validate required alt field', async () => {
+  test('POST /api/admin/assets - should validate required alt field', async () => {
     const assetData = {
       id: 'test-asset-no-alt',
       // missing alt
@@ -137,7 +137,7 @@ describe('POST /api/assets Contract Tests', () => {
     });
   });
 
-  test('POST /api/assets - should validate alt text length limits', async () => {
+  test('POST /api/admin/assets - should validate alt text length limits', async () => {
     const assetData = {
       id: 'test-asset-long-alt',
       alt: 'x'.repeat(201), // exceeds 200 character limit
@@ -160,7 +160,7 @@ describe('POST /api/assets Contract Tests', () => {
     });
   });
 
-  test('POST /api/assets - should validate empty alt text', async () => {
+  test('POST /api/admin/assets - should validate empty alt text', async () => {
     const assetData = {
       id: 'test-asset-empty-alt',
       alt: '', // empty alt text
@@ -183,7 +183,7 @@ describe('POST /api/assets Contract Tests', () => {
     });
   });
 
-  test('POST /api/assets - should validate caption length limits', async () => {
+  test('POST /api/admin/assets - should validate caption length limits', async () => {
     const assetData = {
       id: 'test-asset-long-caption',
       alt: 'Asset with long caption',
@@ -207,7 +207,7 @@ describe('POST /api/assets Contract Tests', () => {
     });
   });
 
-  test('POST /api/assets - should validate width and height are positive integers', async () => {
+  test('POST /api/admin/assets - should validate width and height are positive integers', async () => {
     const assetData = {
       id: 'test-asset-invalid-dimensions',
       alt: 'Asset with invalid dimensions',
@@ -230,7 +230,7 @@ describe('POST /api/assets Contract Tests', () => {
     });
   });
 
-  test('POST /api/assets - should enforce unique asset ID', async () => {
+  test('POST /api/admin/assets - should enforce unique asset ID', async () => {
     const assetData = {
       id: 'duplicate-asset-id',
       alt: 'First asset with this ID',
@@ -273,7 +273,7 @@ describe('POST /api/assets Contract Tests', () => {
     });
   });
 
-  test('POST /api/assets - should handle null caption gracefully', async () => {
+  test('POST /api/admin/assets - should handle null caption gracefully', async () => {
     const assetData = {
       id: 'test-asset-null-caption',
       alt: 'Asset with null caption',
@@ -297,7 +297,7 @@ describe('POST /api/assets Contract Tests', () => {
     testAssetIds.push(asset.id);
   });
 
-  test('POST /api/assets - should handle complex metadata_json', async () => {
+  test('POST /api/admin/assets - should handle complex metadata_json', async () => {
     const assetData = {
       id: 'test-asset-complex-metadata',
       alt: 'Asset with complex metadata',

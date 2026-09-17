@@ -1,12 +1,12 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
 import { getCloudflareEnv, getD1Database } from '@/lib/cloudflare';
 import { shouldUseD1Direct } from '@/lib/d1-queries';
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
 
   const diagnostics: Record<string, any> = {
     timestamp: new Date().toISOString(),

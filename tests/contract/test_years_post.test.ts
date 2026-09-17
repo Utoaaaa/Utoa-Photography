@@ -1,11 +1,11 @@
 /**
- * Contract Test: POST /api/years
+ * Contract Test: POST /api/admin/years
  * 
  * Tests the API contract for creating new years according to OpenAPI spec.
  * This test MUST FAIL until the API endpoint is implemented.
  */
 
-describe('Contract: POST /api/years', () => {
+describe('Contract: POST /api/admin/years', () => {
   const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3000';
 
   const validYearData = {
@@ -20,7 +20,7 @@ describe('Contract: POST /api/years', () => {
   };
 
   it('should create new year with valid data and return 201', async () => {
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(validYearData),
@@ -44,7 +44,7 @@ describe('Contract: POST /api/years', () => {
   it('should create year with minimal required data (label only)', async () => {
     const minimalData = { label: '2026' };
 
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(minimalData),
@@ -60,7 +60,7 @@ describe('Contract: POST /api/years', () => {
   it('should auto-generate order_index if not provided', async () => {
     const dataWithoutIndex = { label: '2027', status: 'draft' };
 
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(dataWithoutIndex),
@@ -75,7 +75,7 @@ describe('Contract: POST /api/years', () => {
   it('should return 400 for missing required label field', async () => {
     const invalidData = { status: 'draft' };
 
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(invalidData),
@@ -96,7 +96,7 @@ describe('Contract: POST /api/years', () => {
       status: 'invalid_status',
     };
 
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(invalidData),
@@ -109,7 +109,7 @@ describe('Contract: POST /api/years', () => {
   });
 
   it('should return 400 for invalid JSON body', async () => {
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: 'invalid json',
@@ -121,7 +121,7 @@ describe('Contract: POST /api/years', () => {
   });
 
   it('should return 401 without authentication header', async () => {
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validYearData),
@@ -136,7 +136,7 @@ describe('Contract: POST /api/years', () => {
       'Content-Type': 'application/json',
     };
 
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: invalidAuthHeader,
       body: JSON.stringify(validYearData),
@@ -147,14 +147,14 @@ describe('Contract: POST /api/years', () => {
 
   it('should handle duplicate label gracefully', async () => {
     // First creation
-    await fetch(`${BASE_URL}/api/years`, {
+    await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify({ label: 'DuplicateTest' }),
     });
 
     // Second creation with same label
-    const response = await fetch(`${BASE_URL}/api/years`, {
+    const response = await fetch(`${BASE_URL}/api/admin/years`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify({ label: 'DuplicateTest' }),
@@ -173,7 +173,7 @@ describe('Contract: POST /api/years', () => {
     ];
 
     for (const testCase of testCases) {
-      const response = await fetch(`${BASE_URL}/api/years`, {
+      const response = await fetch(`${BASE_URL}/api/admin/years`, {
         method: 'POST',
         headers: mockAuthHeader,
         body: JSON.stringify({ label: testCase.label }),

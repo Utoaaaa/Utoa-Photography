@@ -1,5 +1,5 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
 import { NEW_IMAGE_VARIANTS } from '@/lib/image-variants';
 import { regenerateR2Variants } from '@/lib/r2-variants';
 
@@ -7,9 +7,9 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
   const mod = await import('@/app/api/uploads/r2/variants/[id]/route');
   return mod.GET(request, context as any);
 }
@@ -18,9 +18,9 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
   const { id } = await context.params;
   try {
     const additionsOnly = request.nextUrl.searchParams.get('scope') === 'new';

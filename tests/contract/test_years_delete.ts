@@ -1,7 +1,7 @@
 import { describe, expect, test, beforeAll, afterAll } from '@jest/globals';
 
-describe('DELETE /api/years/{id} Contract Tests', () => {
-  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api';
+describe('DELETE /api/admin/years/{id} Contract Tests', () => {
+  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api/admin';
   let testYearId: string;
 
   beforeAll(async () => {
@@ -20,7 +20,7 @@ describe('DELETE /api/years/{id} Contract Tests', () => {
     testYearId = year.id;
   });
 
-  test('DELETE /api/years/{id} - should delete year successfully', async () => {
+  test('DELETE /api/admin/years/{id} - should delete year successfully', async () => {
     const response = await fetch(`${API_BASE}/years/${testYearId}`, {
       method: 'DELETE'
     });
@@ -28,7 +28,7 @@ describe('DELETE /api/years/{id} Contract Tests', () => {
     expect(response.status).toBe(204);
   });
 
-  test('DELETE /api/years/{id} - should return 404 for non-existent year', async () => {
+  test('DELETE /api/admin/years/{id} - should return 404 for non-existent year', async () => {
     // Use a valid UUID format that is extremely unlikely to exist
     const nonExistentId = '00000000-0000-0000-0000-000000000000';
     const response = await fetch(`${API_BASE}/years/${nonExistentId}`, {
@@ -38,7 +38,7 @@ describe('DELETE /api/years/{id} Contract Tests', () => {
     expect(response.status).toBe(404);
   });
 
-  test('DELETE /api/years/{id} - should return 409 when year contains collections', async () => {
+  test('DELETE /api/admin/years/{id} - should return 409 when year contains collections', async () => {
     // Create year with collection
     const yearResponse = await fetch(`${API_BASE}/years`, {
       method: 'POST',
@@ -77,7 +77,7 @@ describe('DELETE /api/years/{id} Contract Tests', () => {
     });
   });
 
-  test('DELETE /api/years/{id} - should force delete year with collections when force=true', async () => {
+  test('DELETE /api/admin/years/{id} - should force delete year with collections when force=true', async () => {
     // Create year with collection
     const yearResponse = await fetch(`${API_BASE}/years`, {
       method: 'POST',
@@ -112,7 +112,7 @@ describe('DELETE /api/years/{id} Contract Tests', () => {
     expect(deleteResponse.status).toBe(204);
   });
 
-  test('DELETE /api/years/{id} - should require valid UUID format', async () => {
+  test('DELETE /api/admin/years/{id} - should require valid UUID format', async () => {
     const response = await fetch(`${API_BASE}/years/invalid-uuid`, {
       method: 'DELETE'
     });

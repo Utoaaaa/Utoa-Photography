@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
+import { adminAuthError } from '@/lib/auth';
+import { NextRequest } from 'next/server';
 
 async function mapContext(context: { params: Promise<{ collectionId: string; assetId: string }> }) {
   const p = await Promise.resolve(context.params);
@@ -12,10 +12,10 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ collectionId: string; assetId: string }> }
 ) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-  }
-  const mod = await import('@/app/api/collections/[collection_id]/assets/[asset_id]/route');
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
+  const mod = await import('@/lib/api-handlers/collection-asset');
   const mapped = await mapContext(context);
   return mod.DELETE(request, mapped);
 }

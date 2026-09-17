@@ -1,11 +1,11 @@
+import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated } from '@/lib/auth';
 import { getCloudflareEnv } from '@/lib/cloudflare';
 
 export async function GET(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-  }
+  const authError = await adminAuthError(request);
+  if (authError) return authError;
+
 
   let hasD1Binding = false;
   let hasR2Binding = false;

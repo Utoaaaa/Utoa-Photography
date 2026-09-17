@@ -1,11 +1,11 @@
 /**
- * Contract Test: POST /api/images/direct-upload
+ * Contract Test: POST /api/admin/images/direct-upload
  * 
  * Tests the API contract for Cloudflare Images direct upload token generation.
  * This test MUST FAIL until the API endpoint is implemented.
  */
 
-describe('Contract: POST /api/images/direct-upload', () => {
+describe('Contract: POST /api/admin/images/direct-upload', () => {
   const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3000';
 
   const mockAuthHeader = {
@@ -19,7 +19,7 @@ describe('Contract: POST /api/images/direct-upload', () => {
       content_type: 'image/jpeg',
     };
 
-    const response = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+    const response = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(uploadRequest),
@@ -55,7 +55,7 @@ describe('Contract: POST /api/images/direct-upload', () => {
     ];
 
     for (const format of supportedFormats) {
-      const response = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+      const response = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
         method: 'POST',
         headers: mockAuthHeader,
         body: JSON.stringify(format),
@@ -76,7 +76,7 @@ describe('Contract: POST /api/images/direct-upload', () => {
     ];
 
     for (const format of unsupportedFormats) {
-      const response = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+      const response = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
         method: 'POST',
         headers: mockAuthHeader,
         body: JSON.stringify(format),
@@ -94,7 +94,7 @@ describe('Contract: POST /api/images/direct-upload', () => {
       content_type: 'image/jpeg',
     };
 
-    const response = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+    const response = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(invalidRequest),
@@ -112,7 +112,7 @@ describe('Contract: POST /api/images/direct-upload', () => {
       content_type: 'image/jpeg',
     };
 
-    const response = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+    const response = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(uploadRequest),
@@ -131,7 +131,7 @@ describe('Contract: POST /api/images/direct-upload', () => {
     ];
 
     for (const filename of specialFilenames) {
-      const response = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+      const response = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
         method: 'POST',
         headers: mockAuthHeader,
         body: JSON.stringify({
@@ -154,7 +154,7 @@ describe('Contract: POST /api/images/direct-upload', () => {
     ];
 
     for (const mismatch of mismatchedTypes) {
-      const response = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+      const response = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
         method: 'POST',
         headers: mockAuthHeader,
         body: JSON.stringify(mismatch),
@@ -171,13 +171,13 @@ describe('Contract: POST /api/images/direct-upload', () => {
       content_type: 'image/jpeg',
     };
 
-    const response1 = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+    const response1 = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(uploadRequest),
     });
 
-    const response2 = await fetch(`${BASE_URL}/api/images/direct-upload`, {
+    const response2 = await fetch(`${BASE_URL}/api/admin/images/direct-upload`, {
       method: 'POST',
       headers: mockAuthHeader,
       body: JSON.stringify(uploadRequest),

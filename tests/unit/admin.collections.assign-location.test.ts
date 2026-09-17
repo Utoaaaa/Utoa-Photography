@@ -1,3 +1,7 @@
+// Business behavior tests use an explicitly authenticated administrator.
+// Real JWT rejection and route coverage live in tests/security/auth.test.mjs.
+jest.mock('@/lib/auth', () => ({ adminAuthError: jest.fn().mockResolvedValue(null) }));
+
 jest.mock('next/server', () => {
   class ResponseStub {
     status: number;

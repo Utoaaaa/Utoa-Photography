@@ -1,0 +1,68 @@
+{
+  "environment": "isolated transpiled source; production; no real database, secrets or network",
+  "results": [
+    {
+      "name": "production no credentials rejected",
+      "actual": false,
+      "expected": false
+    },
+    {
+      "name": "forged email no JWT accepted",
+      "actual": "admin@example.invalid",
+      "expected": "admin@example.invalid"
+    },
+    {
+      "name": "middleware /admin",
+      "status": 401
+    },
+    {
+      "name": "middleware /api/collections/11111111-1111-4111-8111-111111111111",
+      "status": 200
+    },
+    {
+      "name": "middleware /api/admin/years/2026.0/locations",
+      "status": 200
+    },
+    {
+      "name": "direct upload no token",
+      "status": 401
+    },
+    {
+      "name": "direct upload invalid_token",
+      "status": 401
+    },
+    {
+      "name": "direct upload arbitrary-value",
+      "status": 200
+    },
+    {
+      "name": "anonymous DELETE src/app/api/collections/[collection_id]/route.ts",
+      "status": 404,
+      "accessedMockDatabase": true
+    },
+    {
+      "name": "anonymous DELETE src/app/api/years/[year_id]/route.ts",
+      "status": 500,
+      "accessedMockDatabase": true
+    },
+    {
+      "name": "missing revalidate secret accepts literal undefined",
+      "status": 200
+    },
+    {
+      "name": "audit arbitrary authorization header",
+      "status": 200
+    },
+    {
+      "name": "R2 accepts HTML disguised as jpg",
+      "status": 200,
+      "stored": {
+        "key": "images/probe/thumb.jpg",
+        "httpMetadata": {
+          "contentType": "text/html",
+          "cacheControl": "public, max-age=31536000, immutable"
+        }
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { describe, expect, test, beforeAll, afterAll } from '@jest/globals';
 
-describe('POST /api/years/{year_id}/collections Contract Tests', () => {
-  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api';
+describe('POST /api/admin/years/{year_id}/collections Contract Tests', () => {
+  const API_BASE = process.env.TEST_API_BASE || 'http://localhost:3000/api/admin';
   let testYearId: string;
 
   beforeAll(async () => {
@@ -25,7 +25,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     await fetch(`${API_BASE}/years/${testYearId}?force=true`, { method: 'DELETE' });
   });
 
-  test('POST /api/years/{year_id}/collections - should create collection with required fields', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should create collection with required fields', async () => {
     const collectionData = {
       slug: 'minimal-collection',
       title: 'Minimal Collection',
@@ -54,7 +54,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should create collection with all fields', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should create collection with all fields', async () => {
     const collectionData = {
       slug: 'full-collection',
       title: 'Full Collection',
@@ -89,7 +89,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should enforce unique slug within year', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should enforce unique slug within year', async () => {
     const collectionData = {
       slug: 'duplicate-slug',
       title: 'First Collection',
@@ -126,7 +126,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should validate required fields', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should validate required fields', async () => {
     const invalidData = {
       title: 'Collection without slug',
       // missing slug
@@ -147,7 +147,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should validate slug format', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should validate slug format', async () => {
     const invalidData = {
       slug: 'Invalid Slug With Spaces!',
       title: 'Invalid Slug Collection',
@@ -168,7 +168,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should validate status enum', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should validate status enum', async () => {
     const invalidData = {
       slug: 'invalid-status-collection',
       title: 'Invalid Status Collection',
@@ -190,7 +190,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should validate title length', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should validate title length', async () => {
     const invalidData = {
       slug: 'long-title-collection',
       title: 'x'.repeat(201), // exceeds 200 character limit
@@ -211,7 +211,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should return 404 for non-existent year', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should return 404 for non-existent year', async () => {
     const collectionData = {
       slug: 'orphan-collection',
       title: 'Orphan Collection',
@@ -232,7 +232,7 @@ describe('POST /api/years/{year_id}/collections Contract Tests', () => {
     });
   });
 
-  test('POST /api/years/{year_id}/collections - should auto-generate order_index if not provided', async () => {
+  test('POST /api/admin/years/{year_id}/collections - should auto-generate order_index if not provided', async () => {
     const collectionData = {
       slug: 'auto-order-collection',
       title: 'Auto Order Collection',

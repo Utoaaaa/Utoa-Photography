@@ -5,6 +5,7 @@ const { TextEncoder, TextDecoder } = require('util');
 const { ReadableStream, TransformStream } = require('stream/web');
 const { Blob, File } = require('buffer');
 const { MessageChannel, MessagePort } = require('worker_threads');
+const { setImmediate, clearImmediate } = require('timers');
 
 Object.defineProperties(globalThis, {
   TextEncoder: { value: globalThis.TextEncoder ?? TextEncoder, writable: true },
@@ -15,6 +16,10 @@ Object.defineProperties(globalThis, {
   File: { value: globalThis.File ?? File, writable: true },
   MessageChannel: { value: globalThis.MessageChannel ?? MessageChannel, writable: true },
   MessagePort: { value: globalThis.MessagePort ?? MessagePort, writable: true },
+  // Let React's scheduler use Node timers instead of keeping a MessagePort alive
+  // in jsdom. This affects the test environment only.
+  setImmediate: { value: globalThis.setImmediate ?? setImmediate, writable: true },
+  clearImmediate: { value: globalThis.clearImmediate ?? clearImmediate, writable: true },
 });
 
 const undici = require('undici');
