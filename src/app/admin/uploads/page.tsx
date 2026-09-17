@@ -759,30 +759,31 @@ export default function AdminUploadsPage() {
       return;
     }
 
-  const filesToUpload: Array<File | null> = files.length > 0 ? files : [null];
+    if (files.length === 0) {
+      setFeedback({ type: 'error', text: '請先選擇要上傳的照片。' });
+      return;
+    }
+    const filesToUpload = [...files];
     const failedFiles: File[] = [];
     let successCount = 0;
 
     setIsUploading(true);
     try {
       for (let index = 0; index < filesToUpload.length; index += 1) {
-  const currentFile = filesToUpload[index];
+        const currentFile = filesToUpload[index];
         const filename = currentFile?.name || (filesToUpload.length > 1 ? `admin-upload-${index + 1}.jpg` : 'admin-upload.jpg');
 
         try {
           // Upload to R2 via same-origin API
-          let imageId = `test-uploaded-image-id-${Date.now()}-${index}`;
-          if (currentFile) {
-            // 1) Upload original
-            const fd = new FormData();
-            fd.append('file', currentFile, currentFile.name);
-            const up = await fetch('/api/admin/uploads/r2', { method: 'POST', body: fd });
-            if (!up.ok) throw new Error('Upload failed');
-            const upJson = await safeJson<{ image_id?: string }>(up, {});
-            if (upJson.image_id) imageId = upJson.image_id;
-
+          const fd = new FormData();
+          fd.append('file', currentFile, currentFile.name);
+          const up = await fetch('/api/admin/uploads/r2', { method: 'POST', body: fd });
+          if (!up.ok) throw new Error('Upload failed');
+          const upJson = await safeJson<{ image_id?: unknown }>(up, {});
+          const assetId = typeof upJson.image_id === 'string' ? upJson.image_id.trim() : '';
+          if (!assetId || assetId.startsWith('test-uploaded-image-id-')) {
+            throw new Error('上傳回應缺少有效的圖片 ID，未建立素材紀錄。');
           }
-          const assetId = imageId;
           const baseAlt = trimmedAlt || currentFile?.name || '上傳圖片';
           const altValue = filesToUpload.length > 1 && currentFile ? `${baseAlt} (${currentFile.name})` : baseAlt;
 
@@ -1220,7 +1221,7 @@ export default function AdminUploadsPage() {
               data-testid="save-asset-btn"
               onClick={saveAsset}
               className="inline-flex items-center rounded-md border border-blue-200 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={isUploading || alt.trim().length === 0}
+              disabled={isUploading || files.length === 0 || alt.trim().length === 0}
               aria-busy={isUploading}
             >
               {isUploading ? '上傳中…' : '開始上傳'}
