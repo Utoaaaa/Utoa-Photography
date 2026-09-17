@@ -75,6 +75,23 @@ describe('PhotoViewer', () => {
     expect(screen.getByTestId('dot-navigation')).toBeInTheDocument();
   });
 
+  it.each([400, 720])('centers the photo frame at height %i, excluding its caption and ancestor offset', (height) => {
+    render(<PhotoViewer photos={[genPhoto('1'), genPhoto('2')]} collectionTitle="C" />);
+    const frame = screen.getAllByTestId('current-photo')[1];
+    jest.spyOn(frame, 'getBoundingClientRect').mockReturnValue({
+      top: 640, height, bottom: 640 + height, left: 0, right: 600, width: 600,
+      x: 0, y: 640, toJSON: () => ({}),
+    });
+    const previousScrollY = window.scrollY;
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 350 });
+    fireEvent.click(screen.getAllByTestId('nav-dot')[1]);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({
+      top: 350 + 640 + height / 2 - window.innerHeight / 2,
+      behavior: 'smooth',
+    });
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: previousScrollY });
+  });
+
   it('renders single-screen mode and navigates via dots', () => {
     const photos = [genPhoto('1'), genPhoto('2'), genPhoto('3')];
     render(

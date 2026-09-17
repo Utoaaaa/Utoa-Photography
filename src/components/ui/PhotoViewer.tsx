@@ -235,13 +235,13 @@ export function PhotoViewer({
     const photoElement = photoRefs.current[index];
     if (!photoElement) return;
 
-    // Use offsetTop for stable positioning (not affected by scroll position)
-    const elementTop = photoElement.offsetTop;
-    const elementHeight = photoElement.offsetHeight;
-    const viewportHeight = window.innerHeight;
-
-    // Calculate scroll position to center the element in viewport
-    const targetScrollTop = elementTop - (viewportHeight - elementHeight) / 2;
+    // Center the image itself, excluding captions and article padding.
+    // Bounding rect + scrollY gives document coordinates even when the viewer
+    // sits inside a positioned ancestor or below the collection header.
+    const frame = photoElement.querySelector<HTMLElement>('[data-photo-frame]');
+    if (!frame) return;
+    const rect = frame.getBoundingClientRect();
+    const targetScrollTop = window.scrollY + rect.top + rect.height / 2 - window.innerHeight / 2;
 
     window.scrollTo({
       top: Math.max(targetScrollTop, 0),
@@ -580,6 +580,7 @@ export function PhotoViewer({
                 <div
                   className="relative flex w-full justify-center"
                   data-testid="current-photo"
+                  data-photo-frame
                   id={`photo-${index + 1}`}
                 >
                   <div className={photoWrapperClassName} style={{ '--photo-max-width': `min(100%, ${84 * dimensions.width / dimensions.height}vh)` } as CSSProperties}>
