@@ -4,6 +4,7 @@ export type DemoYear = {
   id: string;
   label: string;
   status: Extract<Status, 'published' | 'draft'>;
+  countsLoaded?: boolean;
   locations: number;
   collections: number;
   assets: number;

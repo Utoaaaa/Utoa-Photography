@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import AdminWorkspace from '../../src/components/admin/AdminWorkspace';
 import {
   loadWorkspace,
+  requestAdmin,
   persistOrder,
   saveCollection,
   savePhotos,
@@ -254,4 +255,100 @@ test('twelve-photo ordering survives lexical storage order and loading legacy ro
   });
   const reloaded = await loadWorkspace();
   expect(reloaded.workspaces.y1.collections[0].assetIds).toEqual(ids);
+});
+
+test('years remain editable while the media library is still loading', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    if (url.includes('/assets?')) await pending;
+    return original(url, init);
+  });
+  render(<AdminWorkspace live />);
+  fireEvent.click(screen.getByRole('button', { name: /年份管理/ }));
+  expect(await screen.findByRole('heading', { name: '2026', exact: true })).toBeInTheDocument();
+  expect(screen.getByLabelText('年份 2026 名稱')).toBeEnabled();
+  fireEvent.change(screen.getByLabelText('新增年份'), { target: { value: '2027' } });
+  expect(screen.getByRole('button', { name: '新增年份', exact: true })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: /年份工作區/ }));
+  expect(screen.getByRole('button', { name: /2026/ })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: /上傳與媒體/ }));
+  expect(screen.getByText('真實上傳元件')).toBeInTheDocument();
+  await act(async () => {
+    release();
+    await pending;
+  });
+});
+
+test('a failed media request does not lock year management', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit) =>
+    url.includes('/assets?') ? response({ message: '媒體暫時無法讀取' }, 503) : original(url, init)
+  );
+  render(<AdminWorkspace live />);
+  expect(await screen.findByRole('alert')).toHaveTextContent('媒體暫時無法讀取');
+  fireEvent.click(screen.getByRole('button', { name: /年份管理/ }));
+  expect(screen.getByLabelText('年份 2026 名稱')).toBeEnabled();
+});
+
+test('collection reads overlap, remain bounded and preserve list order', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  let active = 0;
+  let peak = 0;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    if (url.endsWith('/collections?status=all'))
+      return response(Array.from({ length: 9 }, (_, i) => ({ ...collection, id: `c${i}` })));
+    if (url.includes('?include_assets=true')) {
+      active++;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      active--;
+      return response({ assets: [] });
+    }
+    return original(url, init);
+  });
+  const snapshot = await loadWorkspace();
+  expect(peak).toBe(4);
+  expect(snapshot.workspaces.y1.collections.map((item) => item.id)).toEqual(
+    Array.from({ length: 9 }, (_, i) => `c${i}`)
+  );
+});
+
+test('a stalled request aborts and reports a retryable timeout', async () => {
+  jest.useFakeTimers();
+  try {
+    mockFetch.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal!.addEventListener('abort', () => reject(new Error('aborted')));
+        })
+    );
+    const result = expect(requestAdmin('years')).rejects.toThrow('請求逾時');
+    await jest.advanceTimersByTimeAsync(20000);
+    await result;
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('one failed year does not prevent another year from becoming available', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    if (url.includes('years?'))
+      return response([
+        { id: 'bad', label: '2025', status: 'draft' },
+        { id: 'y1', label: '2026', status: 'draft' },
+      ]);
+    if (url.includes('/years/bad/')) return response({ message: '讀取失敗' }, 500);
+    return original(url, init);
+  });
+  const onWorkspace = jest.fn();
+  await expect(loadWorkspace({ onWorkspace })).rejects.toThrow('2025');
+  expect(onWorkspace).toHaveBeenCalledWith(
+    'y1',
+    expect.objectContaining({ collections: expect.any(Array) })
+  );
 });

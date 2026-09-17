@@ -24,24 +24,36 @@ const status = (value: unknown): 'draft' | 'published' => {
 export const pathId = (id: string) => encodeURIComponent(id);
 
 export async function requestAdmin(path: string, method = 'GET', body?: unknown): Promise<unknown> {
-  const response = await fetch(`/api/admin/${path}`, {
-    method,
-    cache: 'no-store',
-    credentials: 'same-origin',
-    ...(body === undefined
-      ? {}
-      : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
-  });
-  if (response.status === 204) return null;
-  const value: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    if (response.status === 401) throw new Error('登入已失效，請重新登入管理後台。');
-    if (response.status === 403) throw new Error('目前帳號沒有管理權限。');
-    const error = value && typeof value === 'object' ? (value as Row) : {};
-    throw new Error(text(error.message) || text(error.error) || `請求失敗（${response.status}）。`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(`/api/admin/${path}`, {
+      method,
+      signal: controller.signal,
+      cache: 'no-store',
+      credentials: 'same-origin',
+      ...(body === undefined
+        ? {}
+        : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+    });
+    if (response.status === 204) return null;
+    const value: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('登入已失效，請重新登入管理後台。');
+      if (response.status === 403) throw new Error('目前帳號沒有管理權限。');
+      const error = value && typeof value === 'object' ? (value as Row) : {};
+      throw new Error(
+        text(error.message) || text(error.error) || `請求失敗（${response.status}）。`
+      );
+    }
+    if (value === null) throw new Error('伺服器未回傳有效資料。');
+    return value;
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error('請求逾時，請重新載入資料。');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-  if (value === null) throw new Error('伺服器未回傳有效資料。');
-  return value;
 }
 
 function mapAsset(value: Row): DemoAsset {
@@ -62,7 +74,12 @@ function mapAsset(value: Row): DemoAsset {
   };
 }
 
-export async function loadWorkspace(): Promise<{
+export async function loadWorkspace(
+  progress: {
+    onYears?: (years: DemoYear[]) => void;
+    onWorkspace?: (id: string, workspace: DemoWorkspace) => void;
+  } = {}
+): Promise<{
   years: DemoYear[];
   workspaces: Record<string, DemoWorkspace>;
 }> {
@@ -76,6 +93,7 @@ export async function loadWorkspace(): Promise<{
     assets: 0,
     updatedAt: text(value.updated_at),
   }));
+  if (progress.onYears) progress.onYears(years);
   const assets: DemoAsset[] = [];
   let offset = 0;
   while (true) {
@@ -87,41 +105,51 @@ export async function loadWorkspace(): Promise<{
     if (!Number.isFinite(Number(page.total))) throw new Error('媒體列表缺少總筆數。');
   }
   const workspaces: Record<string, DemoWorkspace> = {};
-  for (const year of years) {
-    const [locationResponse, collectionResponse] = await Promise.all([
-      requestAdmin(`years/${pathId(year.id)}/locations`),
-      requestAdmin(`years/${pathId(year.id)}/collections?status=all`),
-    ]);
-    const locations = rows(locationResponse).map((value) => ({
-      id: idOf(value),
-      name: text(value.name),
-      slug: text(value.slug),
-      summary: text(value.summary),
-      coverAssetId: text(value.coverAssetId) || null,
-      status: 'draft' as const,
-    }));
-    const collections: DemoCollection[] = [];
-    for (const value of rows(collectionResponse)) {
-      const detail = row(
-        await requestAdmin(`collections/${pathId(idOf(value))}?include_assets=true`)
-      );
-      collections.push({
+  const failures: string[] = [];
+  await mapConcurrent(years, 2, async (year) => {
+    try {
+      const [locationResponse, collectionResponse] = await Promise.all([
+        requestAdmin(`years/${pathId(year.id)}/locations`),
+        requestAdmin(`years/${pathId(year.id)}/collections?status=all`),
+      ]);
+      const locations = rows(locationResponse).map((value) => ({
         id: idOf(value),
-        title: text(value.title),
+        name: text(value.name),
         slug: text(value.slug),
         summary: text(value.summary),
-        locationId: text(value.location_id),
-        status: status(value.status),
-        capturedAt: text(value.captured_at).slice(0, 10),
-        coverAssetId: text(value.cover_asset_id) || null,
-        assetIds: rows(detail.assets)
-          .sort((a, b) => Number(a.order_index ?? 0) - Number(b.order_index ?? 0))
-          .map(idOf),
-      });
+        coverAssetId: text(value.coverAssetId) || null,
+        status: 'draft' as const,
+      }));
+      const collections = await mapConcurrent(
+        rows(collectionResponse),
+        4,
+        async (value): Promise<DemoCollection> => {
+          const detail = row(
+            await requestAdmin(`collections/${pathId(idOf(value))}?include_assets=true`)
+          );
+          return {
+            id: idOf(value),
+            title: text(value.title),
+            slug: text(value.slug),
+            summary: text(value.summary),
+            locationId: text(value.location_id),
+            status: status(value.status),
+            capturedAt: text(value.captured_at).slice(0, 10),
+            coverAssetId: text(value.cover_asset_id) || null,
+            assetIds: rows(detail.assets)
+              .sort((a, b) => Number(a.order_index ?? 0) - Number(b.order_index ?? 0))
+              .map(idOf),
+          };
+        }
+      );
+      // The real asset library is global; include unassigned and cross-year assets as in the existing CMS.
+      workspaces[year.id] = { locations, collections, assets };
+      if (progress.onWorkspace) progress.onWorkspace(year.id, workspaces[year.id]);
+    } catch (error) {
+      failures.push(`${year.label}：${error instanceof Error ? error.message : '載入失敗'}`);
     }
-    // The real asset library is global; include unassigned and cross-year assets as in the existing CMS.
-    workspaces[year.id] = { locations, collections, assets };
-  }
+  });
+  if (failures.length) throw new Error(failures.join('；'));
   return { years, workspaces };
 }
 
@@ -167,4 +195,22 @@ export async function persistOrder(kind: 'years' | 'collections', ids: string[])
       order_index: String(index + 1).padStart(4, '0'),
     });
   }
+}
+
+async function mapConcurrent<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (cursor < items.length) {
+        const index = cursor++;
+        results[index] = await fn(items[index]);
+      }
+    })
+  );
+  return results;
 }

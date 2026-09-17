@@ -506,33 +506,44 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
   const [isAuxNavOpen, setIsAuxNavOpen] = useState(false);
   const [toast, setToast] = useState<ToastRecord | null>(null);
   const toastIdRef = useRef(0);
-  const [busy, setBusy] = useState(live);
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(live);
+  const refreshVersion = useRef(0);
   const busyRef = useRef(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ready, setReady] = useState(!live);
   const refresh = useCallback(async () => {
-    const snapshot = await loadWorkspace();
-    setYears(snapshot.years);
-    setWorkspaces(snapshot.workspaces);
-    setSelectedYearId((id) =>
-      snapshot.years.some((year) => year.id === id) ? id : (snapshot.years[0]?.id ?? '')
-    );
-    setReady(true);
+    const version = ++refreshVersion.current;
+    setLoading(true);
     setLoadError(null);
+    try {
+      await loadWorkspace({
+        onYears: (nextYears) => {
+          if (version !== refreshVersion.current) return;
+          setYears(nextYears);
+          setSelectedYearId((id) =>
+            nextYears.some((year) => year.id === id) ? id : (nextYears[0]?.id ?? '')
+          );
+          setReady(true);
+        },
+        onWorkspace: (id, workspace) => {
+          if (version !== refreshVersion.current) return;
+          setWorkspaces((previous) => ({ ...previous, [id]: workspace }));
+        },
+      });
+    } finally {
+      if (version === refreshVersion.current) setLoading(false);
+    }
   }, []);
   useEffect(() => {
     if (!live) return;
     let active = true;
-    setBusy(true);
-    refresh()
-      .catch((error: unknown) => {
-        if (active) setLoadError(error instanceof Error ? error.message : '載入失敗。');
-      })
-      .finally(() => {
-        if (active) setBusy(false);
-      });
+    void refresh().catch((error: unknown) => {
+      if (active) setLoadError(error instanceof Error ? error.message : '載入失敗。');
+    });
     return () => {
       active = false;
+      refreshVersion.current += 1;
     };
   }, [live, refresh]);
   const mutate = async (
@@ -569,13 +580,9 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
     const wasUploads = previousSection.current === 'uploads';
     previousSection.current = activeSection;
     if (!live || !wasUploads || activeSection === 'uploads') return;
-    setBusy(true);
-    refresh()
-      .catch((error: Error) => {
-        setReady(false);
-        setLoadError(error.message);
-      })
-      .finally(() => setBusy(false));
+    refresh().catch((error: Error) => {
+      setLoadError(error.message);
+    });
   }, [activeSection, live, refresh]);
 
   const isAuxiliaryActive = auxiliarySectionIds.has(activeSection);
@@ -602,6 +609,7 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
   } | null>(null);
   const displayYears = years.map((year) => ({
     ...year,
+    countsLoaded: !live || !!workspaces[year.id],
     locations: workspaces[year.id]?.locations.length ?? 0,
     collections: workspaces[year.id]?.collections.length ?? 0,
     assets: workspaces[year.id]?.assets.length ?? 0,
@@ -613,13 +621,13 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
         locations: summary.locations + year.locations,
         collections: summary.collections + year.collections,
         assets: live
-          ? (workspaces[years[0]?.id]?.assets.length ?? 0)
+          ? (Object.values(workspaces)[0]?.assets.length ?? 0)
           : summary.assets + year.assets,
         publishedYears: summary.publishedYears + (year.status === 'published' ? 1 : 0),
       }),
       { locations: 0, collections: 0, assets: 0, publishedYears: 0 }
     );
-  }, [displayYears, live, workspaces, years]);
+  }, [displayYears, live, workspaces]);
 
   const showToast = (text: string, intent: ToastIntent = 'info') => {
     toastIdRef.current += 1;
@@ -1010,12 +1018,9 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
                 <div className="mt-2 flex flex-wrap gap-3">
                   <button
                     className={secondaryButton}
-                    disabled={busy}
+                    disabled={busy || loading}
                     onClick={() => {
-                      setBusy(true);
-                      refresh()
-                        .catch((error: Error) => setLoadError(error.message))
-                        .finally(() => setBusy(false));
+                      refresh().catch((error: Error) => setLoadError(error.message));
                     }}
                   >
                     重新載入資料
@@ -1024,7 +1029,7 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
                     返回原版後台
                   </Link>
                 </div>
-                {busy && (
+                {(busy || loading) && (
                   <p role="status" className="mt-2 text-sm">
                     正在讀取或儲存資料…
                   </p>
@@ -1037,7 +1042,10 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
               </div>
             )}
             <fieldset
-              disabled={live && (busy || !ready)}
+              disabled={
+                live &&
+                (busy || ((activeSection === 'years' || activeSection === 'workspace') && !ready))
+              }
               className="min-w-0 space-y-6 border-0 p-0"
               aria-busy={busy}
             >
@@ -1048,22 +1056,25 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
                       label="新增年份"
                       onCreate={(name) => createRecord('year', name)}
                     />
-                    {activeSection === 'workspace' && (
-                      <>
-                        <DemoCreateForm
-                          label="新增地點"
-                          slugHint={
-                            live ? `例如 kyoto-${selectedYear?.label.slice(-2) || '26'}` : undefined
-                          }
-                          onCreate={(name, slug) => createRecord('location', name, slug)}
-                        />
-                        <DemoCreateForm
-                          label="新增作品集"
-                          slugHint={live ? '例如 morning-walk' : undefined}
-                          onCreate={(name, slug) => createRecord('collection', name, slug)}
-                        />
-                      </>
-                    )}
+                    {activeSection === 'workspace' &&
+                      (!live || !!workspaces[selectedYear?.id ?? '']) && (
+                        <>
+                          <DemoCreateForm
+                            label="新增地點"
+                            slugHint={
+                              live
+                                ? `例如 kyoto-${selectedYear?.label.slice(-2) || '26'}`
+                                : undefined
+                            }
+                            onCreate={(name, slug) => createRecord('location', name, slug)}
+                          />
+                          <DemoCreateForm
+                            label="新增作品集"
+                            slugHint={live ? '例如 morning-walk' : undefined}
+                            onCreate={(name, slug) => createRecord('collection', name, slug)}
+                          />
+                        </>
+                      )}
                   </div>
                   <p className="mt-3 text-xs text-gray-500">
                     {live
@@ -1252,7 +1263,12 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
               {activeSection === 'dashboard' &&
                 (live ? (
                   <Card>
-                    <h2 className="mb-4 text-lg font-semibold">內容總覽</h2>
+                    <h2 className="mb-4 text-lg font-semibold">內容總覽（已載入資料）</h2>
+                    {loading && (
+                      <p className="mb-3 text-sm text-gray-600">
+                        年份已優先顯示；統計會隨各年份資料載入更新。
+                      </p>
+                    )}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <StatCard label="已發布年份" value={totals.publishedYears} accent="emerald" />
                       <StatCard label="地點" value={totals.locations} accent="blue" />
@@ -1593,11 +1609,17 @@ function YearsSection({
                   </div>
                   <div>
                     <dt className="sr-only">地點</dt>
-                    <dd>{year.locations} 個地點</dd>
+                    <dd>
+                      {year.countsLoaded === false ? '地點待載入' : `${year.locations} 個地點`}
+                    </dd>
                   </div>
                   <div>
                     <dt className="sr-only">作品集</dt>
-                    <dd>{year.collections} 個作品集</dd>
+                    <dd>
+                      {year.countsLoaded === false
+                        ? '作品集待載入'
+                        : `${year.collections} 個作品集`}
+                    </dd>
                   </div>
                   <div>
                     <dt className="sr-only">更新時間</dt>
@@ -1683,6 +1705,11 @@ function WorkspaceSection({
         title="不擠壓內容的分欄工作區"
         description="先選年份，再管理地點與作品集指派；版面只在超寬螢幕才拆成多欄，避免文字與狀態標籤重疊。"
       />
+      {live && years.find((year) => year.id === selectedYearId)?.countsLoaded === false && (
+        <p role="status" className="text-sm text-gray-600">
+          此年份的地點與作品集尚未載入；可先切換其他年份，或查看上方讀取狀態。
+        </p>
+      )}
       <div className="grid min-w-0 gap-4 2xl:grid-cols-[17rem_minmax(0,1fr)]">
         <Card className="p-0">
           <PaneHeader title="年份" description="切換管理脈絡" />
