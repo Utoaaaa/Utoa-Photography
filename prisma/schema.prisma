@@ -160,7 +160,7 @@ model PublishHistory {
 // SEOMetadata model - Polymorphic design for different page types
 model SEOMetadata {
   id            String          @id @default(uuid())
-  entity_type   SEOEntityType   // 'year' | 'collection' | 'homepage'
+  entity_type   SEOEntityType   // 'year' | 'location' | 'collection' | 'homepage'
   entity_id     String          // Year/Collection ID, or 'homepage'
   title         String?         // Custom page title
   description   String?         // Meta description
@@ -204,6 +204,7 @@ enum CollectionStatus {
 }
 
 enum SEOEntityType {
+  location
   year
   collection
   homepage

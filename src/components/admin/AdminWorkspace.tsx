@@ -933,6 +933,7 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
         <div className="mx-auto flex max-w-screen-2xl flex-col gap-6 px-4 py-5 sm:px-6 lg:flex-row lg:px-8">
           <aside className="lg:sticky lg:top-5 lg:h-[calc(100vh-2.5rem)] lg:w-80 lg:flex-none">
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-sm ring-1 ring-gray-100/60">
+              {live && <Link href="/admin/seo" className="block border-b border-gray-100 px-5 py-3 text-sm font-medium text-blue-700 hover:bg-blue-50">搜尋與分享設定 ↗</Link>}
               <div className="border-b border-gray-100 p-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">

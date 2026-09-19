@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getPageSEO } from '@/lib/seo/store';
 import { notFound } from 'next/navigation';
 
 import { AnimatedCollectionShell } from '@/components/site/animated';
@@ -27,22 +28,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const locationSlug = data.location?.slug ?? decodedLocationSlug;
   const canonical = `/${encodeURIComponent(data.year.label)}/${encodeURIComponent(locationSlug)}/${encodeURIComponent(data.collection.slug)}`;
 
-  return {
-    title: `${data.collection.title} — ${data.year.label} | UTOA Photography`,
-    description,
-    alternates: {
-      canonical,
-    },
-    openGraph: {
-      title: `${data.collection.title} — ${data.year.label} | UTOA Photography`,
-      description,
-      url: canonical,
-    },
-    twitter: {
-      title: `${data.collection.title} — ${data.year.label} | UTOA Photography`,
-      description,
-    },
-  };
+  return getPageSEO('collection', data.collection.id, {
+    title: `${data.collection.title} — ${data.year.label} | UTOA Photography`, description,
+  }, canonical);
 }
 
 export default async function CollectionPage({ params }: PageProps) {

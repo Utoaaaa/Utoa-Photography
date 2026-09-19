@@ -1,0 +1,32 @@
+[
+  {
+    "results": [
+      {
+        "Total queries executed": 2,
+        "Rows read": 160,
+        "Rows written": 256,
+        "Database size (MB)": "0.37"
+      }
+    ],
+    "success": true,
+    "finalBookmark": "000046f9-00000008-000050eb-b8551744c5f36186090216eedc8aad4c",
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "APAC",
+      "served_by_colo": "SIN",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 22.5163
+      },
+      "duration": 22.5163,
+      "changes": 65,
+      "last_row_id": 32,
+      "changed_db": true,
+      "size_after": 372736,
+      "rows_read": 160,
+      "rows_written": 256,
+      "num_tables": 8,
+      "total_attempts": 1
+    }
+  }
+]

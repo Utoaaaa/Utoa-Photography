@@ -1,0 +1,16 @@
+{
+  "verified_at": "2026-09-19T08:44:49.516197+00:00",
+  "content_sha256": "0f5632ee81dcf41de1d33e1174f4e00b3ec9a2768c337699d27b7e8530248ce3",
+  "production_seo_entries": 32,
+  "matching_entries": 32,
+  "audit_entries": 32,
+  "unchanged_display_records": 663,
+  "display_fields_unchanged": true,
+  "canonical_overrides_added": false,
+  "output_code_deployed": false,
+  "public_homepage_observed": {
+    "title": "UTOA Photography",
+    "description": "Moments In Focus",
+    "og_title": "UTOA Photography"
+  }
+}

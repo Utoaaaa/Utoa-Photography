@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 
 import { AnimatedArchiveHome } from '@/components/site/animated';
+import { getPageSEO } from '@/lib/seo/store';
 import { loadYearLocationData } from '@/lib/year-location';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: '/',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getPageSEO('homepage', 'homepage', {
+    title: 'UTOA Photography', description: 'Moments In Focus',
+  }, '/');
+}
 
 export default async function Homepage() {
   const data = await loadYearLocationData().catch((error) => {

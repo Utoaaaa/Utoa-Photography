@@ -1,0 +1,12 @@
+{
+  "content_sha256": "0f5632ee81dcf41de1d33e1174f4e00b3ec9a2768c337699d27b7e8530248ce3",
+  "sql_sha256": "7b30b24216b20470465f247ae294a9b49488708106d1880c03f03fb50e8a1825",
+  "entries": 32,
+  "audit_entries": 32,
+  "sql_validated": true,
+  "idempotent": true,
+  "preserves_existing_seo": true,
+  "preserves_display_fields": true,
+  "sitemap_coverage": 32,
+  "reviewed_images": 311
+}

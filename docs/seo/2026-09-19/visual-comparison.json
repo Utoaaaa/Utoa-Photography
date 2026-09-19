@@ -1,0 +1,29 @@
+[
+  {
+    "page": "homepage",
+    "width": 1440,
+    "height": 1691,
+    "sameDimensions": true,
+    "changedChannels": 1275,
+    "totalChannels": 7305120,
+    "identical": false
+  },
+  {
+    "page": "location",
+    "width": 1440,
+    "height": 1123,
+    "sameDimensions": true,
+    "changedChannels": 122,
+    "totalChannels": 4851360,
+    "identical": false
+  },
+  {
+    "page": "collection",
+    "width": 1440,
+    "height": 1417,
+    "sameDimensions": true,
+    "changedChannels": 0,
+    "totalChannels": 6121440,
+    "identical": true
+  }
+]

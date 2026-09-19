@@ -71,6 +71,7 @@ export default function AdminDashboardContent({
         </section>
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <QuickActionPanel href="/admin/seo" title="搜尋與分享設定" description="獨立設定 SEO 文字與分享封面，維持頁面展示內容。" cta="編輯 SEO" dataTestId="nav-seo" />
           <QuickActionPanel href="/admin/workspace" title="新版內容管理" description="在新版工作區管理年份、地點、作品集與媒體。" cta="開啟新版後台" dataTestId="nav-workspace" />
           <QuickActionPanel
             href="/admin/years"

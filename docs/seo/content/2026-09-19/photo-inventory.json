@@ -1,0 +1,3137 @@
+{
+  "source": "production D1 / current public sitemap",
+  "collections": [
+    {
+      "public_path": "/2026/tokyo-26/enoshima",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "25a34e06-28f7-43fd-9ff7-911e23eadad9",
+        "slug": "enoshima",
+        "title": "江之島",
+        "summary": null,
+        "cover_asset_id": "r2-cli-8da323bf4e2be60f",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-f1a8878fa9b88fb8",
+          "alt": "DSC8809",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-13e0ba6227656b58",
+          "alt": "DSC8818",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-36669a87bc2a1aad",
+          "alt": "DSC8830",
+          "caption": null,
+          "width": 2909,
+          "height": 4363,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-8da323bf4e2be60f",
+          "alt": "DSC8832",
+          "caption": null,
+          "width": 2327,
+          "height": 3490,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-2f51f3918a56b246",
+          "alt": "DSC8848",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-648a627828ba31d3",
+          "alt": "DSC8868",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-cli-883eef7ee3668bfa",
+          "alt": "DSC8874",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-cli-59393c115f8b9cbb",
+          "alt": "DSC8948",
+          "caption": null,
+          "width": 2774,
+          "height": 4161,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-cli-d3aef26782008cb0",
+          "alt": "DSC8958",
+          "caption": null,
+          "width": 4545,
+          "height": 6817,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-cli-096c264438d03edf",
+          "alt": "26 04 09 東京 DSC8888",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-cli-7a0a51b4d950021d",
+          "alt": "26 04 09 東京 DSC8857",
+          "caption": null,
+          "width": 4270,
+          "height": 6404,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-cli-5ae4ad72b32cb9e5",
+          "alt": "DSC8853",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-cli-2540b6b84bdf7a5f",
+          "alt": "DSC8916",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-cli-ee6a84c2caabf977",
+          "alt": "DSC8889",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "14"
+        },
+        {
+          "asset_id": "r2-cli-2eec87d34deb558e",
+          "alt": "26 04 09 東京 DSC8894",
+          "caption": null,
+          "width": 2998,
+          "height": 4497,
+          "order_index": "15"
+        },
+        {
+          "asset_id": "r2-cli-94c4f755eba1b36f",
+          "alt": "DSC8956",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "16"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/ginza",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "9e2faa2d-30cc-4a25-8a81-e5069f366c7e",
+        "slug": "ginza",
+        "title": "銀座、日本橋",
+        "summary": null,
+        "cover_asset_id": "r2-cli-5365bb3881915f41",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1779979269708-j1p9x4",
+          "alt": "DSC7931",
+          "caption": null,
+          "width": 4424,
+          "height": 6636,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-5365bb3881915f41",
+          "alt": "DSC7930",
+          "caption": null,
+          "width": 6639,
+          "height": 4426,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-66313f7d85ab6110",
+          "alt": "DSC7916",
+          "caption": null,
+          "width": 2727,
+          "height": 4091,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-4c2045456faa07f7",
+          "alt": "DSC7920",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-30dff05e547b7d2d",
+          "alt": "DSC7927",
+          "caption": null,
+          "width": 3462,
+          "height": 5193,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-5875420b15ee5d00",
+          "alt": "DSC8470",
+          "caption": null,
+          "width": 4611,
+          "height": 6916,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-cli-b9b25d5fcedd6e94",
+          "alt": "DSC8463",
+          "caption": null,
+          "width": 4553,
+          "height": 6830,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-cli-ca815a074bf3b23c",
+          "alt": "DSC8480",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-cli-1f9d5ae02e723af8",
+          "alt": "DSC7910",
+          "caption": null,
+          "width": 2517,
+          "height": 3776,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-cli-b95202b0950d75d4",
+          "alt": "DSC7898",
+          "caption": null,
+          "width": 4562,
+          "height": 6844,
+          "order_index": "10"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/kamakura",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "8bc5dfb7-e69a-4cfb-b050-4a4bf502fbcd",
+        "slug": "kamakura",
+        "title": "鎌倉",
+        "summary": null,
+        "cover_asset_id": "r2-cli-73ced62d261f5fe5",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-73ced62d261f5fe5",
+          "alt": "DSC8975",
+          "caption": null,
+          "width": 2871,
+          "height": 4307,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-cb625f9914cc300b",
+          "alt": "DSC8985",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-dddd746a4dedad13",
+          "alt": "26 04 09 東京 DSC8989",
+          "caption": null,
+          "width": 6438,
+          "height": 4292,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-f75c614f2d333453",
+          "alt": "26 04 09 東京 DSC9028",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-564628bc82f7d296",
+          "alt": "26 04 09 東京 DSC9146",
+          "caption": null,
+          "width": 3945,
+          "height": 5916,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-910004965c91f746",
+          "alt": "26 04 09 東京 DSC9151",
+          "caption": null,
+          "width": 3923,
+          "height": 5883,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-cli-e7d2541fc7ef8bc0",
+          "alt": "26 04 09 東京 DSC9075",
+          "caption": null,
+          "width": 2703,
+          "height": 4054,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-cli-a9d303263d90467a",
+          "alt": "26 04 09 東京 DSC9056",
+          "caption": null,
+          "width": 6301,
+          "height": 4201,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-cli-fb17f9363db24e01",
+          "alt": "DSC9053",
+          "caption": null,
+          "width": 2795,
+          "height": 4192,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-cli-68d8d9a6bb95a1a0",
+          "alt": "DSC9197",
+          "caption": null,
+          "width": 4038,
+          "height": 6057,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-cli-d347183ab8113c23",
+          "alt": "DSC9183",
+          "caption": null,
+          "width": 4349,
+          "height": 6524,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-cli-f2914f90080b8a1b",
+          "alt": "DSC9206",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-cli-41df1359caf8e6a6",
+          "alt": "DSC9210",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-cli-702066f576ee482b",
+          "alt": "DSC9222",
+          "caption": null,
+          "width": 2850,
+          "height": 4275,
+          "order_index": "14"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/shibuya-roppongi",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "37bbc196-d38a-49b0-bb83-3a314dc42183",
+        "slug": "shibuya-roppongi",
+        "title": "澀谷、六本木",
+        "summary": null,
+        "cover_asset_id": "r2-cli-ddfca88182d25f8c",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-ef5fabca283a557d",
+          "alt": "DSC8338",
+          "caption": null,
+          "width": 4496,
+          "height": 6744,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-ddfca88182d25f8c",
+          "alt": "DSC8364",
+          "caption": null,
+          "width": 4163,
+          "height": 6245,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-99953485da529127",
+          "alt": "DSC8371",
+          "caption": null,
+          "width": 6267,
+          "height": 4178,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-145447dff35e9970",
+          "alt": "26 04 07 東京 DSC8442",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-189dda825f91be05",
+          "alt": "26 04 07 東京 DSC8426",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-421ba2b03ffa9949",
+          "alt": "DSC8391",
+          "caption": null,
+          "width": 3977,
+          "height": 5966,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-cli-ff901faccddeeb38",
+          "alt": "DSC8387",
+          "caption": null,
+          "width": 2703,
+          "height": 4055,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-cli-a22145bc2a55339b",
+          "alt": "DSC8384",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-cli-3ad600af9b40edc8",
+          "alt": "DSC8403",
+          "caption": null,
+          "width": 4451,
+          "height": 6677,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-cli-92f90099f2ed6163",
+          "alt": "DSC8400",
+          "caption": null,
+          "width": 3983,
+          "height": 5975,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-cli-19b1506a1104a721",
+          "alt": "DSC8447",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "11"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/shinjuku-gyoen",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "e3d70e8c-11e0-4c05-b8e3-90d837bbef20",
+        "slug": "shinjuku-gyoen",
+        "title": "新宿御苑",
+        "summary": null,
+        "cover_asset_id": "r2-cli-d98725894421861c",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-d98725894421861c",
+          "alt": "DSC8529",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-2f62419065889611",
+          "alt": "DSC8544",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-ee6f07d99696e099",
+          "alt": "DSC8540",
+          "caption": null,
+          "width": 6816,
+          "height": 4544,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-5cd327a36cd45bdc",
+          "alt": "DSC8568",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-01f81ff26246afa7",
+          "alt": "DSC8569",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-fd022b9b717d855d",
+          "alt": "DSC8596",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-cli-459d40e87672b9c2",
+          "alt": "DSC8579",
+          "caption": null,
+          "width": 4483,
+          "height": 6725,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-cli-6db6256c8c9e2efd",
+          "alt": "DSC8556",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-cli-dc91f71ccb3bfeb6",
+          "alt": "DSC8582",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-cli-a683471e4470fdbe",
+          "alt": "DSC8588",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-cli-2a74c616d80bc1e6",
+          "alt": "DSC8586",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-cli-00001de3a03c6e48",
+          "alt": "DSC8591",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-cli-5273c02f177303de",
+          "alt": "DSC8601",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-cli-f24e72a3c732c741",
+          "alt": "DSC8620",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "14"
+        },
+        {
+          "asset_id": "r2-cli-076f1eb42a8b3cab",
+          "alt": "DSC8629",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "15"
+        },
+        {
+          "asset_id": "r2-cli-83bf8df6d54c49b2",
+          "alt": "DSC8639",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "16"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/sumida-park",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "42506378-3e30-4a15-90c5-3003565a3a94",
+        "slug": "sumida-park",
+        "title": "隅田公園",
+        "summary": null,
+        "cover_asset_id": "r2-cli-4041310a129f28cb",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-4041310a129f28cb",
+          "alt": "DSC8133",
+          "caption": null,
+          "width": 2924,
+          "height": 4386,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-845f836928d8e23f",
+          "alt": "DSC8101",
+          "caption": null,
+          "width": 2762,
+          "height": 4143,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-9368e42bd167dd4b",
+          "alt": "DSC8118",
+          "caption": null,
+          "width": 2811,
+          "height": 4217,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-93693a11014382e4",
+          "alt": "DSC8120",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-e07b99e5ecafff60",
+          "alt": "DSC8179",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-afb82f5320bf82ee",
+          "alt": "DSC8182",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-cli-f41c94517d9a02e4",
+          "alt": "DSC8106",
+          "caption": null,
+          "width": 2804,
+          "height": 4206,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-cli-933ae98ac4b4687f",
+          "alt": "DSC8138",
+          "caption": null,
+          "width": 4392,
+          "height": 6589,
+          "order_index": "8"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/tokyo-station-imperial-palace",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "79f4dfa5-5e35-44e7-99f2-5c29d2fbca60",
+        "slug": "tokyo-station-imperial-palace",
+        "title": "東京車站、皇居",
+        "summary": null,
+        "cover_asset_id": "r2-cli-e7e1304f407e527f",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-e7e1304f407e527f",
+          "alt": "26 04 07 東京 DSC8516",
+          "caption": null,
+          "width": 4455,
+          "height": 6682,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-d1737e3e0dff95c3",
+          "alt": "26 04 07 東京 DSC8522",
+          "caption": null,
+          "width": 6611,
+          "height": 4407,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-357a4f278ca74b7f",
+          "alt": "26 04 07 東京 DSC8507",
+          "caption": null,
+          "width": 6978,
+          "height": 4652,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-087759eb7094c22f",
+          "alt": "DSC8214",
+          "caption": null,
+          "width": 4528,
+          "height": 3018,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-3e80cb2233bfc9cc",
+          "alt": "DSC8212",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-facf86914a6895fa",
+          "alt": "DSC8265",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-cli-994759f5bebeb43e",
+          "alt": "DSC8309",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "7"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/ueno",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "803817e6-73e3-4f8f-a151-2b245789c985",
+        "slug": "ueno",
+        "title": "上野",
+        "summary": null,
+        "cover_asset_id": "r2-cli-6f1504bf64cc2581",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-6f1504bf64cc2581",
+          "alt": "DSC7939",
+          "caption": null,
+          "width": 2831,
+          "height": 4247,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-eb0ac4e9bbc2c56e",
+          "alt": "DSC7976",
+          "caption": null,
+          "width": 6347,
+          "height": 4231,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-26973e3d8abaedec",
+          "alt": "DSC7945",
+          "caption": null,
+          "width": 4048,
+          "height": 6072,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-ffc03c1e6e4fc95b",
+          "alt": "DSC7997",
+          "caption": null,
+          "width": 2928,
+          "height": 4392,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-00fd209f88ca1744",
+          "alt": "DSC8028",
+          "caption": null,
+          "width": 4201,
+          "height": 6302,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-cli-ead18c4190a7dcad",
+          "alt": "DSC7983",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-cli-9cbcf9f92ee3d43b",
+          "alt": "DSC7987",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-cli-8ceeee984934e7be",
+          "alt": "DSC7993",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-cli-d7963b77954da97f",
+          "alt": "DSC8001",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-cli-ebb1b44c0d2c016a",
+          "alt": "DSC8063",
+          "caption": null,
+          "width": 2740,
+          "height": 4110,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-cli-e1d43753c0f4355a",
+          "alt": "DSC8096",
+          "caption": null,
+          "width": 2877,
+          "height": 4315,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-cli-caf92212a4f813cd",
+          "alt": "DSC8044",
+          "caption": null,
+          "width": 6355,
+          "height": 4242,
+          "order_index": "14"
+        },
+        {
+          "asset_id": "r2-cli-712272a938b0a6df",
+          "alt": "DSC8088",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "15"
+        },
+        {
+          "asset_id": "r2-cli-1ca63a099252ff1e",
+          "alt": "DSC8082",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "16"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/uonami",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "0d6bb1ae-d3d5-402a-ae67-b026d566cc44",
+        "slug": "uonami",
+        "title": "魚波",
+        "summary": null,
+        "cover_asset_id": "r2-cli-ad29cd379e13b455",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-ad29cd379e13b455",
+          "alt": "26 04 08 東京 DSC8710",
+          "caption": null,
+          "width": 3825,
+          "height": 5736,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-d0e9e81d90b296a0",
+          "alt": "26 04 08 東京 DSC8775",
+          "caption": null,
+          "width": 3768,
+          "height": 5653,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-ed431025c33e2b5d",
+          "alt": "26 04 08 東京 DSC8788",
+          "caption": null,
+          "width": 3913,
+          "height": 5870,
+          "order_index": "3"
+        }
+      ]
+    },
+    {
+      "public_path": "/2026/tokyo-26/yoyogi-level-crossing",
+      "year": {
+        "id": "48f515c8-f97f-4163-a010-a0df818023c5",
+        "label": "2026"
+      },
+      "location": {
+        "id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+        "slug": "tokyo-26",
+        "name": "東京",
+        "summary": "Spring in Tokyo"
+      },
+      "collection": {
+        "id": "13f9e946-46e7-4752-985f-57f2d7955c41",
+        "slug": "yoyogi-level-crossing",
+        "title": "代代木平交道",
+        "summary": null,
+        "cover_asset_id": "r2-cli-152904b9cea463da",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-cli-152904b9cea463da",
+          "alt": "DSC8690",
+          "caption": null,
+          "width": 3171,
+          "height": 4757,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-cli-46ba3fdbbd41640b",
+          "alt": "DSC8669",
+          "caption": null,
+          "width": 2737,
+          "height": 4106,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-cli-a406fa102c36a3e6",
+          "alt": "DSC8686",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-cli-d24c8bb2c3860404",
+          "alt": "DSC8649",
+          "caption": null,
+          "width": 2932,
+          "height": 4398,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-cli-b77ba5e97c00ff7c",
+          "alt": "DSC8698",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "5"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/abashiri",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "9747d21d-0cb7-4d20-83c5-20407476e4d1",
+        "slug": "abashiri",
+        "title": "網走與層雲峽",
+        "summary": null,
+        "cover_asset_id": "r2-1765173916461-j54foq",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765173916461-j54foq",
+          "alt": "圖片 (_DSC5730.jpeg)",
+          "caption": null,
+          "width": 4438,
+          "height": 6657,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765173921017-me26d3",
+          "alt": "圖片 (_DSC5683.jpeg)",
+          "caption": "瑞穗車站",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765173923929-jg4ija",
+          "alt": "圖片 (_DSC5674.jpeg)",
+          "caption": null,
+          "width": 4602,
+          "height": 3068,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765173927221-1m2xp2",
+          "alt": "圖片 (_DSC5578.jpeg)",
+          "caption": "銀河瀑布",
+          "width": 3072,
+          "height": 4608,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765173930334-rwod2h",
+          "alt": "圖片 (_DSC5629.jpeg)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765173933273-005nfo",
+          "alt": "圖片 (_DSC5166.jpeg)",
+          "caption": "卯原内珊瑚草群生地",
+          "width": 3072,
+          "height": 4608,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765173937723-j1jqcl",
+          "alt": "圖片 (_DSC5076.jpeg)",
+          "caption": "知床五湖",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765173941140-qethz4",
+          "alt": "圖片 (_DSC5436.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1765173946035-j1v2ys",
+          "alt": "圖片 (_DSC5305.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1765173950608-77nsm2",
+          "alt": "圖片 (_DSC5327.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1765173955931-t7urp6",
+          "alt": "圖片 (_DSC5319.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1765173958893-djyy5c",
+          "alt": "圖片 (_DSC5288.jpeg)",
+          "caption": null,
+          "width": 5727,
+          "height": 3818,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-1765173961754-klhwj1",
+          "alt": "圖片 (_DSC5354.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-1765173965112-q2f1dc",
+          "alt": "圖片 (_DSC5384.jpeg)",
+          "caption": "網走監獄博物館",
+          "width": 4608,
+          "height": 3072,
+          "order_index": "14"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/food",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "b70851c0-0059-4397-ac3c-6f601ab54d65",
+        "slug": "food",
+        "title": "食物",
+        "summary": null,
+        "cover_asset_id": "r2-1765211313527-y25e79",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765211313527-y25e79",
+          "alt": "圖片 (_DSC4309.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765211321744-pmopi5",
+          "alt": "圖片 (_DSC4318.jpg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765211329931-6k8ruf",
+          "alt": "圖片 (_DSC4326.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765211337584-5foz1a",
+          "alt": "圖片 (_DSC4320.JPG)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765211347384-j13rfx",
+          "alt": "圖片 (_DSC4323.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765211356921-px0lzv",
+          "alt": "圖片 (_DSC4311.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765211800803-oqv9ll",
+          "alt": "圖片 (_DSC6533.jpg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765211791257-p6kkl3",
+          "alt": "圖片 (_DSC7255.jpg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "8"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/furano",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "94252b19-fdba-4fa7-b4e3-2fedb995c666",
+        "slug": "furano",
+        "title": "旭川、富良野",
+        "summary": null,
+        "cover_asset_id": "r2-1765203111777-e4n0ih",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765203111777-e4n0ih",
+          "alt": "圖片 (_DSC6941.jpeg)",
+          "caption": "Christmas tree",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765203116392-z6jk3e",
+          "alt": "圖片 (_DSC6930.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765203120735-kfsib9",
+          "alt": "圖片 (_DSC6802.jpeg)",
+          "caption": "Ken & Mery 之樹",
+          "width": 6837,
+          "height": 4564,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765203123472-xuwyf0",
+          "alt": "圖片 (_DSC6777.jpeg)",
+          "caption": "旭橋",
+          "width": 6309,
+          "height": 4206,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765203127892-ng6lp7",
+          "alt": "圖片 (_DSC6989.jpeg)",
+          "caption": "深山峠アートパーク観覧車",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765203130697-b0d40h",
+          "alt": "圖片 (_DSC6837.jpeg)",
+          "caption": "美瑛車站",
+          "width": 4472,
+          "height": 2981,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765203133317-zuw1qf",
+          "alt": "圖片 (_DSC6854.jpeg)",
+          "caption": null,
+          "width": 4418,
+          "height": 2945,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765203135915-899l2l",
+          "alt": "圖片 (_DSC6677.jpeg)",
+          "caption": null,
+          "width": 5678,
+          "height": 3785,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1765203138226-h577am",
+          "alt": "圖片 (_DSC6686.jpeg)",
+          "caption": null,
+          "width": 3919,
+          "height": 2613,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1765203142165-72dron",
+          "alt": "圖片 (_DSC6996.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1765203147608-0wgb2s",
+          "alt": "圖片 (_DSC6966.jpeg)",
+          "caption": "雲霄飛車之路",
+          "width": 2989,
+          "height": 4484,
+          "order_index": "11"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/kushiro",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "9ac4a9c3-85fb-469d-a9ba-74a0fe580087",
+        "slug": "kushiro",
+        "title": "釧路",
+        "summary": null,
+        "cover_asset_id": "r2-1765172482149-fhncy3",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765172482149-fhncy3",
+          "alt": "圖片 (_DSC4518.jpeg)",
+          "caption": "厚岸大橋",
+          "width": 2999,
+          "height": 4499,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765172613361-gi286n",
+          "alt": "圖片",
+          "caption": "牡蠣島弁天神社",
+          "width": 2434,
+          "height": 3651,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765172577120-7trvt8",
+          "alt": "圖片 (_DSC4652.jpeg)",
+          "caption": null,
+          "width": 4541,
+          "height": 6812,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765172574011-kklq5c",
+          "alt": "圖片 (_DSC4642.jpeg)",
+          "caption": "細岡車站",
+          "width": 4033,
+          "height": 2688,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765172583883-fzjls9",
+          "alt": "圖片 (_DSC4672.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765172588780-anof1n",
+          "alt": "圖片 (_DSC4692.jpeg)",
+          "caption": "釧路濕原車站",
+          "width": 4007,
+          "height": 6011,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765172591693-xhakpm",
+          "alt": "圖片 (_DSC4713.jpeg)",
+          "caption": "塘路湖",
+          "width": 2901,
+          "height": 4351,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765172568727-lsnl1p",
+          "alt": "圖片 (_DSC4560.jpeg)",
+          "caption": null,
+          "width": 5839,
+          "height": 3893,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1765172571637-jrala4",
+          "alt": "圖片 (_DSC4575.jpeg)",
+          "caption": null,
+          "width": 4176,
+          "height": 6264,
+          "order_index": "9"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/lake-kussharo",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "a54b3028-d4e8-4bdb-a98b-f69a0d24deea",
+        "slug": "lake-kussharo",
+        "title": "屈斜路湖",
+        "summary": null,
+        "cover_asset_id": "r2-1765172992723-xjca45",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765172992723-xjca45",
+          "alt": "圖片 (_DSC4743.jpeg)",
+          "caption": "屈斜路湖",
+          "width": 4543,
+          "height": 6815,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765172995326-c1pogu",
+          "alt": "圖片 (_DSC4789.jpeg)",
+          "caption": null,
+          "width": 6189,
+          "height": 4126,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765173007002-6jm1gx",
+          "alt": "圖片 (_DSC4815.jpeg)",
+          "caption": "屈斜路湖 砂湯",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765173002563-2jblq2",
+          "alt": "圖片 (_DSC4811.jpeg)",
+          "caption": "",
+          "width": 6663,
+          "height": 4442,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765172999434-ipv6uh",
+          "alt": "圖片 (_DSC4810.jpeg)",
+          "caption": null,
+          "width": 4396,
+          "height": 6594,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765172989681-spv54v",
+          "alt": "圖片 (_DSC4724.jpeg)",
+          "caption": "去了兩次都碰到大霧，用招牌紀念一下",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765173012455-vgg4id",
+          "alt": "圖片 (_DSC4850.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765173015591-6csrbt",
+          "alt": "圖片 (_DSC4956.jpeg)",
+          "caption": "櫻花瀑布 さくらの滝",
+          "width": 4010,
+          "height": 2673,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1765173489299-66ei4r",
+          "alt": "圖片",
+          "caption": "Road To The Sky 天に続く道",
+          "width": 2862,
+          "height": 3816,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1765173023936-peqzf1",
+          "alt": "圖片 (_DSC4996.jpeg)",
+          "caption": null,
+          "width": 6603,
+          "height": 4402,
+          "order_index": "10"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/lake-shikotsu",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "d43d3bcd-9f78-48a4-9071-66e753070f60",
+        "slug": "lake-shikotsu",
+        "title": "支笏湖",
+        "summary": null,
+        "cover_asset_id": "r2-1765209760869-y1v5zn",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765209738344-bn8o2o",
+          "alt": "圖片 (_DSC7727.jpg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765209747066-6n18a8",
+          "alt": "圖片 (_DSC7767.jpg)",
+          "caption": null,
+          "width": 6435,
+          "height": 4290,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765209760869-y1v5zn",
+          "alt": "圖片 (_DSC7795.JPG)",
+          "caption": "山線鉄橋",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765209768579-w2ngjk",
+          "alt": "圖片 (_DSC7796.jpg)",
+          "caption": null,
+          "width": 4591,
+          "height": 6887,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765209773104-4eqm90",
+          "alt": "圖片 (_DSC7793.jpg)",
+          "caption": null,
+          "width": 4685,
+          "height": 3123,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765209779612-0siz9g",
+          "alt": "圖片 (_DSC7719.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765209784224-6nbv74",
+          "alt": "圖片 (_DSC7717.JPG)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765259375206-p373mp",
+          "alt": "圖片",
+          "caption": null,
+          "width": 1696,
+          "height": 2528,
+          "order_index": "8"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/lake-toya",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "3288a2aa-0446-4b48-bfe4-7f070e06833f",
+        "slug": "lake-toya",
+        "title": "洞爺湖",
+        "summary": null,
+        "cover_asset_id": "r2-1765208850440-5npx8m",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765208850440-5npx8m",
+          "alt": "圖片 (_DSC7355.jpg)",
+          "caption": "「夢洞爺」空充秋",
+          "width": 3072,
+          "height": 4608,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765208853435-7aeeld",
+          "alt": "圖片 (_DSC7387.jpg)",
+          "caption": null,
+          "width": 4405,
+          "height": 2937,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765208860261-yg0m13",
+          "alt": "圖片 (_DSC7400.jpg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765208863247-d59s18",
+          "alt": "圖片 (_DSC7419.jpg)",
+          "caption": null,
+          "width": 4291,
+          "height": 2860,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765208868012-0zzj1r",
+          "alt": "圖片 (_DSC7519.jpg)",
+          "caption": null,
+          "width": 6745,
+          "height": 4497,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765208872494-bldg6z",
+          "alt": "圖片 (_DSC7516.jpg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765208877955-c9qsfx",
+          "alt": "圖片 (_DSC7537.jpg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765208883630-p2fuki",
+          "alt": "圖片 (_DSC7443.jpg)",
+          "caption": "洞爺湖長跑煙火大會",
+          "width": 5827,
+          "height": 3885,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1765208889307-l6niwx",
+          "alt": "圖片 (_DSC7463.jpg)",
+          "caption": null,
+          "width": 6274,
+          "height": 4183,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1765208893947-4f055n",
+          "alt": "圖片 (_DSC7447.jpg)",
+          "caption": null,
+          "width": 5135,
+          "height": 3423,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1765208898215-agyxkn",
+          "alt": "圖片 (IMG_9960.JPG)",
+          "caption": "昭和新山熊牧場",
+          "width": 3024,
+          "height": 4032,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1765208905205-g9x9x2",
+          "alt": "圖片 (_DSC7579.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-1765208912877-4pfnzj",
+          "alt": "圖片 (_DSC7558.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-1765208920260-8k1p3d",
+          "alt": "圖片 (_DSC7595.JPG)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "14"
+        },
+        {
+          "asset_id": "r2-1765208929019-02z4qi",
+          "alt": "圖片 (_DSC7414.JPG)",
+          "caption": "北海道特產哈密瓜熊？",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "15"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/obihiro-shi",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "efb4a580-c020-42f5-bd58-034450ce20c6",
+        "slug": "obihiro-shi",
+        "title": "帶廣",
+        "summary": " ",
+        "cover_asset_id": "r2-1765172218572-rzpvvu",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765172218572-rzpvvu",
+          "alt": "圖片 (_DSC4374.jpeg)",
+          "caption": "十勝之丘公園",
+          "width": 4227,
+          "height": 6340,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765172221948-sxpbj8",
+          "alt": "圖片 (_DSC4381.jpeg)",
+          "caption": null,
+          "width": 4061,
+          "height": 6092,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765172225911-df7ru6",
+          "alt": "圖片 (_DSC4288.jpeg)",
+          "caption": "千鳥ヶ滝",
+          "width": 3780,
+          "height": 5670,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765172228067-koz9o7",
+          "alt": "圖片 (_DSC4349.jpeg)",
+          "caption": null,
+          "width": 2568,
+          "height": 3852,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765172230407-p5auuk",
+          "alt": "圖片 (_DSC4403.jpeg)",
+          "caption": null,
+          "width": 2630,
+          "height": 3945,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765172234388-bbtbqu",
+          "alt": "圖片 (_DSC4334.jpeg)",
+          "caption": "北之屋台",
+          "width": 4525,
+          "height": 6788,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765172237734-i0e4sw",
+          "alt": "圖片 (_DSC4328.jpeg)",
+          "caption": null,
+          "width": 4132,
+          "height": 6198,
+          "order_index": "7"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/sapporo",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "98905654-7328-41c3-99c0-123cf80279a1",
+        "slug": "sapporo",
+        "title": "札幌",
+        "summary": null,
+        "cover_asset_id": "r2-1765206465498-iraqa3",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765206465498-iraqa3",
+          "alt": "圖片 (_DSC7145.JPG)",
+          "caption": "北海道神宮",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765206473735-ckarm9",
+          "alt": "圖片 (_DSC7134.JPG)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765205786750-zoegnv",
+          "alt": "圖片 (_DSC7161.jpeg)",
+          "caption": null,
+          "width": 4081,
+          "height": 6121,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765206483989-3hafd8",
+          "alt": "圖片 (_DSC7190.jpg)",
+          "caption": null,
+          "width": 4427,
+          "height": 6640,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765206487942-k50a98",
+          "alt": "圖片 (_DSC7198.jpg)",
+          "caption": "北海道廳紅磚廳舍（舊本廳舍） ",
+          "width": 2930,
+          "height": 4395,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765206498130-vj87d3",
+          "alt": "圖片 (_DSC7234.JPG)",
+          "caption": "札幌車站",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765206505863-2cypw7",
+          "alt": "圖片 (_DSC7315.jpg)",
+          "caption": "藻岩山觀景台",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765206514112-ma4bzw",
+          "alt": "圖片 (_DSC7024.JPG)",
+          "caption": "莫埃來沼公園",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1765206519228-t3la4v",
+          "alt": "圖片 (_DSC7069.jpg)",
+          "caption": null,
+          "width": 2900,
+          "height": 4350,
+          "order_index": "9"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/hokkaido-25/wakkanai",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+        "slug": "hokkaido-25",
+        "name": "北海道",
+        "summary": "Summer in Hokkaido"
+      },
+      "collection": {
+        "id": "7971193c-02a7-4e0b-9f2e-5776438c9480",
+        "slug": "wakkanai",
+        "title": "稚內、道北",
+        "summary": null,
+        "cover_asset_id": "r2-1765174552043-3f2we5",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1765174552043-3f2we5",
+          "alt": "圖片 (_DSC5926.jpeg)",
+          "caption": "猿払村道エサヌカ線",
+          "width": 4611,
+          "height": 6916,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1765174562533-5be6dk",
+          "alt": "圖片 (_DSC5969.jpeg)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1765174565223-ggd7ms",
+          "alt": "圖片 (_DSC6151.jpeg)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1765174572051-vpkh71",
+          "alt": "圖片 (_DSC5757.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1765174575149-d3z3zz",
+          "alt": "圖片 (_DSC6264.jpeg)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1765174577854-jche66",
+          "alt": "圖片 (_DSC6291.jpeg)",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1765174580062-0p9dux",
+          "alt": "圖片 (_DSC6157.jpeg)",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1765174585049-iq3j8c",
+          "alt": "圖片 (_DSC6207.jpeg)",
+          "caption": "宗谷岬",
+          "width": 6842,
+          "height": 4561,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1765174588508-f57fj7",
+          "alt": "圖片 (_DSC6180.jpeg)",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1765174590821-54pfz9",
+          "alt": "圖片 (_DSC6248.jpeg)",
+          "caption": "宗谷岬灯台",
+          "width": 2978,
+          "height": 4467,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1765174592623-fzgqbp",
+          "alt": "圖片 (_DSC6407.jpeg)",
+          "caption": "稚內港北防波堤穹頂",
+          "width": 2645,
+          "height": 3968,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1765174595357-otlatm",
+          "alt": "圖片 (_DSC6556.jpeg)",
+          "caption": "日本鐵路最北端",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-1765174598677-0e88qk",
+          "alt": "圖片 (_DSC5818.jpeg)",
+          "caption": null,
+          "width": 4179,
+          "height": 6269,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-1765174603143-1slwkw",
+          "alt": "圖片 (_DSC6649.jpeg)",
+          "caption": "利尻島",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "14"
+        },
+        {
+          "asset_id": "r2-1765174606555-m0b80v",
+          "alt": "圖片 (_DSC6633.jpeg)",
+          "caption": "庫頁島",
+          "width": 6874,
+          "height": 4583,
+          "order_index": "15"
+        },
+        {
+          "asset_id": "r2-1765174610876-jt04hk",
+          "alt": "圖片 (_DSC6108.jpeg)",
+          "caption": null,
+          "width": 4092,
+          "height": 6139,
+          "order_index": "16"
+        },
+        {
+          "asset_id": "r2-1765174900010-rptrmd",
+          "alt": "圖片",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "17"
+        },
+        {
+          "asset_id": "r2-1765174608643-ep5dsv",
+          "alt": "圖片 (_DSC6510.jpeg)",
+          "caption": null,
+          "width": 4454,
+          "height": 2969,
+          "order_index": "18"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider1",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "27ee8e31-e9f7-41d3-b208-15317394f053",
+        "slug": "windrider1",
+        "title": "高雄港 #1",
+        "summary": null,
+        "cover_asset_id": "r2-1761392581858-abf4mc",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1761392450066-9rznvh",
+          "alt": "圖片",
+          "caption": "御風輪",
+          "width": 3024,
+          "height": 4032,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1761392581858-abf4mc",
+          "alt": "圖片 (_DSC1260.jpeg)",
+          "caption": null,
+          "width": 4534,
+          "height": 6801,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1761392588481-p57ohf",
+          "alt": "圖片 (_DSC1264.jpeg)",
+          "caption": null,
+          "width": 6224,
+          "height": 4149,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1761392594624-3kbs1a",
+          "alt": "圖片 (_DSC1269.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1761392600347-fk4del",
+          "alt": "圖片 (_DSC1274.jpeg)",
+          "caption": null,
+          "width": 2729,
+          "height": 4094,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1762753277224-zn7ipe",
+          "alt": "圖片 (_DSC1279.jpeg)",
+          "caption": "船長",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1762753293860-kib00x",
+          "alt": "圖片 (_DSC1295.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1761392605690-mua13n",
+          "alt": "圖片 (_DSC1277.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1761392612592-geln58",
+          "alt": "圖片 (_DSC1321.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1761392619071-det6p6",
+          "alt": "圖片 (_DSC1343.jpeg)",
+          "caption": null,
+          "width": 2877,
+          "height": 4315,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1761392624878-ymt79d",
+          "alt": "圖片 (_DSC1353.jpeg)",
+          "caption": null,
+          "width": 6874,
+          "height": 4583,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1761392640745-emn00z",
+          "alt": "圖片 (_DSC1476.jpeg)",
+          "caption": null,
+          "width": 4553,
+          "height": 6830,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-1761392649609-hoxkaq",
+          "alt": "圖片 (_DSC1540.jpeg)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "13"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider2",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "23de6e8c-e479-45ff-be5b-25a3b661829d",
+        "slug": "windrider2",
+        "title": "航行日",
+        "summary": null,
+        "cover_asset_id": "r2-1762753328223-zb4x8o",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1762753328223-zb4x8o",
+          "alt": "圖片 (_DSC1559.jpeg)",
+          "caption": null,
+          "width": 3024,
+          "height": 4537,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1762753442899-akcie1",
+          "alt": "圖片 (_DSC1577.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1763277806178-2cgjan",
+          "alt": "圖片 (_DSC1987.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1762753626107-d9jg6t",
+          "alt": "圖片 (_DSC1608.jpeg)",
+          "caption": "雷達與電子海圖",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1762753308920-18gywj",
+          "alt": "圖片 (_DSC1550.jpeg)",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1763277770993-fyti8m",
+          "alt": "圖片 (_DSC1903.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1763226768560-n7qnco",
+          "alt": "圖片 (_DSC1897.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1763226757251-lr6htc",
+          "alt": "圖片 (_DSC1898.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1763277783068-dpn3m1",
+          "alt": "圖片 (_DSC1924.jpeg)",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1763277794407-csrmxa",
+          "alt": "圖片 (_DSC1959.jpeg)",
+          "caption": "磁羅經",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1762753641517-hdmjku",
+          "alt": "圖片 (IMG_4377.jpeg)",
+          "caption": null,
+          "width": 4032,
+          "height": 3024,
+          "order_index": "12"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider3",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "05d5379a-245d-440e-bd82-ae23bbd2abef",
+        "slug": "windrider3",
+        "title": "夕陽與日出",
+        "summary": null,
+        "cover_asset_id": "r2-1762755065029-vxoowd",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1762755065029-vxoowd",
+          "alt": "圖片 (_DSC1668.jpeg)",
+          "caption": null,
+          "width": 4001,
+          "height": 6001,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1762755086715-6y18aa",
+          "alt": "圖片 (_DSC1696.jpeg)",
+          "caption": null,
+          "width": 2965,
+          "height": 4447,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1762757616433-nyg4bv",
+          "alt": "圖片 (_DSC1662.jpeg)",
+          "caption": null,
+          "width": 4275,
+          "height": 2850,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1762757632772-8nwcqd",
+          "alt": "圖片 (_DSC1986.jpeg)",
+          "caption": null,
+          "width": 4294,
+          "height": 6442,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1762755116195-94liiq",
+          "alt": "圖片 (_DSC1807.jpeg)",
+          "caption": null,
+          "width": 4455,
+          "height": 6682,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1763215847551-v03852",
+          "alt": "圖片 (_DSC3409.jpeg)",
+          "caption": null,
+          "width": 4163,
+          "height": 6245,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1763215838802-uouhqk",
+          "alt": "圖片 (_DSC3299.jpeg)",
+          "caption": null,
+          "width": 4305,
+          "height": 6457,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1763280211158-ypdzy3",
+          "alt": "圖片 (_DSC3371.jpeg)",
+          "caption": null,
+          "width": 2881,
+          "height": 4320,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1763215859377-lfzq55",
+          "alt": "圖片 (_DSC3814.jpeg)",
+          "caption": "彰化風場",
+          "width": 4449,
+          "height": 2966,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1763215854127-cfd7pv",
+          "alt": "圖片 (_DSC3879.jpeg)",
+          "caption": null,
+          "width": 2931,
+          "height": 4396,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1763215865763-jbx6ky",
+          "alt": "圖片 (_DSC3495.jpeg)",
+          "caption": null,
+          "width": 4497,
+          "height": 2998,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1763215828401-t96822",
+          "alt": "圖片 (_DSC1991.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "12"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider4",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "f4624ec4-8557-4ad3-8da4-2d8516f93c6b",
+        "slug": "windrider4",
+        "title": "東京灣 #1",
+        "summary": null,
+        "cover_asset_id": "r2-1763279235718-em5gpd",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1763279235718-em5gpd",
+          "alt": "圖片 (_DSC2105.jpeg)",
+          "caption": "領港爬梯",
+          "width": 2890,
+          "height": 4335,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1763279224628-1nprsi",
+          "alt": "圖片 (_DSC2087.jpeg)",
+          "caption": null,
+          "width": 2889,
+          "height": 4333,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1763279263736-y46jg1",
+          "alt": "圖片 (_DSC2170.jpeg)",
+          "caption": null,
+          "width": 4395,
+          "height": 6593,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1763279328314-vv1v5d",
+          "alt": "圖片 (_DSC2331.jpeg)",
+          "caption": "日本領港",
+          "width": 3072,
+          "height": 4608,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1763279339298-zkxnvf",
+          "alt": "圖片 (_DSC2341.jpeg)",
+          "caption": "船長(左)與領港(右)",
+          "width": 4120,
+          "height": 2747,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1763279213660-ni8gxt",
+          "alt": "圖片 (_DSC2067.jpeg)",
+          "caption": null,
+          "width": 4100,
+          "height": 6150,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1763279252046-jrdj79",
+          "alt": "圖片 (_DSC2148.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1763279276947-y1rzwj",
+          "alt": "圖片 (_DSC2184.jpeg)",
+          "caption": null,
+          "width": 4368,
+          "height": 2912,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1763279317097-7ad1qm",
+          "alt": "圖片 (_DSC2313.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1763279287607-yk699h",
+          "alt": "圖片 (_DSC2244.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1763279299762-6qtq0l",
+          "alt": "圖片 (_DSC2254.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1763279308651-taet9b",
+          "alt": "圖片 (_DSC2283.jpeg)",
+          "caption": "浮塢",
+          "width": 4608,
+          "height": 3072,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-1763279245216-pn987k",
+          "alt": "圖片 (_DSC2095.jpeg)",
+          "caption": null,
+          "width": 4424,
+          "height": 2949,
+          "order_index": "14"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider5",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "aa950e45-6744-49e6-ab55-369387a0b1a4",
+        "slug": "windrider5",
+        "title": "東京灣 #2",
+        "summary": null,
+        "cover_asset_id": "r2-1763280099142-bdeybk",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1763280099142-bdeybk",
+          "alt": "圖片 (_DSC2926.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1763280110168-lr5aga",
+          "alt": "圖片 (_DSC2950.jpeg)",
+          "caption": "領港旗",
+          "width": 4176,
+          "height": 6264,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1763280151060-fi2v80",
+          "alt": "圖片 (_DSC3075.jpeg)",
+          "caption": null,
+          "width": 2651,
+          "height": 3976,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1763280086535-3pr7u3",
+          "alt": "圖片 (_DSC2910.JPG .jpeg)",
+          "caption": "拖船",
+          "width": 4287,
+          "height": 2858,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1763280129792-bf9qij",
+          "alt": "圖片 (_DSC2934.jpeg)",
+          "caption": null,
+          "width": 3360,
+          "height": 5040,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1763280120256-3ew991",
+          "alt": "圖片 (_DSC2945.jpeg)",
+          "caption": null,
+          "width": 3760,
+          "height": 5640,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1763280173746-kvgr2l",
+          "alt": "圖片 (_DSC3232.jpeg)",
+          "caption": null,
+          "width": 5323,
+          "height": 3548,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1763280191734-wkpyu5",
+          "alt": "圖片 (_DSC3160.jpeg)",
+          "caption": null,
+          "width": 4284,
+          "height": 6426,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1763280164217-bwn0fw",
+          "alt": "圖片 (_DSC3156.jpeg)",
+          "caption": null,
+          "width": 2952,
+          "height": 4428,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1763280182744-lwyguq",
+          "alt": "圖片 (_DSC3221.jpeg)",
+          "caption": "海底隧道捕風塔",
+          "width": 4608,
+          "height": 3072,
+          "order_index": "12"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider6",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "518729e7-4b2a-455c-a685-80c784b0d9cf",
+        "slug": "windrider6",
+        "title": "高雄港 #2",
+        "summary": null,
+        "cover_asset_id": "r2-1763288832189-woaeik",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1763288832189-woaeik",
+          "alt": "圖片 (_DSC4052.jpeg)",
+          "caption": "澎湖輪與領港小艇",
+          "width": 3072,
+          "height": 4608,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1763288827614-mciapm",
+          "alt": "圖片 (_DSC3946.jpeg)",
+          "caption": null,
+          "width": 2269,
+          "height": 3403,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1763288825675-d4wfaz",
+          "alt": "圖片 (_DSC3912.jpeg)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1763288855732-qc82js",
+          "alt": "圖片 (_DSC4233.jpeg)",
+          "caption": "高雄港領港",
+          "width": 4246,
+          "height": 6369,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1763288851408-xlfqv1",
+          "alt": "圖片 (_DSC4231.jpeg)",
+          "caption": null,
+          "width": 4023,
+          "height": 6034,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1763288836091-dsmrca",
+          "alt": "圖片 (_DSC4111.jpeg)",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1763288843267-qluih3",
+          "alt": "圖片 (_DSC4165.jpeg)",
+          "caption": null,
+          "width": 4299,
+          "height": 2866,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1763288848032-nyo51e",
+          "alt": "圖片 (_DSC4196.jpeg)",
+          "caption": null,
+          "width": 3072,
+          "height": 4608,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1763288839142-jmwtup",
+          "alt": "圖片 (_DSC4143.jpeg)",
+          "caption": null,
+          "width": 4608,
+          "height": 3072,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1763288860038-ntj4t3",
+          "alt": "圖片 (_DSC4258.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1763288862023-ds9jaq",
+          "alt": "圖片 (_DSC4262.jpeg)",
+          "caption": null,
+          "width": 2210,
+          "height": 3315,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1763288867910-wrz5pb",
+          "alt": "圖片 (_DSC4265.jpeg)",
+          "caption": "御風輪餐廳",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "12"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider7",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "1e3e15b8-04de-440a-ac69-f5d18052c186",
+        "slug": "windrider7",
+        "title": "東京下地",
+        "summary": null,
+        "cover_asset_id": "r2-1763296516939-fm592g",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1763296516939-fm592g",
+          "alt": "圖片",
+          "caption": "淺草寺",
+          "width": 4573,
+          "height": 6859,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1763356978899-4e2ayl",
+          "alt": "圖片 (_DSC2367.jpeg)",
+          "caption": null,
+          "width": 6355,
+          "height": 4237,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1763357109025-3u4shs",
+          "alt": "圖片 (_DSC2371.jpeg)",
+          "caption": null,
+          "width": 6653,
+          "height": 4435,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1763357200127-6mp2mn",
+          "alt": "圖片 (_DSC2362.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1763356988342-5pvgeg",
+          "alt": "圖片 (_DSC2372.jpeg)",
+          "caption": null,
+          "width": 4383,
+          "height": 6575,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1763357113733-g1zs1v",
+          "alt": "圖片 (_DSC2440.jpeg)",
+          "caption": "東京晴空塔",
+          "width": 4672,
+          "height": 7008,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1763357427799-ei7ght",
+          "alt": "圖片 (_DSC2825.jpeg)",
+          "caption": "Hijiri Bridge 聖橋",
+          "width": 4290,
+          "height": 6435,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1763357206176-efrtod",
+          "alt": "圖片 (_DSC2686.jpeg)",
+          "caption": null,
+          "width": 4418,
+          "height": 2945,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1763357214910-lqbnog",
+          "alt": "圖片 (_DSC2658.jpeg)",
+          "caption": null,
+          "width": 4433,
+          "height": 6650,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1763357456896-p4qv9a",
+          "alt": "圖片 (_DSC2777.jpeg)",
+          "caption": null,
+          "width": 4351,
+          "height": 6527,
+          "order_index": "10"
+        },
+        {
+          "asset_id": "r2-1763357116919-zjmqao",
+          "alt": "圖片 (_DSC2437.jpeg)",
+          "caption": null,
+          "width": 6884,
+          "height": 4589,
+          "order_index": "11"
+        },
+        {
+          "asset_id": "r2-1763357422522-bn7gym",
+          "alt": "圖片 (_DSC2847.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "12"
+        },
+        {
+          "asset_id": "r2-1763357450551-o24gn2",
+          "alt": "圖片 (_DSC2851.jpeg)",
+          "caption": null,
+          "width": 6745,
+          "height": 4497,
+          "order_index": "13"
+        },
+        {
+          "asset_id": "r2-1763357667417-3vo578",
+          "alt": "圖片 (_DSC2857.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "14"
+        },
+        {
+          "asset_id": "r2-1763357435640-6i53pe",
+          "alt": "圖片 (_DSC2858.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "15"
+        },
+        {
+          "asset_id": "r2-1763357672493-lf91k0",
+          "alt": "圖片 (_DSC2886.jpeg)",
+          "caption": "不忍池",
+          "width": 6845,
+          "height": 4563,
+          "order_index": "16"
+        },
+        {
+          "asset_id": "r2-1763357553933-a1zxwa",
+          "alt": "圖片 (_DSC2639.jpeg)",
+          "caption": "吃過最難吃的日本料理",
+          "width": 7008,
+          "height": 4672,
+          "order_index": "17"
+        }
+      ]
+    },
+    {
+      "public_path": "/2025/wind-rider-25/windrider8",
+      "year": {
+        "id": "36d92bf4-7aaf-4c30-ab5c-3484bfaff171",
+        "label": "2025"
+      },
+      "location": {
+        "id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+        "slug": "wind-rider-25",
+        "name": "御風輪",
+        "summary": "Wind Rider 御風而行"
+      },
+      "collection": {
+        "id": "58e2ee24-8a84-4da1-bf7c-badd2ddfa8cc",
+        "slug": "windrider8",
+        "title": "東京鐵塔",
+        "summary": null,
+        "cover_asset_id": "r2-1763358087577-hv2ay5",
+        "status": "published"
+      },
+      "photos": [
+        {
+          "asset_id": "r2-1763358087577-hv2ay5",
+          "alt": "圖片 (_DSC2533.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "1"
+        },
+        {
+          "asset_id": "r2-1763358094427-8cdg4l",
+          "alt": "圖片 (_DSC2530.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "2"
+        },
+        {
+          "asset_id": "r2-1763358098480-h5c8ay",
+          "alt": "圖片 (_DSC2567.jpeg)",
+          "caption": null,
+          "width": 4442,
+          "height": 6663,
+          "order_index": "3"
+        },
+        {
+          "asset_id": "r2-1763358103732-2s3gc4",
+          "alt": "圖片 (_DSC2524.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "4"
+        },
+        {
+          "asset_id": "r2-1763358109189-r9ffde",
+          "alt": "圖片 (_DSC2529.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "5"
+        },
+        {
+          "asset_id": "r2-1763358114657-ih9j6f",
+          "alt": "圖片 (_DSC2614.jpeg)",
+          "caption": null,
+          "width": 6745,
+          "height": 4496,
+          "order_index": "6"
+        },
+        {
+          "asset_id": "r2-1763358118765-bwkl3t",
+          "alt": "圖片 (_DSC2623.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "7"
+        },
+        {
+          "asset_id": "r2-1763358122868-t24x19",
+          "alt": "圖片 (_DSC2545.jpeg)",
+          "caption": null,
+          "width": 4672,
+          "height": 7008,
+          "order_index": "8"
+        },
+        {
+          "asset_id": "r2-1763358128473-srqovy",
+          "alt": "圖片 (_DSC2594.jpeg)",
+          "caption": null,
+          "width": 4464,
+          "height": 6696,
+          "order_index": "9"
+        },
+        {
+          "asset_id": "r2-1763358135202-v2w18q",
+          "alt": "圖片 (_DSC2518.jpeg)",
+          "caption": null,
+          "width": 7008,
+          "height": 4672,
+          "order_index": "10"
+        }
+      ]
+    }
+  ]
+}

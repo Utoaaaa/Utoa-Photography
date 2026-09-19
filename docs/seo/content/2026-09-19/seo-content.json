@@ -1,0 +1,1055 @@
+{
+  "version": 1,
+  "created_at": "2026-09-19T08:38:24.340938+00:00",
+  "source": "production D1 and https://utoa.studio/sitemap.xml",
+  "scope": "All currently public canonical pages; preserve visible page content, captions, alt text, image order and cover selections. Only seo_metadata fields are populated.",
+  "coverage": {
+    "homepage": 1,
+    "locations": 3,
+    "collections": 28,
+    "images_reviewed": 311
+  },
+  "entries": [
+    {
+      "entity_type": "homepage",
+      "entity_id": "homepage",
+      "path": "/",
+      "display_label_unchanged": "UTOA Photography",
+      "title": "UTOA Photography｜旅行、街拍與航海攝影",
+      "description": "UTOA 的攝影作品集，收錄東京與近郊的櫻花街景、北海道的湖泊與北方海岸，以及御風輪往返港灣的航海紀錄。依年份與旅程瀏覽，從城市日常、沿途風景到海上天光，看見鏡頭留下的片刻。",
+      "og_asset_id": "r2-1762757616433-nyg4bv",
+      "cover": {
+        "asset_id": "r2-1762757616433-nyg4bv",
+        "source_collection_id": "05d5379a-245d-440e-bd82-ae23bbd2abef",
+        "ordinal": 3,
+        "url": "https://images.utoa.studio/images/r2-1762757616433-nyg4bv/large.webp",
+        "width": 4275,
+        "height": 2850
+      },
+      "evidence": {
+        "basis": "全部 28 組作品與 311 張影像；封面為御風輪系列的海平線夕陽。"
+      }
+    },
+    {
+      "entity_type": "location",
+      "entity_id": "9255191b-6874-4950-8931-41b5f54d8ce4",
+      "path": "/2026/tokyo-26",
+      "display_label_unchanged": "東京",
+      "title": "東京與近郊攝影｜櫻花街景、鐵道與海岸 — UTOA Photography",
+      "description": "2026 年東京與近郊的旅行攝影：上野、新宿御苑與隅田公園的櫻花，銀座街景、東京車站夜色，以及江之島海岸與鎌倉江之電。循著十組作品，觀看城市、花木與海面的不同光線。",
+      "og_asset_id": "r2-cli-994759f5bebeb43e",
+      "cover": {
+        "asset_id": "r2-cli-994759f5bebeb43e",
+        "source_collection_id": "79f4dfa5-5e35-44e7-99f2-5c29d2fbca60",
+        "ordinal": 7,
+        "url": "https://images.utoa.studio/images/r2-cli-994759f5bebeb43e/large.webp",
+        "width": 4608,
+        "height": 3072
+      },
+      "evidence": {
+        "collection_ids": [
+          "25a34e06-28f7-43fd-9ff7-911e23eadad9",
+          "9e2faa2d-30cc-4a25-8a81-e5069f366c7e",
+          "8bc5dfb7-e69a-4cfb-b050-4a4bf502fbcd",
+          "37bbc196-d38a-49b0-bb83-3a314dc42183",
+          "e3d70e8c-11e0-4c05-b8e3-90d837bbef20",
+          "42506378-3e30-4a15-90c5-3003565a3a94",
+          "79f4dfa5-5e35-44e7-99f2-5c29d2fbca60",
+          "803817e6-73e3-4f8f-a151-2b245789c985",
+          "0d6bb1ae-d3d5-402a-ae67-b026d566cc44",
+          "13f9e946-46e7-4752-985f-57f2d7955c41"
+        ],
+        "reviewed_images": 104
+      }
+    },
+    {
+      "entity_type": "location",
+      "entity_id": "80ec3a48-f0eb-4ed7-8a7c-5740fd328028",
+      "path": "/2025/hokkaido-25",
+      "display_label_unchanged": "北海道",
+      "title": "北海道旅行攝影｜湖泊、田野與北方海岸 — UTOA Photography",
+      "description": "2025 年北海道旅行的影像紀錄，從帶廣、釧路走向網走與稚內，再看美瑛田野、札幌街景、洞爺湖煙火與支笏湖水色。十組作品收錄沿途小站、港口、湖畔與餐桌上的片刻。",
+      "og_asset_id": "r2-1765203116392-z6jk3e",
+      "cover": {
+        "asset_id": "r2-1765203116392-z6jk3e",
+        "source_collection_id": "94252b19-fdba-4fa7-b4e3-2fedb995c666",
+        "ordinal": 2,
+        "url": "https://images.utoa.studio/images/r2-1765203116392-z6jk3e/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "collection_ids": [
+          "9747d21d-0cb7-4d20-83c5-20407476e4d1",
+          "b70851c0-0059-4397-ac3c-6f601ab54d65",
+          "94252b19-fdba-4fa7-b4e3-2fedb995c666",
+          "9ac4a9c3-85fb-469d-a9ba-74a0fe580087",
+          "a54b3028-d4e8-4bdb-a98b-f69a0d24deea",
+          "d43d3bcd-9f78-48a4-9071-66e753070f60",
+          "3288a2aa-0446-4b48-bfe4-7f070e06833f",
+          "efb4a580-c020-42f5-bd58-034450ce20c6",
+          "98905654-7328-41c3-99c0-123cf80279a1",
+          "7971193c-02a7-4e0b-9f2e-5776438c9480"
+        ],
+        "reviewed_images": 109
+      }
+    },
+    {
+      "entity_type": "location",
+      "entity_id": "84d27b43-022f-431f-a2c0-b3d1593de30c",
+      "path": "/2025/wind-rider-25",
+      "display_label_unchanged": "御風輪",
+      "title": "御風輪航海攝影｜高雄港、東京灣與海上日常 — UTOA Photography",
+      "description": "2025 年御風輪旅程的攝影紀錄，收錄高雄港與東京灣的拖船、領港作業、船橋與舷窗風景，以及海上日出夕陽。也從船上走進東京街頭，以八組作品留下航行與岸上散步的片刻。",
+      "og_asset_id": "r2-1762753442899-akcie1",
+      "cover": {
+        "asset_id": "r2-1762753442899-akcie1",
+        "source_collection_id": "23de6e8c-e479-45ff-be5b-25a3b661829d",
+        "ordinal": 2,
+        "url": "https://images.utoa.studio/images/r2-1762753442899-akcie1/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "collection_ids": [
+          "27ee8e31-e9f7-41d3-b208-15317394f053",
+          "23de6e8c-e479-45ff-be5b-25a3b661829d",
+          "05d5379a-245d-440e-bd82-ae23bbd2abef",
+          "f4624ec4-8557-4ad3-8da4-2d8516f93c6b",
+          "aa950e45-6744-49e6-ab55-369387a0b1a4",
+          "518729e7-4b2a-455c-a685-80c784b0d9cf",
+          "1e3e15b8-04de-440a-ac69-f5d18052c186",
+          "58e2ee24-8a84-4da1-bf7c-badd2ddfa8cc"
+        ],
+        "reviewed_images": 98
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "25a34e06-28f7-43fd-9ff7-911e23eadad9",
+      "path": "/2026/tokyo-26/enoshima",
+      "display_label_unchanged": "江之島",
+      "title": "江之島攝影｜參道、海岸與遠山 — UTOA Photography",
+      "description": "沿江之島的參道與石階走向海邊，記錄鳥居、商店街、春日花木與岩岸風景。從街巷中的行人，到海面彼端的山影，收錄這趟旅程裡安靜與熱鬧交錯的片刻。",
+      "og_asset_id": "r2-cli-2eec87d34deb558e",
+      "cover": {
+        "asset_id": "r2-cli-2eec87d34deb558e",
+        "source_collection_id": "25a34e06-28f7-43fd-9ff7-911e23eadad9",
+        "ordinal": 15,
+        "url": "https://images.utoa.studio/images/r2-cli-2eec87d34deb558e/large.webp",
+        "width": 2998,
+        "height": 4497
+      },
+      "evidence": {
+        "observations": "16 張全數檢視：海港與遠山、鳥居參道、人潮與商店、櫻花及神社、濱海屋頂、岩岸與石燈籠。第 15 張以海面、山影和岩岸作為橫幅主景。",
+        "reviewed_photo_ids": [
+          "r2-cli-f1a8878fa9b88fb8",
+          "r2-cli-13e0ba6227656b58",
+          "r2-cli-36669a87bc2a1aad",
+          "r2-cli-8da323bf4e2be60f",
+          "r2-cli-2f51f3918a56b246",
+          "r2-cli-648a627828ba31d3",
+          "r2-cli-883eef7ee3668bfa",
+          "r2-cli-59393c115f8b9cbb",
+          "r2-cli-d3aef26782008cb0",
+          "r2-cli-096c264438d03edf",
+          "r2-cli-7a0a51b4d950021d",
+          "r2-cli-5ae4ad72b32cb9e5",
+          "r2-cli-2540b6b84bdf7a5f",
+          "r2-cli-ee6a84c2caabf977",
+          "r2-cli-2eec87d34deb558e",
+          "r2-cli-94c4f755eba1b36f"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "9e2faa2d-30cc-4a25-8a81-e5069f366c7e",
+      "path": "/2026/tokyo-26/ginza",
+      "display_label_unchanged": "銀座、日本橋",
+      "title": "銀座、日本橋街拍｜櫻花街道與城市光影 — UTOA Photography",
+      "description": "銀座與日本橋的街頭攝影，從白天的車流、辦公大樓與櫻花樹影，走到入夜後的招牌燈光。以街道縱深、建築立面和行人的尺度，記錄東京春日的城市風景。",
+      "og_asset_id": "r2-cli-5365bb3881915f41",
+      "cover": {
+        "asset_id": "r2-cli-5365bb3881915f41",
+        "source_collection_id": "9e2faa2d-30cc-4a25-8a81-e5069f366c7e",
+        "ordinal": 2,
+        "url": "https://images.utoa.studio/images/r2-cli-5365bb3881915f41/large.webp",
+        "width": 6639,
+        "height": 4426
+      },
+      "evidence": {
+        "observations": "10 張全數檢視：城市道路與地下道、側巷、街邊櫻花、玻璃建築、暮色與夜間招牌。第 2 張為道路縱深與新綠的橫幅畫面。",
+        "reviewed_photo_ids": [
+          "r2-1779979269708-j1p9x4",
+          "r2-cli-5365bb3881915f41",
+          "r2-cli-66313f7d85ab6110",
+          "r2-cli-4c2045456faa07f7",
+          "r2-cli-30dff05e547b7d2d",
+          "r2-cli-5875420b15ee5d00",
+          "r2-cli-b9b25d5fcedd6e94",
+          "r2-cli-ca815a074bf3b23c",
+          "r2-cli-1f9d5ae02e723af8",
+          "r2-cli-b95202b0950d75d4"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "8bc5dfb7-e69a-4cfb-b050-4a4bf502fbcd",
+      "path": "/2026/tokyo-26/kamakura",
+      "display_label_unchanged": "鎌倉",
+      "title": "鎌倉鐵道攝影｜江之電、平交道與湘南海岸 — UTOA Photography",
+      "description": "綠色江之電沿著海岸駛過，平交道、架空電線與浪花交織成鎌倉的日常。這組作品收錄鎌倉高校前站、沿海鐵道、海邊公路，以及傍晚車站與商店的光景。",
+      "og_asset_id": "r2-cli-f75c614f2d333453",
+      "cover": {
+        "asset_id": "r2-cli-f75c614f2d333453",
+        "source_collection_id": "8bc5dfb7-e69a-4cfb-b050-4a4bf502fbcd",
+        "ordinal": 4,
+        "url": "https://images.utoa.studio/images/r2-cli-f75c614f2d333453/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "14 張全數檢視：江之電列車、鎌倉高校前站站牌、面海平交道、沙灘浪花、海岸道路、車站與店舖。第 4 張同時呈現列車、平交道及海面。",
+        "reviewed_photo_ids": [
+          "r2-cli-73ced62d261f5fe5",
+          "r2-cli-cb625f9914cc300b",
+          "r2-cli-dddd746a4dedad13",
+          "r2-cli-f75c614f2d333453",
+          "r2-cli-564628bc82f7d296",
+          "r2-cli-910004965c91f746",
+          "r2-cli-e7d2541fc7ef8bc0",
+          "r2-cli-a9d303263d90467a",
+          "r2-cli-fb17f9363db24e01",
+          "r2-cli-68d8d9a6bb95a1a0",
+          "r2-cli-d347183ab8113c23",
+          "r2-cli-f2914f90080b8a1b",
+          "r2-cli-41df1359caf8e6a6",
+          "r2-cli-702066f576ee482b"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "37bbc196-d38a-49b0-bb83-3a314dc42183",
+      "path": "/2026/tokyo-26/shibuya-roppongi",
+      "display_label_unchanged": "澀谷、六本木",
+      "title": "澀谷、六本木攝影｜路口人潮與東京天際線 — UTOA Photography",
+      "description": "從高處俯看澀谷路口的人潮與車流，再沿街道望向東京鐵塔。作品收錄六本木周邊的都市風景、麻布台之丘與高樓立面，觀察東京街區由近到遠的空間層次。",
+      "og_asset_id": "r2-cli-99953485da529127",
+      "cover": {
+        "asset_id": "r2-cli-99953485da529127",
+        "source_collection_id": "37bbc196-d38a-49b0-bb83-3a314dc42183",
+        "ordinal": 3,
+        "url": "https://images.utoa.studio/images/r2-cli-99953485da529127/large.webp",
+        "width": 6267,
+        "height": 4178
+      },
+      "evidence": {
+        "observations": "11 張全數檢視：澀谷路口俯景、東京鐵塔與城市全景、街道招牌、AZABUDAI HILLS 字樣及高樓鋼玻璃立面。第 3 張為路口、人群、車流的橫幅。",
+        "reviewed_photo_ids": [
+          "r2-cli-ef5fabca283a557d",
+          "r2-cli-ddfca88182d25f8c",
+          "r2-cli-99953485da529127",
+          "r2-cli-145447dff35e9970",
+          "r2-cli-189dda825f91be05",
+          "r2-cli-421ba2b03ffa9949",
+          "r2-cli-ff901faccddeeb38",
+          "r2-cli-a22145bc2a55339b",
+          "r2-cli-3ad600af9b40edc8",
+          "r2-cli-92f90099f2ed6163",
+          "r2-cli-19b1506a1104a721"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "e3d70e8c-11e0-4c05-b8e3-90d837bbef20",
+      "path": "/2026/tokyo-26/shinjuku-gyoen",
+      "display_label_unchanged": "新宿御苑",
+      "title": "新宿御苑攝影｜櫻花、草地與池畔春景 — UTOA Photography",
+      "description": "新宿御苑的春日白天，櫻花枝頭映著藍天，遊人在草地上休息，池水倒映樹木與新綠。從花朵近景到開闊庭園，記錄東京市中心一段放慢腳步的時光。",
+      "og_asset_id": "r2-cli-076f1eb42a8b3cab",
+      "cover": {
+        "asset_id": "r2-cli-076f1eb42a8b3cab",
+        "source_collection_id": "e3d70e8c-11e0-4c05-b8e3-90d837bbef20",
+        "ordinal": 15,
+        "url": "https://images.utoa.studio/images/r2-cli-076f1eb42a8b3cab/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "16 張全數檢視：草地遊人、大樹、新綠、白粉櫻花近景、池塘與城市建築遠景。第 15 張同時包含櫻花、樹木、池水與遊人。",
+        "reviewed_photo_ids": [
+          "r2-cli-d98725894421861c",
+          "r2-cli-2f62419065889611",
+          "r2-cli-ee6f07d99696e099",
+          "r2-cli-5cd327a36cd45bdc",
+          "r2-cli-01f81ff26246afa7",
+          "r2-cli-fd022b9b717d855d",
+          "r2-cli-459d40e87672b9c2",
+          "r2-cli-6db6256c8c9e2efd",
+          "r2-cli-dc91f71ccb3bfeb6",
+          "r2-cli-a683471e4470fdbe",
+          "r2-cli-2a74c616d80bc1e6",
+          "r2-cli-00001de3a03c6e48",
+          "r2-cli-5273c02f177303de",
+          "r2-cli-f24e72a3c732c741",
+          "r2-cli-076f1eb42a8b3cab",
+          "r2-cli-83bf8df6d54c49b2"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "42506378-3e30-4a15-90c5-3003565a3a94",
+      "path": "/2026/tokyo-26/sumida-park",
+      "display_label_unchanged": "隅田公園",
+      "title": "隅田公園攝影｜櫻花、人力車與晴空塔 — UTOA Photography",
+      "description": "櫻花沿著隅田公園步道伸展，人力車與行人穿梭其間，晴空塔從花枝後方露出。這組春日作品以街頭片刻與樹影構圖，記錄淺草一帶的賞花風景。",
+      "og_asset_id": "r2-cli-9368e42bd167dd4b",
+      "cover": {
+        "asset_id": "r2-cli-9368e42bd167dd4b",
+        "source_collection_id": "42506378-3e30-4a15-90c5-3003565a3a94",
+        "ordinal": 3,
+        "url": "https://images.utoa.studio/images/r2-cli-9368e42bd167dd4b/large.webp",
+        "width": 2811,
+        "height": 4217
+      },
+      "evidence": {
+        "observations": "8 張全數檢視：櫻花步道、人力車、車伕與遊人、欄杆及晴空塔。全組為直幅，第 3 張以人力車與花道代表主要內容。",
+        "reviewed_photo_ids": [
+          "r2-cli-4041310a129f28cb",
+          "r2-cli-845f836928d8e23f",
+          "r2-cli-9368e42bd167dd4b",
+          "r2-cli-93693a11014382e4",
+          "r2-cli-e07b99e5ecafff60",
+          "r2-cli-afb82f5320bf82ee",
+          "r2-cli-f41c94517d9a02e4",
+          "r2-cli-933ae98ac4b4687f"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "79f4dfa5-5e35-44e7-99f2-5c29d2fbca60",
+      "path": "/2026/tokyo-26/tokyo-station-imperial-palace",
+      "display_label_unchanged": "東京車站、皇居",
+      "title": "東京車站與皇居攝影｜紅磚夜景、櫻花與小舟 — UTOA Photography",
+      "description": "夜色中的東京車站亮起暖光，皇居周邊的護城河則映著櫻花與划船人影。收錄紅磚站舍、丸之內高樓，以及白天與點燈後的水岸花景，對照東京兩種不同的光線。",
+      "og_asset_id": "r2-cli-994759f5bebeb43e",
+      "cover": {
+        "asset_id": "r2-cli-994759f5bebeb43e",
+        "source_collection_id": "79f4dfa5-5e35-44e7-99f2-5c29d2fbca60",
+        "ordinal": 7,
+        "url": "https://images.utoa.studio/images/r2-cli-994759f5bebeb43e/large.webp",
+        "width": 4608,
+        "height": 3072
+      },
+      "evidence": {
+        "observations": "7 張全數檢視：東京車站夜間紅磚建築、辦公樓夜景、櫻花兩岸小舟與夜間點燈。第 7 張為夜櫻、水面及彩色小舟的橫幅。",
+        "reviewed_photo_ids": [
+          "r2-cli-e7e1304f407e527f",
+          "r2-cli-d1737e3e0dff95c3",
+          "r2-cli-357a4f278ca74b7f",
+          "r2-cli-087759eb7094c22f",
+          "r2-cli-3e80cb2233bfc9cc",
+          "r2-cli-facf86914a6895fa",
+          "r2-cli-994759f5bebeb43e"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "803817e6-73e3-4f8f-a151-2b245789c985",
+      "path": "/2026/tokyo-26/ueno",
+      "display_label_unchanged": "上野",
+      "title": "上野春日攝影｜櫻花、電車與商店街 — UTOA Photography",
+      "description": "上野的春天，櫻花與賞花人群之外，也有高架電車、街頭招牌和忙碌的路口。從公園花枝、上野站到商店街與餐館窗口，以照片留下東京街區的生活片段。",
+      "og_asset_id": "r2-cli-ead18c4190a7dcad",
+      "cover": {
+        "asset_id": "r2-cli-ead18c4190a7dcad",
+        "source_collection_id": "803817e6-73e3-4f8f-a151-2b245789c985",
+        "ordinal": 6,
+        "url": "https://images.utoa.studio/images/r2-cli-ead18c4190a7dcad/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "14 張全數檢視：高架鐵道與商店街、路口行人、公園櫻花與燈籠、上野站、餐館外觀與料理台。第 6 張為櫻花及紅色燈籠的橫幅。",
+        "reviewed_photo_ids": [
+          "r2-cli-6f1504bf64cc2581",
+          "r2-cli-eb0ac4e9bbc2c56e",
+          "r2-cli-26973e3d8abaedec",
+          "r2-cli-ffc03c1e6e4fc95b",
+          "r2-cli-00fd209f88ca1744",
+          "r2-cli-ead18c4190a7dcad",
+          "r2-cli-9cbcf9f92ee3d43b",
+          "r2-cli-8ceeee984934e7be",
+          "r2-cli-d7963b77954da97f",
+          "r2-cli-ebb1b44c0d2c016a",
+          "r2-cli-e1d43753c0f4355a",
+          "r2-cli-caf92212a4f813cd",
+          "r2-cli-712272a938b0a6df",
+          "r2-cli-1ca63a099252ff1e"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "0d6bb1ae-d3d5-402a-ae67-b026d566cc44",
+      "path": "/2026/tokyo-26/uonami",
+      "display_label_unchanged": "魚波",
+      "title": "魚波夜景攝影｜東京街角的招牌與燈光 — UTOA Photography",
+      "description": "以三個街頭視角記錄入夜後的魚波店面。暖色燈籠、發亮的招牌與藍色霓虹疊在狹窄建築上，映出東京街角的小店外觀、道路與行人剪影。",
+      "og_asset_id": "r2-cli-ad29cd379e13b455",
+      "cover": {
+        "asset_id": "r2-cli-ad29cd379e13b455",
+        "source_collection_id": "0d6bb1ae-d3d5-402a-ae67-b026d566cc44",
+        "ordinal": 1,
+        "url": "https://images.utoa.studio/images/r2-cli-ad29cd379e13b455/large.webp",
+        "width": 3825,
+        "height": 5736
+      },
+      "evidence": {
+        "observations": "3 張全數檢視：同一魚波街角建築的夜景、燈籠、黃色店招、上層藍色霓虹與行人。沒有餐點照片，不寫食記、菜單或餐廳推薦。",
+        "reviewed_photo_ids": [
+          "r2-cli-ad29cd379e13b455",
+          "r2-cli-d0e9e81d90b296a0",
+          "r2-cli-ed431025c33e2b5d"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "13f9e946-46e7-4752-985f-57f2d7955c41",
+      "path": "/2026/tokyo-26/yoyogi-level-crossing",
+      "display_label_unchanged": "代代木平交道",
+      "title": "代代木鐵道街拍｜平交道、列車與城市街景 — UTOA Photography",
+      "description": "在代代木的街道旁觀看列車駛過平交道，記錄號誌、架空電線、行人與高樓的交錯。作品也收錄綠樹街景及代代木站外觀，呈現晴日裡的東京通勤風景。",
+      "og_asset_id": "r2-cli-152904b9cea463da",
+      "cover": {
+        "asset_id": "r2-cli-152904b9cea463da",
+        "source_collection_id": "13f9e946-46e7-4752-985f-57f2d7955c41",
+        "ordinal": 1,
+        "url": "https://images.utoa.studio/images/r2-cli-152904b9cea463da/large.webp",
+        "width": 3171,
+        "height": 4757
+      },
+      "evidence": {
+        "observations": "5 張全數檢視：列車穿越平交道、號誌、電線與行人、綠樹街道、代代木站外觀。第 1 張將列車與平交道放在畫面中心。",
+        "reviewed_photo_ids": [
+          "r2-cli-152904b9cea463da",
+          "r2-cli-46ba3fdbbd41640b",
+          "r2-cli-a406fa102c36a3e6",
+          "r2-cli-d24c8bb2c3860404",
+          "r2-cli-b77ba5e97c00ff7c"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "9747d21d-0cb7-4d20-83c5-20407476e4d1",
+      "path": "/2025/hokkaido-25/abashiri",
+      "display_label_unchanged": "網走與層雲峽",
+      "title": "網走與層雲峽攝影｜湖畔、鐵道與瀑布 — UTOA Photography",
+      "description": "北海道旅途中，從網走湖與監獄博物館的木造長廊，走到小車站、濕地與層雲峽瀑布。作品也留下知床五湖一帶的綠意與鹿的身影，記錄陰天之下的道東風景。",
+      "og_asset_id": "r2-1765173965112-q2f1dc",
+      "cover": {
+        "asset_id": "r2-1765173965112-q2f1dc",
+        "source_collection_id": "9747d21d-0cb7-4d20-83c5-20407476e4d1",
+        "ordinal": 14,
+        "url": "https://images.utoa.studio/images/r2-1765173965112-q2f1dc/large.webp",
+        "width": 4608,
+        "height": 3072
+      },
+      "evidence": {
+        "observations": "14 張全數檢視：平交道、瑞穗站、後視鏡、銀河瀑布、鹿、卯原內濕地、知床五湖看板、網走湖、室內窗景、列車與網走監獄博物館。地名由既有圖說與可讀標誌確認。",
+        "reviewed_photo_ids": [
+          "r2-1765173916461-j54foq",
+          "r2-1765173921017-me26d3",
+          "r2-1765173923929-jg4ija",
+          "r2-1765173927221-1m2xp2",
+          "r2-1765173930334-rwod2h",
+          "r2-1765173933273-005nfo",
+          "r2-1765173937723-j1jqcl",
+          "r2-1765173941140-qethz4",
+          "r2-1765173946035-j1v2ys",
+          "r2-1765173950608-77nsm2",
+          "r2-1765173955931-t7urp6",
+          "r2-1765173958893-djyy5c",
+          "r2-1765173961754-klhwj1",
+          "r2-1765173965112-q2f1dc"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "b70851c0-0059-4397-ac3c-6f601ab54d65",
+      "path": "/2025/hokkaido-25/food",
+      "display_label_unchanged": "食物",
+      "title": "北海道美食攝影｜烤魚、串燒與餐桌片刻 — UTOA Photography",
+      "description": "北海道旅程裡的餐桌紀錄：炸物、串燒、烤魚與魷魚，還有生魚片拼盤和舉杯相聚的片刻。以近距離畫面留下食物的色澤、烤物紋理與木桌上的暖光。",
+      "og_asset_id": "r2-1765211791257-p6kkl3",
+      "cover": {
+        "asset_id": "r2-1765211791257-p6kkl3",
+        "source_collection_id": "b70851c0-0059-4397-ac3c-6f601ab54d65",
+        "ordinal": 8,
+        "url": "https://images.utoa.studio/images/r2-1765211791257-p6kkl3/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "8 張全數檢視：炸物、串燒、烤魷魚、烤魚、舉杯、肉串與生魚片。沒有可確認餐廳名，不添加店家、口味或食材產地評價。第 8 張拼盤色彩豐富。",
+        "reviewed_photo_ids": [
+          "r2-1765211313527-y25e79",
+          "r2-1765211321744-pmopi5",
+          "r2-1765211329931-6k8ruf",
+          "r2-1765211337584-5foz1a",
+          "r2-1765211347384-j13rfx",
+          "r2-1765211356921-px0lzv",
+          "r2-1765211800803-oqv9ll",
+          "r2-1765211791257-p6kkl3"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "94252b19-fdba-4fa7-b4e3-2fedb995c666",
+      "path": "/2025/hokkaido-25/furano",
+      "display_label_unchanged": "旭川、富良野",
+      "title": "旭川、美瑛與富良野攝影｜田野、樹木與長路 — UTOA Photography",
+      "description": "從旭川的橋梁到美瑛、富良野一帶的田野，記錄起伏丘陵上的樹、車站、摩天輪與延伸向遠方的公路。低雲、草地和沿途建築，構成北海道旅程中的開闊風景。",
+      "og_asset_id": "r2-1765203116392-z6jk3e",
+      "cover": {
+        "asset_id": "r2-1765203116392-z6jk3e",
+        "source_collection_id": "94252b19-fdba-4fa7-b4e3-2fedb995c666",
+        "ordinal": 2,
+        "url": "https://images.utoa.studio/images/r2-1765203116392-z6jk3e/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "11 張全數檢視：田野獨樹、Ken & Mary 之樹、旭橋、摩天輪、美瑛站、街道巴士、牧草卷與風機、深山峠、雲霄飛車之路。第 2 張為田野獨樹橫幅，不宣稱薰衣草花季。",
+        "reviewed_photo_ids": [
+          "r2-1765203111777-e4n0ih",
+          "r2-1765203116392-z6jk3e",
+          "r2-1765203120735-kfsib9",
+          "r2-1765203123472-xuwyf0",
+          "r2-1765203127892-ng6lp7",
+          "r2-1765203130697-b0d40h",
+          "r2-1765203133317-zuw1qf",
+          "r2-1765203135915-899l2l",
+          "r2-1765203138226-h577am",
+          "r2-1765203142165-72dron",
+          "r2-1765203147608-0wgb2s"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "9ac4a9c3-85fb-469d-a9ba-74a0fe580087",
+      "path": "/2025/hokkaido-25/kushiro",
+      "display_label_unchanged": "釧路",
+      "title": "釧路與厚岸攝影｜濕原車站、湖畔與漁港 — UTOA Photography",
+      "description": "釧路一帶的旅途影像，收錄濕原展望、林間小站、塘路湖船隻，以及漁港裡的作業船。沿途也記錄厚岸大橋與水面上的神社，呈現北海道東部安靜的水岸風景。",
+      "og_asset_id": "r2-1765172574011-kklq5c",
+      "cover": {
+        "asset_id": "r2-1765172574011-kklq5c",
+        "source_collection_id": "9ac4a9c3-85fb-469d-a9ba-74a0fe580087",
+        "ordinal": 4,
+        "url": "https://images.utoa.studio/images/r2-1765172574011-kklq5c/large.webp",
+        "width": 4033,
+        "height": 2688
+      },
+      "evidence": {
+        "observations": "9 張全數檢視：厚岸大橋、牡蠣島弁天神社、釧路濕原細岡展望台、細岡站、鐵道、釧路濕原站、塘路湖船隻及漁港。第 4 張為綠樹環繞的木造小站。",
+        "reviewed_photo_ids": [
+          "r2-1765172482149-fhncy3",
+          "r2-1765172613361-gi286n",
+          "r2-1765172577120-7trvt8",
+          "r2-1765172574011-kklq5c",
+          "r2-1765172583883-fzjls9",
+          "r2-1765172588780-anof1n",
+          "r2-1765172591693-xhakpm",
+          "r2-1765172568727-lsnl1p",
+          "r2-1765172571637-jrala4"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "a54b3028-d4e8-4bdb-a98b-f69a0d24deea",
+      "path": "/2025/hokkaido-25/lake-kussharo",
+      "display_label_unchanged": "屈斜路湖",
+      "title": "屈斜路湖與道東攝影｜湖景、硫黃山與瀑布 — UTOA Photography",
+      "description": "低雲籠罩屈斜路湖，湖畔停著天鵝船，硫黃山的蒸氣沿山坡升起。這組道東旅行影像也收錄霧中的摩周湖到訪紀錄、櫻花瀑布躍魚，以及筆直延伸的公路。",
+      "og_asset_id": "r2-1765172995326-c1pogu",
+      "cover": {
+        "asset_id": "r2-1765172995326-c1pogu",
+        "source_collection_id": "a54b3028-d4e8-4bdb-a98b-f69a0d24deea",
+        "ordinal": 2,
+        "url": "https://images.utoa.studio/images/r2-1765172995326-c1pogu/large.webp",
+        "width": 6189,
+        "height": 4126
+      },
+      "evidence": {
+        "observations": "10 張全數檢視：湖畔與高處湖景、天鵝船、船屋、屈斜路湖吉祥物、摩周湖招牌（原圖說註明兩次大霧）、硫黃山蒸氣、櫻花瀑布躍魚、天に続く道與機車。未將招牌照片描述成摩周湖清晰全景。",
+        "reviewed_photo_ids": [
+          "r2-1765172992723-xjca45",
+          "r2-1765172995326-c1pogu",
+          "r2-1765173007002-6jm1gx",
+          "r2-1765173002563-2jblq2",
+          "r2-1765172999434-ipv6uh",
+          "r2-1765172989681-spv54v",
+          "r2-1765173012455-vgg4id",
+          "r2-1765173015591-6csrbt",
+          "r2-1765173489299-66ei4r",
+          "r2-1765173023936-peqzf1"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "d43d3bcd-9f78-48a4-9071-66e753070f60",
+      "path": "/2025/hokkaido-25/lake-shikotsu",
+      "display_label_unchanged": "支笏湖",
+      "title": "支笏湖攝影｜湖畔山色、山線鐵橋與碧水 — UTOA Photography",
+      "description": "雲霧停在支笏湖對岸的山間，岸邊大樹、紅色山線鐵橋與清澈水色相互映照。作品沿湖畔步道記錄神社、舊鐵道展示與水岸細節，留下北海道湖畔的光景。",
+      "og_asset_id": "r2-1765209738344-bn8o2o",
+      "cover": {
+        "asset_id": "r2-1765209738344-bn8o2o",
+        "source_collection_id": "d43d3bcd-9f78-48a4-9071-66e753070f60",
+        "ordinal": 1,
+        "url": "https://images.utoa.studio/images/r2-1765209738344-bn8o2o/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "8 張影像全數檢視：湖畔樹影與雲霧、湖名木牌、山線鐵橋、鳥居神社、清澈水色、山線湖畔驛標誌，最後一張為旅行插畫而非現場照片。分享封面選用第 1 張實景。",
+        "reviewed_photo_ids": [
+          "r2-1765209738344-bn8o2o",
+          "r2-1765209747066-6n18a8",
+          "r2-1765209760869-y1v5zn",
+          "r2-1765209768579-w2ngjk",
+          "r2-1765209773104-4eqm90",
+          "r2-1765209779612-0siz9g",
+          "r2-1765209784224-6nbv74",
+          "r2-1765259375206-p373mp"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "3288a2aa-0446-4b48-bfe4-7f070e06833f",
+      "path": "/2025/hokkaido-25/lake-toya",
+      "display_label_unchanged": "洞爺湖",
+      "title": "洞爺湖攝影｜湖上煙火、山影與湖畔風景 — UTOA Photography",
+      "description": "白天的洞爺湖有山影、天鵝船與湖畔雕塑，入夜後煙火在水面上展開。這組旅行照片也收錄霧中的遊船與昭和新山熊牧場，記錄湖區從安靜到熱鬧的不同片刻。",
+      "og_asset_id": "r2-1765208889307-l6niwx",
+      "cover": {
+        "asset_id": "r2-1765208889307-l6niwx",
+        "source_collection_id": "3288a2aa-0446-4b48-bfe4-7f070e06833f",
+        "ordinal": 9,
+        "url": "https://images.utoa.studio/images/r2-1765208889307-l6niwx/large.webp",
+        "width": 6274,
+        "height": 4183
+      },
+      "evidence": {
+        "observations": "15 張全數檢視：湖畔雕塑、後視鏡、展望台、霧中船、湖牌與天鵝船、三張煙火、昭和新山熊牧場及紀念品。第 9 張彩色煙火及水面反光適合橫幅分享。",
+        "reviewed_photo_ids": [
+          "r2-1765208850440-5npx8m",
+          "r2-1765208853435-7aeeld",
+          "r2-1765208860261-yg0m13",
+          "r2-1765208863247-d59s18",
+          "r2-1765208868012-0zzj1r",
+          "r2-1765208872494-bldg6z",
+          "r2-1765208877955-c9qsfx",
+          "r2-1765208883630-p2fuki",
+          "r2-1765208889307-l6niwx",
+          "r2-1765208893947-4f055n",
+          "r2-1765208898215-agyxkn",
+          "r2-1765208905205-g9x9x2",
+          "r2-1765208912877-4pfnzj",
+          "r2-1765208920260-8k1p3d",
+          "r2-1765208929019-02z4qi"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "efb4a580-c020-42f5-bd58-034450ce20c6",
+      "path": "/2025/hokkaido-25/obihiro-shi",
+      "display_label_unchanged": "帶廣",
+      "title": "帶廣與十勝攝影｜花園、溪谷與街頭夜色 — UTOA Photography",
+      "description": "十勝之丘公園的花朵與花時計、溪谷裡的水流、霧中的橋梁，連到帶廣街頭的夜間燈光。以沿途風景和店面細節，記錄北海道旅程裡從白天到入夜的光線變化。",
+      "og_asset_id": "r2-1765172225911-df7ru6",
+      "cover": {
+        "asset_id": "r2-1765172225911-df7ru6",
+        "source_collection_id": "efb4a580-c020-42f5-bd58-034450ce20c6",
+        "ordinal": 3,
+        "url": "https://images.utoa.studio/images/r2-1765172225911-df7ru6/large.webp",
+        "width": 3780,
+        "height": 5670
+      },
+      "evidence": {
+        "observations": "7 張全數檢視：十勝之丘公園花時計、花朵、千鳥ヶ滝、霧中斜張橋、本別町路牌、夜間店面與燈籠。第 3 張溪谷水流；不將沿途溪谷定位為帶廣市內。",
+        "reviewed_photo_ids": [
+          "r2-1765172218572-rzpvvu",
+          "r2-1765172221948-sxpbj8",
+          "r2-1765172225911-df7ru6",
+          "r2-1765172228067-koz9o7",
+          "r2-1765172230407-p5auuk",
+          "r2-1765172234388-bbtbqu",
+          "r2-1765172237734-i0e4sw"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "98905654-7328-41c3-99c0-123cf80279a1",
+      "path": "/2025/hokkaido-25/sapporo",
+      "display_label_unchanged": "札幌",
+      "title": "札幌攝影｜北海道神宮、城市遠景與建築線條 — UTOA Photography",
+      "description": "從北海道神宮的屋簷與林間光線，到紅磚廳舍、札幌車站與藻岩山眺望的城市。作品也收錄莫埃來沼公園的玻璃建築與幾何細節，觀察札幌自然與建築並存的風景。",
+      "og_asset_id": "r2-1765206505863-2cypw7",
+      "cover": {
+        "asset_id": "r2-1765206505863-2cypw7",
+        "source_collection_id": "98905654-7328-41c3-99c0-123cf80279a1",
+        "ordinal": 7,
+        "url": "https://images.utoa.studio/images/r2-1765206505863-2cypw7/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "9 張全數檢視：北海道神宮、樹間陽光、紅磚廳舍、札幌站、藻岩山城市遠景、莫埃來沼玻璃金字塔與階梯細節。城市遠景為日間陰天，不寫夜景。",
+        "reviewed_photo_ids": [
+          "r2-1765206465498-iraqa3",
+          "r2-1765206473735-ckarm9",
+          "r2-1765205786750-zoegnv",
+          "r2-1765206483989-3hafd8",
+          "r2-1765206487942-k50a98",
+          "r2-1765206498130-vj87d3",
+          "r2-1765206505863-2cypw7",
+          "r2-1765206514112-ma4bzw",
+          "r2-1765206519228-t3la4v"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "7971193c-02a7-4e0b-9f2e-5776438c9480",
+      "path": "/2025/hokkaido-25/wakkanai",
+      "display_label_unchanged": "稚內、道北",
+      "title": "稚內與道北攝影｜宗谷岬、草原與北方海岸 — UTOA Photography",
+      "description": "沿著道北的長路走向稚內，記錄草原、風車、鹿與漁港。從宗谷岬的紀念碑和燈塔，到北防波堤穹頂、車站及遠方的利尻島，收錄北海道北端的海岸與日常。",
+      "og_asset_id": "r2-1765174585049-iq3j8c",
+      "cover": {
+        "asset_id": "r2-1765174585049-iq3j8c",
+        "source_collection_id": "7971193c-02a7-4e0b-9f2e-5776438c9480",
+        "ordinal": 8,
+        "url": "https://images.utoa.studio/images/r2-1765174585049-iq3j8c/large.webp",
+        "width": 6842,
+        "height": 4561
+      },
+      "evidence": {
+        "observations": "18 張全數檢視：猿払長路、農機、草地巴士、風車、鹿、宗谷岬碑與燈塔、北防波堤穹頂、稚內站、漁港、利尻島、庫頁島遠景圖說、海鳥與浪。第 8 張為宗谷岬紀念碑，無需新增其他遠島辨識。",
+        "reviewed_photo_ids": [
+          "r2-1765174552043-3f2we5",
+          "r2-1765174562533-5be6dk",
+          "r2-1765174565223-ggd7ms",
+          "r2-1765174572051-vpkh71",
+          "r2-1765174575149-d3z3zz",
+          "r2-1765174577854-jche66",
+          "r2-1765174580062-0p9dux",
+          "r2-1765174585049-iq3j8c",
+          "r2-1765174588508-f57fj7",
+          "r2-1765174590821-54pfz9",
+          "r2-1765174592623-fzgqbp",
+          "r2-1765174595357-otlatm",
+          "r2-1765174598677-0e88qk",
+          "r2-1765174603143-1slwkw",
+          "r2-1765174606555-m0b80v",
+          "r2-1765174610876-jt04hk",
+          "r2-1765174900010-rptrmd",
+          "r2-1765174608643-ep5dsv"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "27ee8e31-e9f7-41d3-b208-15317394f053",
+      "path": "/2025/wind-rider-25/windrider1",
+      "display_label_unchanged": "高雄港 #1",
+      "title": "高雄港出航攝影｜御風輪、拖船與港灣風景 — UTOA Photography",
+      "description": "從御風輪的船身、桅杆與船橋望向高雄港，記錄拖船迴轉、甲板作業和港邊建築。隨著船首朝向海面，舷窗裡的藍色海景與飛鳥，也成為這段航程的開場。",
+      "og_asset_id": "r2-1761392605690-mua13n",
+      "cover": {
+        "asset_id": "r2-1761392605690-mua13n",
+        "source_collection_id": "27ee8e31-e9f7-41d3-b208-15317394f053",
+        "ordinal": 8,
+        "url": "https://images.utoa.studio/images/r2-1761392605690-mua13n/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "13 張全數檢視：御風輪船名、港區建築、桅杆、船長及船橋、拖船迴轉、航標、舷窗、船首與飛鳥。第 8 張俯看拖船及藍綠港水。",
+        "reviewed_photo_ids": [
+          "r2-1761392450066-9rznvh",
+          "r2-1761392581858-abf4mc",
+          "r2-1761392588481-p57ohf",
+          "r2-1761392594624-3kbs1a",
+          "r2-1761392600347-fk4del",
+          "r2-1762753277224-zn7ipe",
+          "r2-1762753293860-kib00x",
+          "r2-1761392605690-mua13n",
+          "r2-1761392612592-geln58",
+          "r2-1761392619071-det6p6",
+          "r2-1761392624878-ymt79d",
+          "r2-1761392640745-emn00z",
+          "r2-1761392649609-hoxkaq"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "23de6e8c-e479-45ff-be5b-25a3b661829d",
+      "path": "/2025/wind-rider-25/windrider2",
+      "display_label_unchanged": "航行日",
+      "title": "御風輪航行日攝影｜船橋、舷窗與海上日常 — UTOA Photography",
+      "description": "海面從舷窗外延伸到遠方，船橋裡的雷達、電子海圖、航海日誌與磁羅經，記錄航行中的日常。從船邊浪花到夜間船首的光束，以近景與遠景觀看御風輪上的一天。",
+      "og_asset_id": "r2-1762753442899-akcie1",
+      "cover": {
+        "asset_id": "r2-1762753442899-akcie1",
+        "source_collection_id": "23de6e8c-e479-45ff-be5b-25a3b661829d",
+        "ordinal": 2,
+        "url": "https://images.utoa.studio/images/r2-1762753442899-akcie1/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "11 張全數檢視：船側、船橋窗景、桅杆、雷達海圖、船邊白浪、遠方商船、航海日誌、磁羅經與夜間光束。僅描述日誌存在，不抄錄可見個人資料或航行數值。第 2 張藍色舷窗橫幅。",
+        "reviewed_photo_ids": [
+          "r2-1762753328223-zb4x8o",
+          "r2-1762753442899-akcie1",
+          "r2-1763277806178-2cgjan",
+          "r2-1762753626107-d9jg6t",
+          "r2-1762753308920-18gywj",
+          "r2-1763277770993-fyti8m",
+          "r2-1763226768560-n7qnco",
+          "r2-1763226757251-lr6htc",
+          "r2-1763277783068-dpn3m1",
+          "r2-1763277794407-csrmxa",
+          "r2-1762753641517-hdmjku"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "05d5379a-245d-440e-bd82-ae23bbd2abef",
+      "path": "/2025/wind-rider-25/windrider3",
+      "display_label_unchanged": "夕陽與日出",
+      "title": "海上日出與夕陽攝影｜御風輪航程中的天光 — UTOA Photography",
+      "description": "從舷窗與船首看見海上的日出、夕陽和雲隙光，橙金色逐漸轉為粉紫與深藍。作品收錄海平線、月色與遠處風機的剪影，記錄御風輪航程中不斷變化的天空。",
+      "og_asset_id": "r2-1762757616433-nyg4bv",
+      "cover": {
+        "asset_id": "r2-1762757616433-nyg4bv",
+        "source_collection_id": "05d5379a-245d-440e-bd82-ae23bbd2abef",
+        "ordinal": 3,
+        "url": "https://images.utoa.studio/images/r2-1762757616433-nyg4bv/large.webp",
+        "width": 4275,
+        "height": 2850
+      },
+      "evidence": {
+        "observations": "12 張全數檢視：舷窗夕照、海面落日、船首桅杆、雲隙光、月亮、彰化風場圖說與彩色雲霞。第 3 張為海平線夕陽橫幅。只依既有作品名稱使用日出／夕陽，不判定每張時刻。",
+        "reviewed_photo_ids": [
+          "r2-1762755065029-vxoowd",
+          "r2-1762755086715-6y18aa",
+          "r2-1762757616433-nyg4bv",
+          "r2-1762757632772-8nwcqd",
+          "r2-1762755116195-94liiq",
+          "r2-1763215847551-v03852",
+          "r2-1763215838802-uouhqk",
+          "r2-1763280211158-ypdzy3",
+          "r2-1763215859377-lfzq55",
+          "r2-1763215854127-cfd7pv",
+          "r2-1763215865763-jbx6ky",
+          "r2-1763215828401-t96822"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "f4624ec4-8557-4ad3-8da4-2d8516f93c6b",
+      "path": "/2025/wind-rider-25/windrider4",
+      "display_label_unchanged": "東京灣 #1",
+      "title": "東京灣航海攝影｜領港作業與跨海橋梁 — UTOA Photography",
+      "description": "從御風輪上記錄東京灣的領港艇、船橋作業與港區風景。鏡頭沿著航標、跨海橋梁和浮塢移動，也捕捉從船舶上方掠過的飛機，呈現船上視角的東京灣。",
+      "og_asset_id": "r2-1763279299762-6qtq0l",
+      "cover": {
+        "asset_id": "r2-1763279299762-6qtq0l",
+        "source_collection_id": "f4624ec4-8557-4ad3-8da4-2d8516f93c6b",
+        "ordinal": 11,
+        "url": "https://images.utoa.studio/images/r2-1763279299762-6qtq0l/large.webp",
+        "width": 7008,
+        "height": 4672
+      },
+      "evidence": {
+        "observations": "13 張全數檢視：PILOT 領港艇、船橋內外領港作業、御風船名、飛機、航標、港機、跨海橋梁及 AFD-8000 浮塢。第 11 張橋梁橫幅，不推斷精確飛機班次或作業程序。",
+        "reviewed_photo_ids": [
+          "r2-1763279235718-em5gpd",
+          "r2-1763279224628-1nprsi",
+          "r2-1763279263736-y46jg1",
+          "r2-1763279328314-vv1v5d",
+          "r2-1763279339298-zkxnvf",
+          "r2-1763279213660-ni8gxt",
+          "r2-1763279252046-jrdj79",
+          "r2-1763279276947-y1rzwj",
+          "r2-1763279317097-7ad1qm",
+          "r2-1763279287607-yk699h",
+          "r2-1763279299762-6qtq0l",
+          "r2-1763279308651-taet9b",
+          "r2-1763279245216-pn987k"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "aa950e45-6744-49e6-ab55-369387a0b1a4",
+      "path": "/2025/wind-rider-25/windrider5",
+      "display_label_unchanged": "東京灣 #2",
+      "title": "東京灣船舶攝影｜拖船、領港艇與海上地標 — UTOA Photography",
+      "description": "船側的領港艇、劃出白色尾流的拖船，以及薄霧中的商船與跨海橋梁，構成東京灣另一段航行紀錄。作品也收錄船上旗幟、船橋人物與海底隧道通風塔的遠景。",
+      "og_asset_id": "r2-1763280086535-3pr7u3",
+      "cover": {
+        "asset_id": "r2-1763280086535-3pr7u3",
+        "source_collection_id": "aa950e45-6744-49e6-ab55-369387a0b1a4",
+        "ordinal": 4,
+        "url": "https://images.utoa.studio/images/r2-1763280086535-3pr7u3/large.webp",
+        "width": 4287,
+        "height": 2858
+      },
+      "evidence": {
+        "observations": "10 張全數檢視：日本旗與領港旗、PILOT 小艇、拖船、尾流與橋梁、船側及商船、船橋人物、工作船、海底隧道捕風塔圖說。第 4 張拖船橫幅。",
+        "reviewed_photo_ids": [
+          "r2-1763280099142-bdeybk",
+          "r2-1763280110168-lr5aga",
+          "r2-1763280151060-fi2v80",
+          "r2-1763280086535-3pr7u3",
+          "r2-1763280129792-bf9qij",
+          "r2-1763280120256-3ew991",
+          "r2-1763280173746-kvgr2l",
+          "r2-1763280191734-wkpyu5",
+          "r2-1763280164217-bwn0fw",
+          "r2-1763280182744-lwyguq"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "518729e7-4b2a-455c-a685-80c784b0d9cf",
+      "path": "/2025/wind-rider-25/windrider6",
+      "display_label_unchanged": "高雄港 #2",
+      "title": "高雄港船舶攝影｜領港小艇與港都天際線 — UTOA Photography",
+      "description": "由御風輪望向高雄港，領港小艇靠近船側，商船與港都建築在陰天下交錯。這組作品收錄澎湖輪、船橋作業、浮塢、碼頭與船上餐廳，留下另一段港口紀錄。",
+      "og_asset_id": "r2-1763288843267-qluih3",
+      "cover": {
+        "asset_id": "r2-1763288843267-qluih3",
+        "source_collection_id": "518729e7-4b2a-455c-a685-80c784b0d9cf",
+        "ordinal": 7,
+        "url": "https://images.utoa.studio/images/r2-1763288843267-qluih3/large.webp",
+        "width": 4299,
+        "height": 2866
+      },
+      "evidence": {
+        "observations": "12 張全數檢視：澎湖輪與領港小艇、船長與領港、港灣天際線、商船、浮塢、船首甲板與御風輪餐廳。第 7 張商船與高雄港建築，與 #1 的拖船藍水封面區別。",
+        "reviewed_photo_ids": [
+          "r2-1763288832189-woaeik",
+          "r2-1763288827614-mciapm",
+          "r2-1763288825675-d4wfaz",
+          "r2-1763288855732-qc82js",
+          "r2-1763288851408-xlfqv1",
+          "r2-1763288836091-dsmrca",
+          "r2-1763288843267-qluih3",
+          "r2-1763288848032-nyo51e",
+          "r2-1763288839142-jmwtup",
+          "r2-1763288860038-ntj4t3",
+          "r2-1763288862023-ds9jaq",
+          "r2-1763288867910-wrz5pb"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "1e3e15b8-04de-440a-ac69-f5d18052c186",
+      "path": "/2025/wind-rider-25/windrider7",
+      "display_label_unchanged": "東京下地",
+      "title": "東京街頭攝影｜淺草寺、聖橋與神田明神 — UTOA Photography",
+      "description": "從淺草寺的雷門與商店街出發，走過晴空塔、聖橋旁的河道與鐵路，再到神田明神與不忍池。這組御風輪旅程中的東京岸上照片，記錄寺社、交通與街頭生活。",
+      "og_asset_id": "r2-1763357109025-3u4shs",
+      "cover": {
+        "asset_id": "r2-1763357109025-3u4shs",
+        "source_collection_id": "1e3e15b8-04de-440a-ac69-f5d18052c186",
+        "ordinal": 3,
+        "url": "https://images.utoa.studio/images/r2-1763357109025-3u4shs/large.webp",
+        "width": 6653,
+        "height": 4435
+      },
+      "evidence": {
+        "observations": "17 張全數檢視：淺草寺、仲見世街、雷門、五重塔、晴空塔、聖橋、列車、商店街、船與飛機、神田明神、不忍池荷葉及餐桌。地名以圖說與可讀標誌為據；不複製餐點負面評論到 SEO。",
+        "reviewed_photo_ids": [
+          "r2-1763296516939-fm592g",
+          "r2-1763356978899-4e2ayl",
+          "r2-1763357109025-3u4shs",
+          "r2-1763357200127-6mp2mn",
+          "r2-1763356988342-5pvgeg",
+          "r2-1763357113733-g1zs1v",
+          "r2-1763357427799-ei7ght",
+          "r2-1763357206176-efrtod",
+          "r2-1763357214910-lqbnog",
+          "r2-1763357456896-p4qv9a",
+          "r2-1763357116919-zjmqao",
+          "r2-1763357422522-bn7gym",
+          "r2-1763357450551-o24gn2",
+          "r2-1763357667417-3vo578",
+          "r2-1763357435640-6i53pe",
+          "r2-1763357672493-lf91k0",
+          "r2-1763357553933-a1zxwa"
+        ]
+      }
+    },
+    {
+      "entity_type": "collection",
+      "entity_id": "58e2ee24-8a84-4da1-bf7c-badd2ddfa8cc",
+      "path": "/2025/wind-rider-25/windrider8",
+      "display_label_unchanged": "東京鐵塔",
+      "title": "東京鐵塔攝影｜紅白鋼構、樹影與城市街景 — UTOA Photography",
+      "description": "從樹梢、街角與階梯間仰望東京鐵塔，紅白鋼構在藍天與逆光中展現不同線條。作品也收錄從塔上向下俯看的結構與地面，透過遠近視角觀看這座東京地標。",
+      "og_asset_id": "r2-1763358114657-ih9j6f",
+      "cover": {
+        "asset_id": "r2-1763358114657-ih9j6f",
+        "source_collection_id": "58e2ee24-8a84-4da1-bf7c-badd2ddfa8cc",
+        "ordinal": 6,
+        "url": "https://images.utoa.studio/images/r2-1763358114657-ih9j6f/large.webp",
+        "width": 6745,
+        "height": 4496
+      },
+      "evidence": {
+        "observations": "10 張全數檢視：樹葉框景、街角、階梯、仰角鋼架、全塔街景、逆光與塔上向下俯景。第 6 張街角全塔為唯一適合完整地標分享的橫幅；不是夜間點燈作品。",
+        "reviewed_photo_ids": [
+          "r2-1763358087577-hv2ay5",
+          "r2-1763358094427-8cdg4l",
+          "r2-1763358098480-h5c8ay",
+          "r2-1763358103732-2s3gc4",
+          "r2-1763358109189-r9ffde",
+          "r2-1763358114657-ih9j6f",
+          "r2-1763358118765-bwkl3t",
+          "r2-1763358122868-t24x19",
+          "r2-1763358128473-srqovy",
+          "r2-1763358135202-v2w18q"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "type": "homepage",
+      "visibleTextUnchanged": true,
+      "metadata": true,
+      "botHTML": true,
+      "preview": true,
+      "persisted": true,
+      "clearRestoresDefaults": true,
+      "mobileNoOverflow": true
+    },
+    {
+      "type": "location",
+      "visibleTextUnchanged": true,
+      "metadata": true,
+      "botHTML": true,
+      "preview": true,
+      "persisted": true,
+      "clearRestoresDefaults": true,
+      "mobileNoOverflow": true
+    },
+    {
+      "type": "collection",
+      "visibleTextUnchanged": true,
+      "metadata": true,
+      "botHTML": true,
+      "preview": true,
+      "persisted": true,
+      "clearRestoresDefaults": true,
+      "mobileNoOverflow": true
+    }
+  ],
+  "pageErrors": []
+}
