@@ -401,3 +401,66 @@ test('cover choices stay within the collection or location and collapse after se
     )
   );
 });
+
+test('dragging and buttons reorder immediately, save once, and preserve a rejected draft for retry', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  let serverOrder = ['a1', 'a2'];
+  let failOrder = true;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+    if (url.includes('/assets?'))
+      return response({
+        data: [
+          { id: 'a1', alt: '照片一', location_folder_id: 'l1' },
+          { id: 'a2', alt: '照片二', location_folder_id: 'l1' },
+        ],
+        total: 2,
+      });
+    if (url.endsWith('collections/c1?include_assets=true'))
+      return response({
+        assets: serverOrder.map((id, index) => ({ id, order_index: String(index + 1) })),
+      });
+    if (url.endsWith('collections/c1/assets') && init.method === 'PUT') {
+      if (failOrder) return response({ message: '排序暫時無法儲存' }, 503);
+      serverOrder = JSON.parse(String(init.body)).reorder.map(
+        (item: { asset_id: string }) => item.asset_id
+      );
+      return response({});
+    }
+    return original(url, init);
+  });
+  render(<AdminWorkspace live />);
+  await openCollection();
+  mockFetch.mockClear();
+  const order = () =>
+    screen.getAllByTestId(/^assigned-photo-/).map((element) => element.getAttribute('data-testid'));
+  const dataTransfer = { setData: jest.fn(), effectAllowed: '', dropEffect: '' };
+  fireEvent.dragStart(screen.getByRole('button', { name: '拖拉排序 照片一' }), { dataTransfer });
+  fireEvent.dragOver(screen.getByTestId('assigned-photo-a2'), { dataTransfer });
+  fireEvent.drop(screen.getByTestId('assigned-photo-a2'), { dataTransfer });
+  expect(order()).toEqual(['assigned-photo-a2', 'assigned-photo-a1']);
+  expect(mockFetch).not.toHaveBeenCalled();
+  fireEvent.click(
+    within(screen.getByTestId('assigned-photo-a1')).getByRole('button', { name: '上移' })
+  );
+  expect(order()).toEqual(['assigned-photo-a1', 'assigned-photo-a2']);
+  expect(mockFetch).not.toHaveBeenCalled();
+  fireEvent.click(
+    within(screen.getByTestId('assigned-photo-a1')).getByRole('button', { name: '下移' })
+  );
+  fireEvent.click(screen.getByRole('button', { name: '儲存排序' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('排序暫時無法儲存');
+  expect(order()).toEqual(['assigned-photo-a2', 'assigned-photo-a1']);
+  expect(screen.getByRole('button', { name: '儲存排序' })).toBeEnabled();
+  failOrder = false;
+  mockFetch.mockClear();
+  fireEvent.click(screen.getByRole('button', { name: '儲存排序' }));
+  await waitFor(() => expect(screen.queryByText('正在讀取或儲存資料…')).not.toBeInTheDocument());
+  expect(serverOrder).toEqual(['a2', 'a1']);
+  expect(mockFetch.mock.calls.filter(([, init]) => init.method === 'PUT')).toHaveLength(1);
+  expect(screen.getByRole('button', { name: '儲存排序' })).toBeDisabled();
+  fireEvent.click(
+    within(screen.getByTestId('assigned-photo-a1')).getByRole('button', { name: '上移' })
+  );
+  fireEvent.click(screen.getByRole('button', { name: '取消排序變更' }));
+  expect(order()).toEqual(['assigned-photo-a2', 'assigned-photo-a1']);
+});

@@ -2221,7 +2221,20 @@ function ManagePhotosPanel({
 }) {
   const live = useContext(LiveContext);
   const [pickedIds, setPickedIds] = useState<Set<string>>(new Set());
-  const assignedAssets = collection.assetIds
+  const orderDraft = useSyncedDraft({ order: JSON.stringify(collection.assetIds) });
+  const orderedIds: string[] = JSON.parse(orderDraft.values.order);
+  const orderChanged = orderDraft.values.order !== JSON.stringify(collection.assetIds);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const moveTo = (assetId: string, targetId: string) => {
+    if (assetId === targetId || !orderedIds.includes(assetId) || !orderedIds.includes(targetId))
+      return;
+    const next = [...orderedIds];
+    next.splice(next.indexOf(assetId), 1);
+    next.splice(orderedIds.indexOf(targetId), 0, assetId);
+    orderDraft.setField('order', JSON.stringify(next));
+  };
+  const assignedAssets = orderedIds
     .map((assetId) => assets.find((asset) => asset.id === assetId))
     .filter((asset): asset is DemoAsset => Boolean(asset));
   const availableAssets = assets.filter(
@@ -2238,13 +2251,9 @@ function ManagePhotosPanel({
       collection.assetIds.filter((id) => id !== assetId)
     );
   const moveAsset = (assetId: string, direction: -1 | 1) => {
-    const index = collection.assetIds.indexOf(assetId);
-    const target = index + direction;
-    if (index < 0 || target < 0 || target >= collection.assetIds.length) return;
-    const next = [...collection.assetIds];
-    const [moved] = next.splice(index, 1);
-    next.splice(target, 0, moved);
-    onUpdateAssetIds(collection.id, next);
+    const target = orderedIds.indexOf(assetId) + direction;
+    if (target < 0 || target >= orderedIds.length) return;
+    moveTo(assetId, orderedIds[target]);
   };
 
   return (
@@ -2253,12 +2262,34 @@ function ManagePhotosPanel({
         <div className="min-w-0">
           <h4 className="text-sm font-semibold text-gray-900">管理照片</h4>
           <p className="text-xs text-gray-500">
-            可預覽、加入、移除與排序照片。移除只解除作品集關聯。
+            拖曳「拖拉排序」把手，或用上下移調整；完成後按「儲存排序」。移除只解除作品集關聯。
           </p>
         </div>
         <span className="rounded-full bg-white px-2 py-1 text-xs text-gray-600 ring-1 ring-gray-200">
           已指派 {assignedAssets.length}
         </span>
+      </div>
+      <DraftConflict draft={orderDraft} />
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          className={primaryButton}
+          disabled={!orderChanged || orderDraft.hasConflict}
+          onClick={() => onUpdateAssetIds(collection.id, orderedIds)}
+        >
+          儲存排序
+        </button>
+        <button
+          type="button"
+          className={secondaryButton}
+          disabled={!orderChanged}
+          onClick={orderDraft.useLatest}
+        >
+          取消排序變更
+        </button>
+        <p role="status" className="text-xs text-gray-600">
+          {orderChanged ? '排序尚未儲存；請先儲存或取消，再加入或移除照片。' : '排序已同步'}
+        </p>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
@@ -2272,7 +2303,7 @@ function ManagePhotosPanel({
         </button>
         <button
           className={primaryButton}
-          disabled={!availableAssets.some((asset) => pickedIds.has(asset.id))}
+          disabled={orderChanged || !availableAssets.some((asset) => pickedIds.has(asset.id))}
           onClick={() => {
             onUpdateAssetIds(collection.id, [
               ...collection.assetIds,
@@ -2296,7 +2327,20 @@ function ManagePhotosPanel({
               assignedAssets.map((asset, index) => (
                 <div
                   key={asset.id}
-                  className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 p-2"
+                  data-testid={`assigned-photo-${asset.id}`}
+                  onDragOver={(event) => {
+                    if (!draggedId) return;
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                    setDropTargetId(asset.id);
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    if (draggedId) moveTo(draggedId, asset.id);
+                    setDraggedId(null);
+                    setDropTargetId(null);
+                  }}
+                  className={`flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border p-2 ${dropTargetId === asset.id ? 'border-blue-500 bg-blue-50' : 'border-gray-100'} ${draggedId === asset.id ? 'opacity-50' : ''}`}
                 >
                   <button
                     type="button"
@@ -2313,6 +2357,23 @@ function ManagePhotosPanel({
                     </span>
                   </button>
                   <div className="flex shrink-0 gap-1">
+                    <button
+                      type="button"
+                      draggable
+                      className={`cursor-grab rounded border border-gray-200 px-2 py-1 text-xs active:cursor-grabbing ${focusRing}`}
+                      aria-label={`拖拉排序 ${asset.title}`}
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData('text/plain', asset.id);
+                        setDraggedId(asset.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedId(null);
+                        setDropTargetId(null);
+                      }}
+                    >
+                      ⠿ 拖拉排序
+                    </button>
                     <button
                       type="button"
                       className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 disabled:opacity-40"
@@ -2332,6 +2393,7 @@ function ManagePhotosPanel({
                     <button
                       type="button"
                       className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-700"
+                      disabled={orderChanged}
                       onClick={() => removeAsset(asset.id)}
                     >
                       移除
@@ -2385,6 +2447,7 @@ function ManagePhotosPanel({
                   <button
                     type="button"
                     className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700"
+                    disabled={orderChanged}
                     onClick={() => addAsset(asset.id)}
                   >
                     加入
