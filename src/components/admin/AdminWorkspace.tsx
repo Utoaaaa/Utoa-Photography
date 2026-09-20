@@ -1422,6 +1422,7 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
               )}
               {activeSection === 'workspace' && (
                 <WorkspaceSection
+                  key={`${selectedYearId}/${selectedLocationId}`}
                   years={displayYears}
                   workspace={currentWorkspace}
                   selectedYearId={selectedYear?.id ?? ''}
@@ -1450,25 +1451,18 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
                       locations: reorder(workspace.locations, id, direction),
                     }));
                   }}
-                  onMoveCollection={(id, direction) => {
+                  onSaveCollectionOrder={(ids) => {
                     if (live) {
-                      void mutate(() =>
-                        persistOrder(
-                          'collections',
-                          reorder(selectedCollections, id, direction).map((item) => item.id)
-                        )
-                      );
+                      void mutate(() => persistOrder('collections', ids));
                       return;
                     }
                     updateWorkspace(selectedYearId, (workspace) => {
-                      const ordered = reorder(selectedCollections, id, direction);
+                      const byId = new Map(workspace.collections.map((item) => [item.id, item]));
                       let index = 0;
                       return {
                         ...workspace,
                         collections: workspace.collections.map((item) =>
-                          selectedCollections.some((entry) => entry.id === item.id)
-                            ? ordered[index++]
-                            : item
+                          ids.includes(item.id) ? byId.get(ids[index++])! : item
                         ),
                       };
                     });
@@ -1797,7 +1791,7 @@ function WorkspaceSection({
   onSelectCollection,
   onPreviewAsset,
   onMoveLocation,
-  onMoveCollection,
+  onSaveCollectionOrder,
   onSaveLocation,
   onSaveCollection,
   onUpdateCollectionAssetIds,
@@ -1814,12 +1808,22 @@ function WorkspaceSection({
   onSelectCollection: (id: string | null) => void;
   onPreviewAsset: (asset: DemoAsset) => void;
   onMoveLocation: (id: string, direction: number) => void;
-  onMoveCollection: (id: string, direction: number) => void;
+  onSaveCollectionOrder: (ids: string[]) => void;
   onSaveLocation: (location: DemoLocation) => void;
   onSaveCollection: (collection: DemoCollection) => void;
   onUpdateCollectionAssetIds: (collectionId: string, assetIds: string[]) => void;
 }) {
   const live = useContext(LiveContext);
+  const collectionOrder = useSyncedDraft({
+    order: JSON.stringify(selectedCollections.map((item) => item.id)),
+  });
+  const orderedIds: string[] = JSON.parse(collectionOrder.values.order);
+  const byId = new Map(selectedCollections.map((item) => [item.id, item]));
+  const orderedCollections = orderedIds
+    .map((id) => byId.get(id))
+    .filter((item): item is DemoCollection => !!item);
+  const orderChanged =
+    collectionOrder.values.order !== JSON.stringify(selectedCollections.map((item) => item.id));
   return (
     <section className="space-y-6" aria-labelledby="workspace-title">
       <SectionHeading
@@ -1851,7 +1855,7 @@ function WorkspaceSection({
           </div>
         </Card>
 
-        <div className="grid min-w-0 gap-4 [@media(min-width:1500px)]:grid-cols-[minmax(0,1fr)_minmax(24rem,0.55fr)]">
+        <div className="grid min-w-0 gap-6">
           <Card className="min-w-0 p-0">
             <PaneHeader
               title="地點"
@@ -1920,16 +1924,45 @@ function WorkspaceSection({
           <Card className="min-w-0 p-0">
             <PaneHeader
               title="作品集與編輯頁"
-              description="點選作品集會開啟右側同區塊的詳情與編輯面板。"
+              description="依由左至右、由上至下的順序預覽；點選作品集名稱可編輯。"
             />
+            <div className="space-y-2 border-b border-gray-100 p-4">
+              <DraftConflict draft={collectionOrder} />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={primaryButton}
+                  disabled={!orderChanged || collectionOrder.hasConflict}
+                  onClick={() => onSaveCollectionOrder(orderedIds)}
+                >
+                  儲存作品集排序
+                </button>
+                <button
+                  type="button"
+                  className={secondaryButton}
+                  disabled={!orderChanged}
+                  onClick={collectionOrder.useLatest}
+                >
+                  取消作品集排序
+                </button>
+              </div>
+              <p role="status" className="text-xs text-gray-500">
+                {orderChanged
+                  ? '作品集排序尚未儲存，請在切換年份或地點前儲存。'
+                  : '上下移會立即調整畫面，完成後再儲存排序。'}
+              </p>
+            </div>
             {selectedCollections.length === 0 ? (
               <EmptyState
                 title="尚未指派作品集"
                 description="可在上方新增作品集，或從其他地點解除指派。"
               />
             ) : (
-              <div className="space-y-3 p-5">
-                {selectedCollections.map((collection) => {
+              <div
+                className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3"
+                aria-label="作品集排序預覽"
+              >
+                {orderedCollections.map((collection, index) => {
                   const isActive = selectedCollection?.id === collection.id;
                   const cover = workspace.assets.find(
                     (asset) => asset.id === collection.coverAssetId
@@ -1937,21 +1970,39 @@ function WorkspaceSection({
                   return (
                     <article
                       key={collection.id}
-                      className="min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white"
+                      className={`flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-white ${isActive ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-200'}`}
                     >
-                      <div className="flex items-stretch">
+                      <div className="flex flex-1 flex-col">
                         {cover ? (
                           <button
                             type="button"
                             aria-label={`預覽 ${collection.title} 封面`}
                             onClick={() => onPreviewAsset(cover)}
-                            className={`w-24 shrink-0 border-r border-gray-200 sm:w-36 ${focusRing}`}
+                            className={`group relative m-3 block aspect-[3/4] overflow-hidden rounded-xl bg-slate-100 text-left ${focusRing}`}
                           >
-                            <DemoAssetThumbnail asset={cover} />
-                            <span className="block py-2 text-xs text-blue-700">預覽封面</span>
+                            {cover.imageSrc ? (
+                              <ProgressiveImage
+                                assetId={cover.id}
+                                alt={`${collection.title} 封面`}
+                                width={cover.width}
+                                height={cover.height}
+                                className="h-full w-full"
+                              />
+                            ) : (
+                              <div className={`absolute inset-0 bg-gradient-to-br ${cover.tone}`} />
+                            )}
+                            <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">
+                              {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10 text-sm text-white">
+                              預覽封面
+                            </span>
                           </button>
                         ) : (
-                          <div className="flex w-24 shrink-0 items-center justify-center border-r border-gray-200 bg-slate-50 text-xs text-gray-500 sm:w-36">
+                          <div className="relative m-3 flex aspect-[3/4] items-center justify-center rounded-xl bg-slate-100 text-sm text-gray-500">
+                            <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-xs font-semibold">
+                              {String(index + 1).padStart(2, '0')}
+                            </span>
                             未選封面
                           </div>
                         )}
@@ -1978,9 +2029,16 @@ function WorkspaceSection({
                       </div>
                       <DemoOrderControls
                         label={collection.title}
-                        items={selectedCollections}
+                        items={orderedCollections}
                         id={collection.id}
-                        onMove={(direction) => onMoveCollection(collection.id, direction)}
+                        onMove={(direction) => {
+                          const index = orderedIds.indexOf(collection.id);
+                          const target = index + direction;
+                          if (index < 0 || target < 0 || target >= orderedIds.length) return;
+                          const next = [...orderedIds];
+                          [next[index], next[target]] = [next[target], next[index]];
+                          collectionOrder.setField('order', JSON.stringify(next));
+                        }}
                       />
                     </article>
                   );

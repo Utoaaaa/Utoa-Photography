@@ -642,3 +642,44 @@ test('candidate pages load on expansion, retry failures, and retain pages across
     expect.anything()
   );
 });
+
+test('collection moves are immediate and local until saved, with retry and cancel', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  const ranks: Record<string, string> = { c1: '0001', c2: '0002' };
+  let fail = true;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+    if (url.endsWith('years/y1/collections?status=all'))
+      return response(
+        [
+          { ...collection, title, id: 'c1' },
+          { ...collection, id: 'c2', title: '第二作品', slug: 'second' },
+        ].sort((a, b) => ranks[a.id].localeCompare(ranks[b.id]))
+      );
+    if (init.method === 'PUT' && String(init.body).includes('order_index')) {
+      if (fail) return response({ message: '作品集排序失敗' }, 503);
+      ranks[url.split('/').at(-1)!] = JSON.parse(String(init.body)).order_index;
+      return response({});
+    }
+    return original(url, init);
+  });
+  render(<AdminWorkspace live />);
+  await openCollection();
+  mockFetch.mockClear();
+  fireEvent.click(screen.getByRole('button', { name: '實際作品下移' }));
+  expect(screen.getByRole('button', { name: '第二作品上移' })).toBeDisabled();
+  expect(screen.getByLabelText('標題')).toHaveValue('實際作品');
+  expect(mockFetch).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: '儲存作品集排序' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('作品集排序失敗');
+  expect(screen.getByRole('button', { name: '第二作品上移' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: '儲存作品集排序' })).toBeEnabled();
+  fail = false;
+  fireEvent.click(screen.getByRole('button', { name: '儲存作品集排序' }));
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: '儲存作品集排序' })).toBeDisabled()
+  );
+  expect(ranks).toEqual({ c2: '0001', c1: '0002' });
+  fireEvent.click(screen.getByRole('button', { name: '實際作品上移' }));
+  fireEvent.click(screen.getByRole('button', { name: '取消作品集排序' }));
+  expect(screen.getByRole('button', { name: '第二作品上移' })).toBeDisabled();
+});
