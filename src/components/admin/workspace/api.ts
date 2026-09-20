@@ -76,6 +76,11 @@ function mapAsset(value: Row): DemoAsset {
 
 export async function loadWorkspace(
   progress: {
+    summariesOnly?: boolean;
+    selectedCollectionId?: string | null;
+    yearsOnly?: boolean;
+    yearId?: string;
+    assets?: DemoAsset[];
     onYears?: (years: DemoYear[]) => void;
     onWorkspace?: (id: string, workspace: DemoWorkspace) => void;
   } = {}
@@ -94,9 +99,10 @@ export async function loadWorkspace(
     updatedAt: text(value.updated_at),
   }));
   if (progress.onYears) progress.onYears(years);
-  const assets: DemoAsset[] = [];
+  if (progress.yearsOnly) return { years, workspaces: {} };
+  const assets: DemoAsset[] = progress.assets ? [...progress.assets] : [];
   let offset = 0;
-  while (true) {
+  while (!progress.assets && !progress.summariesOnly) {
     const page = row(await requestAdmin(`assets?limit=200&offset=${offset}`));
     const batch = rows(page.data);
     assets.push(...batch.map(mapAsset));
@@ -106,49 +112,67 @@ export async function loadWorkspace(
   }
   const workspaces: Record<string, DemoWorkspace> = {};
   const failures: string[] = [];
-  await mapConcurrent(years, 2, async (year) => {
-    try {
-      const [locationResponse, collectionResponse] = await Promise.all([
-        requestAdmin(`years/${pathId(year.id)}/locations`),
-        requestAdmin(`years/${pathId(year.id)}/collections?status=all`),
-      ]);
-      const locations = rows(locationResponse).map((value) => ({
-        id: idOf(value),
-        name: text(value.name),
-        slug: text(value.slug),
-        summary: text(value.summary),
-        coverAssetId: text(value.coverAssetId) || null,
-        status: 'draft' as const,
-      }));
-      const collections = await mapConcurrent(
-        rows(collectionResponse),
-        4,
-        async (value): Promise<DemoCollection> => {
-          const detail = row(
-            await requestAdmin(`collections/${pathId(idOf(value))}?include_assets=true`)
-          );
-          return {
-            id: idOf(value),
-            title: text(value.title),
-            slug: text(value.slug),
-            summary: text(value.summary),
-            locationId: text(value.location_id),
-            status: status(value.status),
-            capturedAt: text(value.captured_at).slice(0, 10),
-            coverAssetId: text(value.cover_asset_id) || null,
-            assetIds: rows(detail.assets)
-              .sort((a, b) => Number(a.order_index ?? 0) - Number(b.order_index ?? 0))
-              .map(idOf),
-          };
+  await mapConcurrent(
+    progress.yearId ? years.filter((year) => year.id === progress.yearId) : years,
+    2,
+    async (year) => {
+      try {
+        const [locationResponse, collectionResponse] = await Promise.all([
+          requestAdmin(`years/${pathId(year.id)}/locations`),
+          requestAdmin(`years/${pathId(year.id)}/collections?status=all`),
+        ]);
+        const locations = rows(locationResponse).map((value) => ({
+          id: idOf(value),
+          name: text(value.name),
+          slug: text(value.slug),
+          summary: text(value.summary),
+          coverAssetId: text(value.coverAssetId) || null,
+          status: 'draft' as const,
+        }));
+        const collections = await mapConcurrent(
+          rows(collectionResponse),
+          4,
+          async (value): Promise<DemoCollection> => {
+            const loadPhotos =
+              !progress.summariesOnly || idOf(value) === progress.selectedCollectionId;
+            const detail = loadPhotos
+              ? row(await requestAdmin(`collections/${pathId(idOf(value))}?include_assets=true`))
+              : { assets: [] };
+            if (loadPhotos) assets.push(...rows(detail.assets).map(mapAsset));
+            return {
+              id: idOf(value),
+              title: text(value.title),
+              slug: text(value.slug),
+              summary: text(value.summary),
+              locationId: text(value.location_id),
+              status: status(value.status),
+              capturedAt: text(value.captured_at).slice(0, 10),
+              coverAssetId: text(value.cover_asset_id) || null,
+              photosLoaded: loadPhotos,
+              assetCount:
+                Number(value.asset_count ?? (value._count as Row | undefined)?.collection_assets) ||
+                undefined,
+              assetIds: rows(detail.assets)
+                .sort((a, b) => Number(a.order_index ?? 0) - Number(b.order_index ?? 0))
+                .map(idOf),
+            };
+          }
+        );
+        // The real asset library is global; include unassigned and cross-year assets as in the existing CMS.
+        const knownAssets = new Map(assets.map((asset) => [asset.id, asset]));
+        for (const id of [
+          ...locations.map((location) => location.coverAssetId),
+          ...collections.map((collection) => collection.coverAssetId),
+        ]) {
+          if (id && !knownAssets.has(id)) knownAssets.set(id, mapAsset({ id, alt: '目前封面' }));
         }
-      );
-      // The real asset library is global; include unassigned and cross-year assets as in the existing CMS.
-      workspaces[year.id] = { locations, collections, assets };
-      if (progress.onWorkspace) progress.onWorkspace(year.id, workspaces[year.id]);
-    } catch (error) {
-      failures.push(`${year.label}：${error instanceof Error ? error.message : '載入失敗'}`);
+        workspaces[year.id] = { locations, collections, assets: [...knownAssets.values()] };
+        if (progress.onWorkspace) progress.onWorkspace(year.id, workspaces[year.id]);
+      } catch (error) {
+        failures.push(`${year.label}：${error instanceof Error ? error.message : '載入失敗'}`);
+      }
     }
-  });
+  );
   if (failures.length) throw new Error(failures.join('；'));
   return { years, workspaces };
 }
@@ -213,4 +237,32 @@ async function mapConcurrent<T, R>(
     })
   );
   return results;
+}
+
+export async function loadCollectionPhotoIds(collectionId: string): Promise<string[]> {
+  const detail = row(await requestAdmin(`collections/${pathId(collectionId)}?include_assets=true`));
+  return rows(detail.assets)
+    .sort((a, b) => Number(a.order_index ?? 0) - Number(b.order_index ?? 0))
+    .map(idOf);
+}
+
+export async function loadCollectionPhotos(id: string): Promise<DemoAsset[]> {
+  const detail = row(await requestAdmin(`collections/${pathId(id)}?include_assets=true`));
+  return rows(detail.assets)
+    .sort((a, b) => Number(a.order_index ?? 0) - Number(b.order_index ?? 0))
+    .map(mapAsset);
+}
+
+export async function loadCandidatePage(
+  locationId: string,
+  offset = 0
+): Promise<{ assets: DemoAsset[]; total: number }> {
+  const page = row(
+    await requestAdmin(
+      `assets?limit=24&offset=${offset}${locationId ? `&location_id=${pathId(locationId)}` : ''}`
+    )
+  );
+  const total = Number(page.total);
+  if (!Number.isFinite(total) || total < 0) throw new Error('媒體列表缺少總筆數。');
+  return { assets: rows(page.data).map(mapAsset), total };
 }

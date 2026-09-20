@@ -60,7 +60,10 @@ beforeEach(() => {
       return response([{ id: 'l1', name: '實際地點', slug: 'real-26', coverAssetId: 'a1' }]);
     if (path === 'years/y1/collections?status=all') return response([{ ...collection, title }]);
     if (path === 'collections/c1?include_assets=true')
-      return response({ ...collection, assets: [{ id: 'a1' }] });
+      return response({
+        ...collection,
+        assets: [{ id: 'a1', alt: '真實照片', width: 1200, height: 800, location_folder_id: 'l1' }],
+      });
     throw new Error(`Unexpected request ${method} ${path}`);
   });
   global.fetch = mockFetch as typeof fetch;
@@ -74,8 +77,9 @@ async function openCollection() {
   await screen.findByText('真實資料工作區');
   await waitFor(() => expect(screen.queryByText('正在讀取或儲存資料…')).not.toBeInTheDocument());
   fireEvent.click(screen.getByRole('button', { name: /年份工作區/ }));
-  fireEvent.click(screen.getByRole('button', { name: /實際地點.*已指派/ }));
-  fireEvent.click(screen.getByRole('button', { name: /實際作品.*已指派/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /實際地點.*已指派/ }));
+  fireEvent.click(screen.getByRole('button', { name: /實際作品.*草稿/ }));
+  await screen.findByLabelText('標題');
 }
 
 test('reads real data, persists edits and loads the saved value after remount', async () => {
@@ -182,7 +186,7 @@ test('media section mounts the existing real upload workflow', async () => {
   render(<AdminWorkspace live />);
   await waitFor(() => expect(screen.queryByText('正在讀取或儲存資料…')).not.toBeInTheDocument());
   fireEvent.click(screen.getByRole('button', { name: /上傳與媒體/ }));
-  expect(screen.getByText('真實上傳元件')).toBeInTheDocument();
+  expect(await screen.findByText('真實上傳元件')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: '模擬上傳' })).not.toBeInTheDocument();
 });
 
@@ -248,7 +252,12 @@ test('twelve-photo ordering survives lexical storage order and loading legacy ro
     if (url.includes('include_assets=true'))
       return response({
         assets: ids
-          .map((id, index) => ({ id, order_index: String(index + 1) }))
+          .map((id, index) => ({
+            id,
+            alt: id === 'a1' ? '照片一' : '照片二',
+            location_folder_id: 'l1',
+            order_index: String(index + 1),
+          }))
           .sort((a, b) => a.order_index.localeCompare(b.order_index)),
       });
     return baseFetch(url, init);
@@ -276,7 +285,7 @@ test('years remain editable while the media library is still loading', async () 
   fireEvent.click(screen.getByRole('button', { name: /年份工作區/ }));
   expect(screen.getByRole('button', { name: /2026/ })).toBeEnabled();
   fireEvent.click(screen.getByRole('button', { name: /上傳與媒體/ }));
-  expect(screen.getByText('真實上傳元件')).toBeInTheDocument();
+  expect(await screen.findByText('真實上傳元件')).toBeInTheDocument();
   await act(async () => {
     release();
     await pending;
@@ -289,6 +298,8 @@ test('a failed media request does not lock year management', async () => {
     url.includes('/assets?') ? response({ message: '媒體暫時無法讀取' }, 503) : original(url, init)
   );
   render(<AdminWorkspace live />);
+  await openCollection();
+  fireEvent.click(screen.getByRole('button', { name: '展開可加入照片' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('媒體暫時無法讀取');
   fireEvent.click(screen.getByRole('button', { name: /年份管理/ }));
   expect(screen.getByLabelText('年份 2026 名稱')).toBeEnabled();
@@ -356,6 +367,8 @@ test('one failed year does not prevent another year from becoming available', as
 test('cover choices stay within the collection or location and collapse after selection', async () => {
   const original = mockFetch.getMockImplementation()!;
   mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    if (url.endsWith('collections/c1?include_assets=true'))
+      return response({ assets: [{ id: 'a1', alt: '作品集內照片', location_folder_id: 'l1' }] });
     if (url.includes('/assets?'))
       return response({
         data: [
@@ -381,6 +394,7 @@ test('cover choices stay within the collection or location and collapse after se
   expect(collectionPicker.getByRole('button', { name: '預覽目前作品集封面' })).toBeInTheDocument();
   const locationPicker = within(screen.getByRole('region', { name: '地點封面' }));
   fireEvent.click(locationPicker.getByRole('button', { name: '選擇封面' }));
+  await locationPicker.findByRole('button', { name: '選用 地點內其他照片' });
   expect(locationPicker.getAllByRole('button', { name: /^選用 / })).toHaveLength(2);
   expect(
     locationPicker.queryByRole('button', { name: '選用 其他地點照片' })
@@ -417,7 +431,12 @@ test('dragging and buttons reorder immediately, save once, and preserve a reject
       });
     if (url.endsWith('collections/c1?include_assets=true'))
       return response({
-        assets: serverOrder.map((id, index) => ({ id, order_index: String(index + 1) })),
+        assets: serverOrder.map((id, index) => ({
+          id,
+          alt: id === 'a1' ? '照片一' : '照片二',
+          location_folder_id: 'l1',
+          order_index: String(index + 1),
+        })),
       });
     if (url.endsWith('collections/c1/assets') && init.method === 'PUT') {
       if (failOrder) return response({ message: '排序暫時無法儲存' }, 503);
@@ -463,4 +482,163 @@ test('dragging and buttons reorder immediately, save once, and preserve a reject
   );
   fireEvent.click(screen.getByRole('button', { name: '取消排序變更' }));
   expect(order()).toEqual(['assigned-photo-a2', 'assigned-photo-a1']);
+});
+
+test('initial navigation reads only years; a selected year never loads other year details', async () => {
+  render(<AdminWorkspace live />);
+  await waitFor(() => expect(screen.queryByText('正在讀取或儲存資料…')).not.toBeInTheDocument());
+  expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+    '/api/admin/years?status=all&order=asc',
+  ]);
+  const original = mockFetch.getMockImplementation()!;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    if (url.includes('years?'))
+      return response([
+        { id: 'y1', label: '2026', status: 'draft' },
+        { id: 'y2', label: '2027', status: 'draft' },
+      ]);
+    return original(url, init);
+  });
+  mockFetch.mockClear();
+  await loadWorkspace({ yearId: 'y1', assets: [] });
+  expect(
+    mockFetch.mock.calls.some(([url]) => url.includes('/y2/') || url.includes('/assets?'))
+  ).toBe(false);
+});
+
+test('remove works with an unsaved order and only reconciles that collection', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  let serverOrder = ['a1', 'a2'];
+  mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+    if (url.includes('/assets?'))
+      return response({
+        data: [
+          { id: 'a1', alt: '照片一', location_folder_id: 'l1' },
+          { id: 'a2', alt: '照片二', location_folder_id: 'l1' },
+        ],
+        total: 2,
+      });
+    if (url.endsWith('collections/c1?include_assets=true'))
+      return response({
+        assets: serverOrder.map((id, index) => ({
+          id,
+          alt: id === 'a1' ? '照片一' : '照片二',
+          location_folder_id: 'l1',
+          order_index: String(index + 1),
+        })),
+      });
+    if (url.endsWith('/assets/a1') && init.method === 'DELETE') {
+      serverOrder = serverOrder.filter((id) => id !== 'a1');
+      return response(null, 204);
+    }
+    if (url.endsWith('collections/c1/assets') && init.method === 'PUT') {
+      serverOrder = JSON.parse(String(init.body)).reorder.map(
+        (item: { asset_id: string }) => item.asset_id
+      );
+      return response({});
+    }
+    return original(url, init);
+  });
+  render(<AdminWorkspace live />);
+  await openCollection();
+  mockFetch.mockClear();
+  fireEvent.click(
+    within(screen.getByTestId('assigned-photo-a1')).getByRole('button', { name: '下移' })
+  );
+  const remove = within(screen.getByTestId('assigned-photo-a1')).getByRole('button', {
+    name: '移除',
+  });
+  expect(remove).toBeEnabled();
+  fireEvent.click(remove);
+  expect(screen.queryByTestId('assigned-photo-a1')).not.toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByText('正在讀取或儲存資料…')).not.toBeInTheDocument());
+  expect(serverOrder).toEqual(['a2']);
+  expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+    '/api/admin/collections/c1/assets/a1',
+    '/api/admin/collections/c1/assets',
+    '/api/admin/collections/c1?include_assets=true',
+  ]);
+  expect(screen.getByRole('button', { name: '儲存排序' })).toBeDisabled();
+});
+
+test('failed removal stays retryable and cancelling restores the confirmed photo list', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+    if (init.method === 'DELETE') return response({ message: '移除失敗' }, 503);
+    return original(url, init);
+  });
+  render(<AdminWorkspace live />);
+  await openCollection();
+  fireEvent.click(
+    within(screen.getByTestId('assigned-photo-a1')).getByRole('button', { name: '移除' })
+  );
+  expect(await screen.findByRole('alert')).toHaveTextContent('移除失敗');
+  expect(screen.getByRole('button', { name: '儲存照片變更' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: '取消照片變更' }));
+  expect(screen.getByTestId('assigned-photo-a1')).toBeInTheDocument();
+});
+
+test('workspace lists do not fetch photo details or candidate pages until opened', async () => {
+  render(<AdminWorkspace live />);
+  await waitFor(() => expect(screen.queryByText('正在讀取或儲存資料…')).not.toBeInTheDocument());
+  mockFetch.mockClear();
+  fireEvent.click(screen.getByRole('button', { name: /年份工作區/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /實際地點.*已指派/ }));
+  expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+    '/api/admin/years?status=all&order=asc',
+    '/api/admin/years/y1/locations',
+    '/api/admin/years/y1/collections?status=all',
+  ]);
+  mockFetch.mockClear();
+  fireEvent.click(screen.getByRole('button', { name: /實際作品.*草稿/ }));
+  await screen.findByLabelText('標題');
+  expect(mockFetch.mock.calls.map(([url]) => url)).toEqual([
+    '/api/admin/collections/c1?include_assets=true',
+  ]);
+  fireEvent.click(screen.getByRole('button', { name: '展開可加入照片' }));
+  await waitFor(() =>
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/assets?limit=24&offset=0&location_id=l1',
+      expect.anything()
+    )
+  );
+});
+
+test('candidate pages load on expansion, retry failures, and retain pages across collapse', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  let fail = true;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    if (url.includes('/assets?')) {
+      if (fail) return response({ message: '候選照片讀取失敗' }, 503);
+      const offset = new URL(url, 'http://localhost').searchParams.get('offset');
+      return response({
+        data: Array.from({ length: offset === '0' ? 24 : 1 }, (_, index) => ({
+          id: `b${Number(offset) + index}`,
+          alt: `候選${Number(offset) + index}`,
+          location_folder_id: 'l1',
+        })),
+        total: 25,
+      });
+    }
+    return original(url, init);
+  });
+  render(<AdminWorkspace live />);
+  await openCollection();
+  expect(mockFetch.mock.calls.some(([url]) => url.includes('/assets?'))).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: '展開可加入照片' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('候選照片讀取失敗');
+  fail = false;
+  fireEvent.click(screen.getByRole('button', { name: '重試載入照片' }));
+  await screen.findByRole('checkbox', { name: '選取 候選0' });
+  expect(screen.getAllByRole('checkbox', { name: /選取 候選/ })).toHaveLength(24);
+  mockFetch.mockClear();
+  fireEvent.click(screen.getByRole('button', { name: '收合可加入照片' }));
+  fireEvent.click(screen.getByRole('button', { name: '展開可加入照片' }));
+  expect(mockFetch).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: '載入更多照片' }));
+  await screen.findByRole('checkbox', { name: '選取 候選24' });
+  expect(mockFetch).toHaveBeenCalledWith(
+    '/api/admin/assets?limit=24&offset=24&location_id=l1',
+    expect.anything()
+  );
 });

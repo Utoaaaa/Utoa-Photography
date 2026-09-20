@@ -10,6 +10,8 @@ import {
   useState,
 } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { usePhotoCandidates } from './workspace/usePhotoCandidates';
 import { useSyncedDraft } from './workspace/useSyncedDraft';
 import { ProgressiveImage } from '@/components/ui/ProgressiveImage';
 import type { ReactNode } from 'react';
@@ -48,13 +50,18 @@ import type {
 } from './workspace/types';
 import {
   loadWorkspace,
+  loadCollectionPhotos,
   requestAdmin,
   saveCollection as persistCollection,
   savePhotos,
   persistOrder,
 } from './workspace/api';
-import UploadsPage from '@/app/admin/uploads/page';
-import DiagnosticsPage from '@/app/admin/diagnostics/page';
+const UploadsPage = dynamic(() => import('@/app/admin/uploads/page'), {
+  loading: () => <p role="status">正在載入媒體管理…</p>,
+});
+const DiagnosticsPage = dynamic(() => import('@/app/admin/diagnostics/page'), {
+  loading: () => <p role="status">正在載入診斷工具…</p>,
+});
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
 
 const LiveContext = createContext(false);
@@ -512,15 +519,28 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
   const busyRef = useRef(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ready, setReady] = useState(!live);
-  const refresh = useCallback(async () => {
+  const viewRef = useRef({ activeSection, selectedYearId, selectedCollectionId, workspaces });
+  viewRef.current = { activeSection, selectedYearId, selectedCollectionId, workspaces };
+  const refresh = useCallback(async (reuseAssets = false, scope?: typeof viewRef.current) => {
     const version = ++refreshVersion.current;
     setLoading(true);
     setLoadError(null);
     try {
+      const view = scope ?? viewRef.current;
       await loadWorkspace({
+        summariesOnly: true,
+        selectedCollectionId: view.selectedCollectionId,
+        yearsOnly: view.activeSection !== 'workspace' || !view.selectedYearId,
+        yearId: view.selectedYearId || undefined,
+        assets: reuseAssets ? Object.values(view.workspaces)[0]?.assets : undefined,
         onYears: (nextYears) => {
           if (version !== refreshVersion.current) return;
           setYears(nextYears);
+          setWorkspaces((previous) =>
+            Object.fromEntries(
+              Object.entries(previous).filter(([id]) => nextYears.some((year) => year.id === id))
+            )
+          );
           setSelectedYearId((id) =>
             nextYears.some((year) => year.id === id) ? id : (nextYears[0]?.id ?? '')
           );
@@ -546,9 +566,22 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
       refreshVersion.current += 1;
     };
   }, [live, refresh]);
+  useEffect(() => {
+    if (
+      !live ||
+      activeSection !== 'workspace' ||
+      !selectedYearId ||
+      viewRef.current.workspaces[selectedYearId]
+    )
+      return;
+    void refresh(true).catch((error: Error) => setLoadError(error.message));
+  }, [activeSection, selectedYearId, live, refresh]);
+
   const mutate = async (
     operation: () => Promise<unknown>,
-    message = '已儲存，資料已重新載入。'
+    message = '已儲存，資料已重新載入。',
+    reconcile: () => Promise<unknown> = () =>
+      refresh(true, { activeSection, selectedYearId, selectedCollectionId, workspaces })
   ) => {
     if (busyRef.current) return false;
     busyRef.current = true;
@@ -556,14 +589,14 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
     setLoadError(null);
     try {
       await operation();
-      await refresh();
+      await reconcile();
       showToast(message, 'success');
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : '操作失敗。';
       // Some existing endpoints update rows individually. Reconcile partial writes before the next action.
       try {
-        await refresh();
+        await reconcile();
       } catch {
         setReady(false);
       }
@@ -580,6 +613,7 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
     const wasUploads = previousSection.current === 'uploads';
     previousSection.current = activeSection;
     if (!live || !wasUploads || activeSection === 'uploads') return;
+    setWorkspaces({});
     refresh().catch((error: Error) => {
       setLoadError(error.message);
     });
@@ -700,10 +734,91 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
     showToast('作品集資料已更新在本地模擬狀態。', 'success');
   };
 
+  const photoRequests = useRef(new Set<string>());
+  const selectCollection = useCallback(
+    async (id: string | null) => {
+      setSelectedCollectionId(id);
+      if (
+        !live ||
+        !id ||
+        currentWorkspace.collections.find((item) => item.id === id)?.photosLoaded !== false
+      )
+        return;
+      const yearId = selectedYearId;
+      const requestKey = `${yearId}/${id}`;
+      if (photoRequests.current.has(requestKey)) return;
+      photoRequests.current.add(requestKey);
+      const version = refreshVersion.current;
+      setLoadError(null);
+      try {
+        const photos = await loadCollectionPhotos(id);
+        if (version !== refreshVersion.current) return;
+        setWorkspaces((previous) => {
+          const workspace = previous[yearId];
+          if (!workspace) return previous;
+          return {
+            ...previous,
+            [yearId]: {
+              ...workspace,
+              assets: [
+                ...new Map(
+                  [...workspace.assets, ...photos].map((asset) => [asset.id, asset])
+                ).values(),
+              ],
+              collections: workspace.collections.map((item) =>
+                item.id === id
+                  ? { ...item, photosLoaded: true, assetIds: photos.map((asset) => asset.id) }
+                  : item
+              ),
+            },
+          };
+        });
+      } catch (error) {
+        if (version === refreshVersion.current)
+          setLoadError(error instanceof Error ? error.message : '照片載入失敗。');
+      } finally {
+        photoRequests.current.delete(requestKey);
+      }
+    },
+    [live, selectedYearId, currentWorkspace.collections]
+  );
+  useEffect(() => {
+    if (activeSection === 'workspace' && selectedCollectionId)
+      void selectCollection(selectedCollectionId);
+  }, [activeSection, selectedCollectionId, selectCollection]);
+
   const updateCollectionAssetIds = (collectionId: string, assetIds: string[]) => {
     if (live) {
       const collection = currentWorkspace.collections.find((item) => item.id === collectionId);
-      if (collection) void mutate(() => savePhotos(collection, assetIds));
+      if (collection) {
+        const yearId = selectedYearId;
+        void mutate(
+          () => savePhotos(collection, assetIds),
+          '作品集照片已儲存。',
+          async () => {
+            const savedPhotos = await loadCollectionPhotos(collectionId);
+            const savedIds = savedPhotos.map((asset) => asset.id);
+            setWorkspaces((previous) => {
+              const workspace = previous[yearId];
+              if (!workspace) return previous;
+              return {
+                ...previous,
+                [yearId]: {
+                  ...workspace,
+                  assets: [
+                    ...new Map(
+                      [...workspace.assets, ...savedPhotos].map((asset) => [asset.id, asset])
+                    ).values(),
+                  ],
+                  collections: workspace.collections.map((item) =>
+                    item.id === collectionId ? { ...item, assetIds: savedIds } : item
+                  ),
+                },
+              };
+            });
+          }
+        );
+      }
       return;
     }
     updateWorkspace(selectedYearId, (workspace) => ({
@@ -1316,7 +1431,7 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
                   selectedCollection={selectedCollection}
                   onSelectYear={handleSelectYear}
                   onSelectLocation={handleSelectLocation}
-                  onSelectCollection={setSelectedCollectionId}
+                  onSelectCollection={selectCollection}
                   onPreviewAsset={setPreviewAsset}
                   onMoveLocation={(id, direction) => {
                     if (live) {
@@ -1853,7 +1968,11 @@ function WorkspaceSection({
                           </div>
                           <p className="mt-1 break-all text-xs text-gray-500">{collection.slug}</p>
                           <p className="mt-2 text-xs text-gray-500">
-                            已指派 {collection.assetIds.length} 個媒體
+                            {collection.photosLoaded === false
+                              ? collection.assetCount === undefined
+                                ? '照片尚未載入'
+                                : `已指派 ${collection.assetCount} 個媒體`
+                              : `已指派 ${collection.assetIds.length} 個媒體`}
                           </p>
                         </button>
                       </div>
@@ -1871,15 +1990,28 @@ function WorkspaceSection({
 
             {selectedCollection ? (
               <div className="border-t border-gray-100 p-5">
-                <CollectionDetailPanel
-                  key={selectedCollection.id}
-                  collection={selectedCollection}
-                  locations={workspace.locations}
-                  assets={workspace.assets}
-                  onSave={onSaveCollection}
-                  onPreviewAsset={onPreviewAsset}
-                  onUpdateAssetIds={onUpdateCollectionAssetIds}
-                />
+                {selectedCollection.photosLoaded === false ? (
+                  <div>
+                    <p role="status">作品集照片尚未載入完成。</p>
+                    <button
+                      type="button"
+                      className={secondaryButton}
+                      onClick={() => onSelectCollection(selectedCollection.id)}
+                    >
+                      重試載入作品集
+                    </button>
+                  </div>
+                ) : (
+                  <CollectionDetailPanel
+                    key={selectedCollection.id}
+                    collection={selectedCollection}
+                    locations={workspace.locations}
+                    assets={workspace.assets}
+                    onSave={onSaveCollection}
+                    onPreviewAsset={onPreviewAsset}
+                    onUpdateAssetIds={onUpdateCollectionAssetIds}
+                  />
+                )}
               </div>
             ) : selectedCollections.length > 0 ? (
               <div className="border-t border-gray-100 p-5">
@@ -1950,6 +2082,7 @@ function LocationEditPanel({
       />
       <DemoCoverPicker
         label="地點封面"
+        candidateLocationId={location.id}
         assets={assets.filter((asset) => asset.locationId === location.id)}
         selectedAsset={assets.find((asset) => asset.id === coverAssetId)}
         selectedAssetId={coverAssetId}
@@ -2126,6 +2259,7 @@ function CollectionDetailPanel({
 
 function DemoCoverPicker({
   label,
+  candidateLocationId,
   assets,
   selectedAsset,
   selectedAssetId,
@@ -2133,6 +2267,7 @@ function DemoCoverPicker({
   onPreviewAsset,
 }: {
   label: string;
+  candidateLocationId?: string;
   assets: DemoAsset[];
   selectedAsset?: DemoAsset;
   selectedAssetId: string | null;
@@ -2140,6 +2275,13 @@ function DemoCoverPicker({
   onPreviewAsset: (asset: DemoAsset) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const live = useContext(LiveContext);
+  const lazy = live && candidateLocationId !== undefined;
+  const candidates = usePhotoCandidates(open, lazy, candidateLocationId ?? '');
+  const choices = lazy
+    ? candidates.assets.filter((asset) => asset.locationId === candidateLocationId)
+    : assets;
+  const preview = selectedAsset ?? candidates.assets.find((asset) => asset.id === selectedAssetId);
   return (
     <section aria-label={label} className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2166,27 +2308,48 @@ function DemoCoverPicker({
           </button>
         </div>
       </div>
-      {selectedAsset ? (
+      {preview ? (
         <button
           type="button"
           className={`block w-40 rounded-xl border border-gray-200 p-2 text-left ${focusRing}`}
           aria-label={`預覽目前${label}`}
-          onClick={() => onPreviewAsset(selectedAsset)}
+          onClick={() => onPreviewAsset(preview!)}
         >
-          <DemoAssetThumbnail asset={selectedAsset} />
-          <span className="mt-2 block truncate text-xs">{selectedAsset.title}</span>
+          <DemoAssetThumbnail asset={preview!} />
+          <span className="mt-2 block truncate text-xs">{preview!.title}</span>
         </button>
       ) : (
         <p className="text-xs text-gray-500">
           {selectedAssetId ? '目前封面暫時無法預覽' : '尚未選擇封面'}
         </p>
       )}
+      {open && lazy && (
+        <div>
+          {candidates.loading && <p role="status">正在載入可選封面…</p>}
+          {candidates.error && <p role="alert">{candidates.error}</p>}
+          {(candidates.hasMore || candidates.error) && (
+            <button
+              type="button"
+              disabled={candidates.loading}
+              className={secondaryButton}
+              onClick={() => void candidates.loadMore()}
+            >
+              {candidates.error ? '重試載入封面' : '載入更多封面'}
+            </button>
+          )}
+        </div>
+      )}
       {open &&
-        (assets.length === 0 ? (
-          <EmptyState title="沒有可選封面" description="請先將照片加入此作品集或地點。" />
+        (choices.length === 0 ? (
+          <EmptyState
+            title="沒有可選封面"
+            description={
+              candidates.loading ? '正在讀取候選照片。' : '請先將照片加入此作品集或地點。'
+            }
+          />
         ) : (
           <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-3">
-            {assets.map((asset) => (
+            {choices.map((asset) => (
               <button
                 key={asset.id}
                 type="button"
@@ -2224,6 +2387,9 @@ function ManagePhotosPanel({
   const orderDraft = useSyncedDraft({ order: JSON.stringify(collection.assetIds) });
   const orderedIds: string[] = JSON.parse(orderDraft.values.order);
   const orderChanged = orderDraft.values.order !== JSON.stringify(collection.assetIds);
+  const membershipChanged =
+    orderedIds.length !== collection.assetIds.length ||
+    orderedIds.some((id) => !collection.assetIds.includes(id));
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const moveTo = (assetId: string, targetId: string) => {
@@ -2234,22 +2400,31 @@ function ManagePhotosPanel({
     next.splice(orderedIds.indexOf(targetId), 0, assetId);
     orderDraft.setField('order', JSON.stringify(next));
   };
-  const assignedAssets = orderedIds
-    .map((assetId) => assets.find((asset) => asset.id === assetId))
-    .filter((asset): asset is DemoAsset => Boolean(asset));
-  const availableAssets = assets.filter(
-    (asset) =>
-      !collection.assetIds.includes(asset.id) &&
-      (!live || !collection.locationId || asset.locationId === collection.locationId)
+  const [availableOpen, setAvailableOpen] = useState(false);
+  const candidates = usePhotoCandidates(availableOpen, live, collection.locationId);
+  const [visibleAvailable, setVisibleAvailable] = useState(24);
+  const assetsById = useMemo(
+    () => new Map([...assets, ...candidates.assets].map((asset) => [asset.id, asset])),
+    [assets, candidates.assets]
   );
+  const assignedSet = new Set(orderedIds);
+  const assignedAssets = orderedIds
+    .map((assetId) => assetsById.get(assetId))
+    .filter((asset): asset is DemoAsset => Boolean(asset));
+  const availableAssets = availableOpen
+    ? (live ? candidates.assets : assets).filter(
+        (asset) =>
+          !assignedSet.has(asset.id) &&
+          (!live || !collection.locationId || asset.locationId === collection.locationId)
+      )
+    : [];
 
-  const addAsset = (assetId: string) =>
-    onUpdateAssetIds(collection.id, [...collection.assetIds, assetId]);
-  const removeAsset = (assetId: string) =>
-    onUpdateAssetIds(
-      collection.id,
-      collection.assetIds.filter((id) => id !== assetId)
-    );
+  const applyPhotos = (ids: string[]) => {
+    orderDraft.setField('order', JSON.stringify(ids));
+    onUpdateAssetIds(collection.id, ids);
+  };
+  const addAsset = (assetId: string) => applyPhotos([...orderedIds, assetId]);
+  const removeAsset = (assetId: string) => applyPhotos(orderedIds.filter((id) => id !== assetId));
   const moveAsset = (assetId: string, direction: -1 | 1) => {
     const target = orderedIds.indexOf(assetId) + direction;
     if (target < 0 || target >= orderedIds.length) return;
@@ -2277,7 +2452,7 @@ function ManagePhotosPanel({
           disabled={!orderChanged || orderDraft.hasConflict}
           onClick={() => onUpdateAssetIds(collection.id, orderedIds)}
         >
-          儲存排序
+          {membershipChanged ? '儲存照片變更' : '儲存排序'}
         </button>
         <button
           type="button"
@@ -2285,38 +2460,42 @@ function ManagePhotosPanel({
           disabled={!orderChanged}
           onClick={orderDraft.useLatest}
         >
-          取消排序變更
+          {membershipChanged ? '取消照片變更' : '取消排序變更'}
         </button>
         <p role="status" className="text-xs text-gray-600">
-          {orderChanged ? '排序尚未儲存；請先儲存或取消，再加入或移除照片。' : '排序已同步'}
+          {orderChanged ? '照片變更尚未儲存；加入或移除會一併儲存目前排序。' : '排序已同步'}
         </p>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          className={secondaryButton}
-          onClick={() => setPickedIds(new Set(availableAssets.map((asset) => asset.id)))}
-        >
-          全選可加入照片
-        </button>
-        <button className={secondaryButton} onClick={() => setPickedIds(new Set())}>
-          清除照片選取
-        </button>
-        <button
-          className={primaryButton}
-          disabled={orderChanged || !availableAssets.some((asset) => pickedIds.has(asset.id))}
-          onClick={() => {
-            onUpdateAssetIds(collection.id, [
-              ...collection.assetIds,
-              ...availableAssets
-                .filter((asset) => pickedIds.has(asset.id))
-                .map((asset) => asset.id),
-            ]);
-            setPickedIds(new Set());
-          }}
-        >
-          批次加入照片
-        </button>
-      </div>
+      {availableOpen && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            className={secondaryButton}
+            onClick={() => setPickedIds(new Set(availableAssets.map((asset) => asset.id)))}
+          >
+            全選可加入照片
+          </button>
+          <button className={secondaryButton} onClick={() => setPickedIds(new Set())}>
+            清除照片選取
+          </button>
+          <button
+            className={primaryButton}
+            disabled={
+              orderDraft.hasConflict || !availableAssets.some((asset) => pickedIds.has(asset.id))
+            }
+            onClick={() => {
+              applyPhotos([
+                ...orderedIds,
+                ...availableAssets
+                  .filter((asset) => pickedIds.has(asset.id))
+                  .map((asset) => asset.id),
+              ]);
+              setPickedIds(new Set());
+            }}
+          >
+            批次加入照片
+          </button>
+        </div>
+      )}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="min-w-0 rounded-xl border border-gray-200 bg-white p-3">
           <p className="text-xs font-semibold text-gray-700">已指派照片</p>
@@ -2393,7 +2572,7 @@ function ManagePhotosPanel({
                     <button
                       type="button"
                       className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-700"
-                      disabled={orderChanged}
+                      disabled={orderDraft.hasConflict}
                       onClick={() => removeAsset(asset.id)}
                     >
                       移除
@@ -2405,57 +2584,109 @@ function ManagePhotosPanel({
           </div>
         </div>
         <div className="min-w-0 rounded-xl border border-gray-200 bg-white p-3">
-          <p className="text-xs font-semibold text-gray-700">可加入照片</p>
-          <div className="mt-3 space-y-2">
-            {availableAssets.length === 0 ? (
-              <p className="text-sm text-gray-500">沒有未指派照片。</p>
-            ) : (
-              availableAssets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 p-2"
-                >
-                  <button
-                    type="button"
-                    className={`flex w-full min-w-0 items-center gap-3 rounded-lg text-left ${focusRing}`}
-                    aria-label={`預覽照片 ${asset.title}`}
-                    onClick={() => onPreviewAsset(asset)}
-                  >
-                    <span className="w-28 shrink-0 overflow-hidden rounded-lg sm:w-32">
-                      <DemoAssetThumbnail asset={asset} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm text-gray-800">{asset.title}</span>
-                      <span className="text-xs text-blue-700">點開預覽</span>
-                    </span>
-                  </button>
-                  <label className="flex items-center gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={pickedIds.has(asset.id)}
-                      onChange={() =>
-                        setPickedIds((current) => {
-                          const next = new Set(current);
-                          if (next.has(asset.id)) next.delete(asset.id);
-                          else next.add(asset.id);
-                          return next;
-                        })
-                      }
-                    />
-                    選取 {asset.title}
-                  </label>
-                  <button
-                    type="button"
-                    className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700"
-                    disabled={orderChanged}
-                    onClick={() => addAsset(asset.id)}
-                  >
-                    加入
-                  </button>
-                </div>
-              ))
-            )}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-gray-700">
+              可加入照片{availableOpen ? `（${availableAssets.length}）` : ''}
+            </p>
+            <button
+              type="button"
+              className={secondaryButton}
+              aria-expanded={availableOpen}
+              onClick={() => setAvailableOpen((open) => !open)}
+            >
+              {availableOpen ? '收合可加入照片' : '展開可加入照片'}
+            </button>
           </div>
+          {!availableOpen && (
+            <p className="mt-3 text-sm text-gray-500">
+              需要加入照片時再展開，才會載入候選照片縮圖。
+            </p>
+          )}
+          {availableOpen && live && (
+            <div>
+              {candidates.loading && <p role="status">正在載入可加入照片…</p>}
+              {candidates.error && <p role="alert">{candidates.error}</p>}
+              {(candidates.hasMore || candidates.error) && (
+                <button
+                  type="button"
+                  disabled={candidates.loading}
+                  className={secondaryButton}
+                  onClick={() => void candidates.loadMore()}
+                >
+                  {candidates.error ? '重試載入照片' : '載入更多照片'}
+                </button>
+              )}
+            </div>
+          )}
+          {availableOpen && (
+            <>
+              {!live && availableAssets.length > visibleAvailable && (
+                <button
+                  type="button"
+                  className={secondaryButton}
+                  onClick={() => setVisibleAvailable((count) => count + 24)}
+                >
+                  顯示更多照片
+                </button>
+              )}
+              <div className="mt-3 space-y-2">
+                {availableAssets.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    {candidates.loading ? '正在讀取候選照片。' : '目前已載入的照片沒有可加入項目。'}
+                  </p>
+                ) : (
+                  (live ? availableAssets : availableAssets.slice(0, visibleAvailable)).map(
+                    (asset) => (
+                      <div
+                        key={asset.id}
+                        className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 p-2"
+                      >
+                        <button
+                          type="button"
+                          className={`flex w-full min-w-0 items-center gap-3 rounded-lg text-left ${focusRing}`}
+                          aria-label={`預覽照片 ${asset.title}`}
+                          onClick={() => onPreviewAsset(asset)}
+                        >
+                          <span className="w-28 shrink-0 overflow-hidden rounded-lg sm:w-32">
+                            <DemoAssetThumbnail asset={asset} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm text-gray-800">
+                              {asset.title}
+                            </span>
+                            <span className="text-xs text-blue-700">點開預覽</span>
+                          </span>
+                        </button>
+                        <label className="flex items-center gap-2 text-xs">
+                          <input
+                            type="checkbox"
+                            checked={pickedIds.has(asset.id)}
+                            onChange={() =>
+                              setPickedIds((current) => {
+                                const next = new Set(current);
+                                if (next.has(asset.id)) next.delete(asset.id);
+                                else next.add(asset.id);
+                                return next;
+                              })
+                            }
+                          />
+                          選取 {asset.title}
+                        </label>
+                        <button
+                          type="button"
+                          className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700"
+                          disabled={orderDraft.hasConflict}
+                          onClick={() => addAsset(asset.id)}
+                        >
+                          加入
+                        </button>
+                      </div>
+                    )
+                  )
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

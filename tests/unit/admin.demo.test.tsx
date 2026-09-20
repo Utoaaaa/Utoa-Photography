@@ -81,9 +81,16 @@ test('previews assigned photos, available photos and the selected collection cov
   click('預覽照片 石徑-024');
   expect(screen.getByRole('dialog')).toHaveTextContent('石徑-024');
   click('關閉媒體預覽');
+  expect(screen.queryByRole('button', { name: '預覽照片 河光-118' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '批次加入照片' })).not.toBeInTheDocument();
+  click('展開可加入照片');
   click('預覽照片 河光-118');
   expect(screen.getByRole('dialog')).toHaveTextContent('河光-118');
   click('關閉媒體預覽');
+  click('收合可加入照片');
+  expect(screen.queryByRole('button', { name: '預覽照片 河光-118' })).not.toBeInTheDocument();
+  click('展開可加入照片');
+  expect(screen.getByRole('checkbox', { name: '選取 河光-118' })).toBeEnabled();
   click('預覽目前選擇的封面');
   expect(screen.getByRole('dialog')).toHaveTextContent('石徑-024');
 });

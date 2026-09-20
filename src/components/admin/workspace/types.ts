@@ -30,6 +30,8 @@ export type DemoCollection = {
   capturedAt: string;
   coverAssetId: string | null;
   assetIds: string[];
+  photosLoaded?: boolean;
+  assetCount?: number;
 };
 
 export type DemoAsset = {
