@@ -933,7 +933,14 @@ export default function AdminWorkspace({ live = false }: { live?: boolean }) {
         <div className="mx-auto flex max-w-screen-2xl flex-col gap-6 px-4 py-5 sm:px-6 lg:flex-row lg:px-8">
           <aside className="lg:sticky lg:top-5 lg:h-[calc(100vh-2.5rem)] lg:w-80 lg:flex-none">
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-sm ring-1 ring-gray-100/60">
-              {live && <Link href="/admin/seo" className="block border-b border-gray-100 px-5 py-3 text-sm font-medium text-blue-700 hover:bg-blue-50">搜尋與分享設定 ↗</Link>}
+              {live && (
+                <Link
+                  href="/admin/seo"
+                  className="block border-b border-gray-100 px-5 py-3 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                >
+                  搜尋與分享設定 ↗
+                </Link>
+              )}
               <div className="border-b border-gray-100 p-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
@@ -1782,6 +1789,7 @@ function WorkspaceSection({
                   location={selectedLocation}
                   assets={workspace.assets}
                   onSave={onSaveLocation}
+                  onPreviewAsset={onPreviewAsset}
                 />
               </div>
             ) : (
@@ -1892,12 +1900,13 @@ function LocationEditPanel({
   location,
   assets,
   onSave,
+  onPreviewAsset,
 }: {
   location: DemoLocation;
   assets: DemoAsset[];
   onSave: (location: DemoLocation) => void;
+  onPreviewAsset: (asset: DemoAsset) => void;
 }) {
-  const live = useContext(LiveContext);
   const draft = useSyncedDraft({
     name: location.name,
     slug: location.slug,
@@ -1940,15 +1949,12 @@ function LocationEditPanel({
         onChange={setSummary}
       />
       <DemoCoverPicker
-        assets={
-          live
-            ? assets.filter(
-                (asset) => asset.locationId === location.id || asset.id === coverAssetId
-              )
-            : assets
-        }
+        label="地點封面"
+        assets={assets.filter((asset) => asset.locationId === location.id)}
+        selectedAsset={assets.find((asset) => asset.id === coverAssetId)}
         selectedAssetId={coverAssetId}
         onSelect={setCoverAssetId}
+        onPreviewAsset={onPreviewAsset}
       />
       <button
         type="button"
@@ -2079,7 +2085,14 @@ function CollectionDetailPanel({
         value={summary}
         onChange={setSummary}
       />
-      <DemoCoverPicker assets={assets} selectedAssetId={coverAssetId} onSelect={setCoverAssetId} />
+      <DemoCoverPicker
+        label="作品集封面"
+        assets={assets.filter((asset) => collection.assetIds.includes(asset.id))}
+        selectedAsset={assets.find((asset) => asset.id === coverAssetId)}
+        selectedAssetId={coverAssetId}
+        onSelect={setCoverAssetId}
+        onPreviewAsset={onPreviewAsset}
+      />
       {assets.find((asset) => asset.id === coverAssetId) && (
         <button
           type="button"
@@ -2112,53 +2125,86 @@ function CollectionDetailPanel({
 }
 
 function DemoCoverPicker({
+  label,
   assets,
+  selectedAsset,
   selectedAssetId,
   onSelect,
+  onPreviewAsset,
 }: {
+  label: string;
   assets: DemoAsset[];
+  selectedAsset?: DemoAsset;
   selectedAssetId: string | null;
   onSelect: (assetId: string | null) => void;
+  onPreviewAsset: (asset: DemoAsset) => void;
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div>
+    <section aria-label={label} className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-medium text-gray-800">封面圖片</p>
-          <p className="text-xs text-gray-500">選擇封面後，按儲存套用至目前地點或作品集。</p>
+          <p className="text-sm font-medium text-gray-800">{label}</p>
+          <p className="text-xs text-gray-500">選好後仍需按儲存套用。</p>
         </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className={secondaryButton}
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          >
+            {open ? '關閉選擇' : '選擇封面'}
+          </button>
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => onSelect(null)}
+            disabled={!selectedAssetId}
+          >
+            清除選擇
+          </button>
+        </div>
+      </div>
+      {selectedAsset ? (
         <button
           type="button"
-          className={secondaryButton}
-          onClick={() => onSelect(null)}
-          disabled={!selectedAssetId}
+          className={`block w-40 rounded-xl border border-gray-200 p-2 text-left ${focusRing}`}
+          aria-label={`預覽目前${label}`}
+          onClick={() => onPreviewAsset(selectedAsset)}
         >
-          清除選擇
+          <DemoAssetThumbnail asset={selectedAsset} />
+          <span className="mt-2 block truncate text-xs">{selectedAsset.title}</span>
         </button>
-      </div>
-      {assets.length === 0 ? (
-        <EmptyState title="沒有可選封面" description="目前沒有可選取的媒體。" />
       ) : (
-        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-3">
-          {assets.map((asset) => {
-            const selected = asset.id === selectedAssetId;
-            return (
+        <p className="text-xs text-gray-500">
+          {selectedAssetId ? '目前封面暫時無法預覽' : '尚未選擇封面'}
+        </p>
+      )}
+      {open &&
+        (assets.length === 0 ? (
+          <EmptyState title="沒有可選封面" description="請先將照片加入此作品集或地點。" />
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-3">
+            {assets.map((asset) => (
               <button
                 key={asset.id}
                 type="button"
-                aria-pressed={selected}
-                onClick={() => onSelect(asset.id)}
-                className={`min-w-0 rounded-xl border p-2 text-left transition ${focusRing} ${selected ? 'border-blue-300 ring-2 ring-blue-200' : 'border-gray-200 hover:border-blue-200'}`}
+                aria-label={`選用 ${asset.title}`}
+                aria-pressed={asset.id === selectedAssetId}
+                onClick={() => {
+                  onSelect(asset.id);
+                  setOpen(false);
+                }}
+                className={`min-w-0 rounded-xl border p-2 text-left transition ${focusRing} ${asset.id === selectedAssetId ? 'border-blue-300 ring-2 ring-blue-200' : 'border-gray-200 hover:border-blue-200'}`}
               >
                 <DemoAssetThumbnail asset={asset} />
                 <p className="mt-2 truncate text-xs font-medium text-gray-800">{asset.title}</p>
-                <p className="truncate text-[11px] text-gray-500">{asset.id}</p>
               </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        ))}
+    </section>
   );
 }
 

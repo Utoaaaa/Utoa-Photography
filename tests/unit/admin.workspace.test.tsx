@@ -352,3 +352,52 @@ test('one failed year does not prevent another year from becoming available', as
     expect.objectContaining({ collections: expect.any(Array) })
   );
 });
+
+test('cover choices stay within the collection or location and collapse after selection', async () => {
+  const original = mockFetch.getMockImplementation()!;
+  mockFetch.mockImplementation(async (url: string, init: RequestInit) => {
+    if (url.includes('/assets?'))
+      return response({
+        data: [
+          { id: 'a1', alt: '作品集內照片', location_folder_id: 'l1' },
+          { id: 'a2', alt: '其他地點照片', location_folder_id: 'elsewhere' },
+          { id: 'a3', alt: '地點內其他照片', location_folder_id: 'l1' },
+        ],
+        total: 3,
+      });
+    return original(url, init);
+  });
+  render(<AdminWorkspace live />);
+  await openCollection();
+  const collectionPicker = within(screen.getByRole('region', { name: '作品集封面' }));
+  expect(collectionPicker.queryByRole('button', { name: /^選用 / })).not.toBeInTheDocument();
+  fireEvent.click(collectionPicker.getByRole('button', { name: '選擇封面' }));
+  expect(collectionPicker.getAllByRole('button', { name: /^選用 / })).toHaveLength(1);
+  fireEvent.click(collectionPicker.getByRole('button', { name: '選用 作品集內照片' }));
+  expect(collectionPicker.getByRole('button', { name: '選擇封面' })).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  expect(collectionPicker.getByRole('button', { name: '預覽目前作品集封面' })).toBeInTheDocument();
+  const locationPicker = within(screen.getByRole('region', { name: '地點封面' }));
+  fireEvent.click(locationPicker.getByRole('button', { name: '選擇封面' }));
+  expect(locationPicker.getAllByRole('button', { name: /^選用 / })).toHaveLength(2);
+  expect(
+    locationPicker.queryByRole('button', { name: '選用 其他地點照片' })
+  ).not.toBeInTheDocument();
+  fireEvent.click(locationPicker.getByRole('button', { name: '選用 地點內其他照片' }));
+  expect(locationPicker.getByRole('button', { name: '選擇封面' })).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  fireEvent.click(locationPicker.getByRole('button', { name: '選擇封面' }));
+  fireEvent.click(locationPicker.getByRole('button', { name: '關閉選擇' }));
+  expect(locationPicker.getByRole('button', { name: '預覽目前地點封面' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '儲存地點' }));
+  await waitFor(() =>
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/admin/years/y1/locations',
+      expect.objectContaining({ method: 'PUT', body: expect.stringContaining('a3') })
+    )
+  );
+});
