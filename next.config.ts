@@ -43,22 +43,6 @@ const baseConfig: NextConfig = {
   // experimental: { optimizePackageImports: ['gsap', 'lenis'] },
   
   // Headers for performance and security
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'host',
-            value: 'www.utoa.studio',
-          },
-        ],
-        destination: 'https://utoa.studio/:path*',
-        permanent: true,
-      },
-    ];
-  },
-
   async headers() {
     const isDev = process.env.NODE_ENV !== 'production';
     const imgSrcExtras: string[] = [];
