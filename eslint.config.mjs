@@ -1,14 +1,6 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
 import { globalIgnores } from "eslint/config";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
 const eslintConfig = [
   globalIgnores([
@@ -19,13 +11,21 @@ const eslintConfig = [
     "**/next-env.d.ts",
     "**/.open-next/**",
   ]),
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextVitals,
+  ...nextTs,
   {
+    // Match eslint-config-next's file globs; its plugins (e.g. react-hooks) only exist for these files.
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/ban-ts-comment": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
       "react-hooks/exhaustive-deps": "warn",
+      // React Compiler rules added by eslint-plugin-react-hooks v7 (eslint-config-next 16); surface as warnings until components are refactored
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/error-boundaries": "warn",
       // 禁用可選呼叫與可選方法呼叫，避免被轉譯成 .call() 導致 RSC/SSR 問題
       "no-restricted-syntax": [
         "error",

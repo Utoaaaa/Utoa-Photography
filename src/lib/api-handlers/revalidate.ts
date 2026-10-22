@@ -110,7 +110,7 @@ async function invalidatePreciseTargets(targets: {
   // Home page invalidation
   if (targets.home) {
     revalidatePath('/');
-    revalidateTag('homepage');
+    revalidateTag('homepage', 'max');
     invalidatedPaths.push('/');
     invalidatedTags.push('homepage');
   }
@@ -123,8 +123,8 @@ async function invalidatePreciseTargets(targets: {
       if (year?.label) {
         const yearPath = `/${year.label}`;
         revalidatePath(yearPath);
-        revalidateTag(`years:${targets.year}`);
-        revalidateTag(`collections:year:${targets.year}`);
+        revalidateTag(`years:${targets.year}`, 'max');
+        revalidateTag(`collections:year:${targets.year}`, 'max');
         invalidatedPaths.push(yearPath);
         invalidatedTags.push(`years:${targets.year}`, `collections:year:${targets.year}`);
       }
@@ -141,8 +141,8 @@ async function invalidatePreciseTargets(targets: {
       if (collection?.year?.label && collection.slug) {
         const collectionPath = `/${collection.year.label}/${collection.slug}`;
         revalidatePath(collectionPath);
-        revalidateTag(`collections:${targets.collection}`);
-        revalidateTag(`assets:collection:${targets.collection}`);
+        revalidateTag(`collections:${targets.collection}`, 'max');
+        revalidateTag(`assets:collection:${targets.collection}`, 'max');
         invalidatedPaths.push(collectionPath);
         invalidatedTags.push(`collections:${targets.collection}`, `assets:collection:${targets.collection}`);
       }

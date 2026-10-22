@@ -5,10 +5,6 @@ import path from 'path';
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 
 const baseConfig: NextConfig = {
-  // Allow builds to proceed without ESLint blocking (deployment focus)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -23,15 +19,15 @@ const baseConfig: NextConfig = {
   
   // Image optimization (we serve from external CDN directly)
   images: {
-    domains: (() => {
-      const domains = ['imagedelivery.net','images.utoa.studio'];
+    remotePatterns: (() => {
+      const hostnames = ['imagedelivery.net','images.utoa.studio'];
       const r2Host = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_HOST;
-      if (r2Host) domains.push(r2Host);
+      if (r2Host) hostnames.push(r2Host);
       const r2Origin = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_ORIGIN;
       if (r2Origin) {
-        try { domains.push(new URL(r2Origin).host); } catch {}
+        try { hostnames.push(new URL(r2Origin).host); } catch {}
       }
-      return domains;
+      return hostnames.map((hostname) => ({ hostname }));
     })(),
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

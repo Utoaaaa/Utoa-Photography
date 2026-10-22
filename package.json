@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "bundle-analyze": "ANALYZE=true next build",
-    "opennext": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
+    "bundle-analyze": "ANALYZE=true next build --webpack",
+    "opennext": "opennextjs-cloudflare build",
     "dev:worker": "npm run opennext && wrangler dev",
     "start": "next start",
     "lint": "eslint",
@@ -55,7 +55,7 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.6",
+    "@opennextjs/cloudflare": "^1.20.13",
     "@prisma/adapter-d1": "^6.0.0",
     "@prisma/client": "^6.16.2",
     "@react-three/drei": "^10.7.6",
@@ -67,13 +67,13 @@
     "lenis": "^1.3.11",
     "lucide-react": "^0.544.0",
     "maath": "^0.10.7",
-    "next": "15.5.28",
+    "next": "16.4.2",
     "prisma": "^6.16.2",
     "react": "19.1.9",
     "react-dom": "19.1.9",
     "tailwind-merge": "^3.3.1",
     "three": "^0.180.0",
-    "wrangler": "^4.132.0",
+    "wrangler": "^4.151.3",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -82,7 +82,7 @@
     "@cloudflare/workers-types": "^5.20260916.1",
     "@eslint/eslintrc": "^3",
     "@lhci/cli": "^0.14.0",
-    "@next/bundle-analyzer": "15.5.28",
+    "@next/bundle-analyzer": "16.4.2",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.8.0",
@@ -94,7 +94,7 @@
     "axe-core": "^4.10.3",
     "esbuild": "^0.28.2",
     "eslint": "^9",
-    "eslint-config-next": "15.5.28",
+    "eslint-config-next": "16.4.2",
     "jest": "^30.1.3",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.1.2",

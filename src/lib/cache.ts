@@ -1,5 +1,5 @@
 // Lazy accessor to next/cache avoiding top-level require/import in non-Next envs
-type NextCacheModule = { revalidateTag: (tag: string) => void; revalidatePath: (path: string) => void };
+type NextCacheModule = { revalidateTag: (tag: string, profile: string) => void; revalidatePath: (path: string) => void };
 async function loadNextCache(): Promise<NextCacheModule | undefined> {
   try {
     // In Next runtime, this resolves; in tests or non-Next, it may throw
@@ -45,7 +45,7 @@ export async function revalidateTagsWithRetry(tags: string[], opts: RetryOpts = 
     let lastErr: any = null;
     for (let i = 0; i < attempts; i++) {
       try {
-        revalidateTag(tag);
+        revalidateTag(tag, 'max');
         success.push(tag);
         lastErr = null;
         break;
