@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "bundle-analyze": "ANALYZE=true next build",
-    "opennext": "opennextjs-cloudflare build",
+    "opennext": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
     "dev:worker": "npm run opennext && wrangler dev",
     "start": "next start",
     "lint": "eslint",
