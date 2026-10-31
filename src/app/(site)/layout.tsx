@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import MenuWrapper from '@/components/ui/MenuWrapper';
+import { SiteProviders } from '@/components/providers/SiteProviders';
 import { buildSiteMenuItems } from '@/lib/site-menu';
 
 export const metadata: Metadata = {
@@ -15,42 +16,44 @@ export default async function SiteLayout({
   const menuItems = await buildSiteMenuItems();
 
   return (
-    <div className="animated-site-shell">
-      {children}
-      <MenuWrapper menuItems={menuItems} />
-      <style>{`
-        .animated-site-shell {
-          --animated-shell-gutter: max(1.5rem, calc((100vw - 80rem) / 2));
-        }
-
-        .animated-site-shell .sm-scope .sm-toggle {
-          right: var(--animated-shell-gutter);
-        }
-
-        .animated-site-shell .sm-scope .sm-toggle .sm-toggle-line {
-          font-family: var(--font-serif);
-          font-weight: 600;
-          letter-spacing: 0.04em;
-        }
-
-        @media (min-width: 640px) {
+    <SiteProviders>
+      <div className="animated-site-shell">
+        {children}
+        <MenuWrapper menuItems={menuItems} />
+        <style>{`
           .animated-site-shell {
-            --animated-shell-gutter: max(2rem, calc((100vw - 80rem) / 2));
+            --animated-shell-gutter: max(1.5rem, calc((100vw - 80rem) / 2));
           }
-        }
 
-        @media (min-width: 768px) {
-          .animated-site-shell {
-            --animated-shell-gutter: max(3rem, calc((100vw - 80rem) / 2));
+          .animated-site-shell .sm-scope .sm-toggle {
+            right: var(--animated-shell-gutter);
           }
-        }
 
-        @media (min-width: 1536px) {
-          .animated-site-shell:has(.animated-collection-viewer) {
-            --animated-shell-gutter: max(3rem, calc((100vw - 128rem) / 2));
+          .animated-site-shell .sm-scope .sm-toggle .sm-toggle-line {
+            font-family: var(--font-serif);
+            font-weight: 600;
+            letter-spacing: 0.04em;
           }
-        }
-      `}</style>
-    </div>
+
+          @media (min-width: 640px) {
+            .animated-site-shell {
+              --animated-shell-gutter: max(2rem, calc((100vw - 80rem) / 2));
+            }
+          }
+
+          @media (min-width: 768px) {
+            .animated-site-shell {
+              --animated-shell-gutter: max(3rem, calc((100vw - 80rem) / 2));
+            }
+          }
+
+          @media (min-width: 1536px) {
+            .animated-site-shell:has(.animated-collection-viewer) {
+              --animated-shell-gutter: max(3rem, calc((100vw - 128rem) / 2));
+            }
+          }
+        `}</style>
+      </div>
+    </SiteProviders>
   );
 }

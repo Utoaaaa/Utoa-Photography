@@ -1,4 +1,5 @@
-export type GSAPBundle = { gsap: any; ScrollTrigger: any } | null;
+// GSAP core only: no live component creates ScrollTriggers, so the plugin is not loaded.
+export type GSAPBundle = { gsap: any } | null;
 
 let p: Promise<GSAPBundle> | null = null;
 
@@ -9,22 +10,11 @@ export async function loadGSAP(): Promise<GSAPBundle> {
   if (p) return p;
   p = (async () => {
     try {
-      const [core, st] = await Promise.all([
-        import('gsap'),
-        import('gsap/ScrollTrigger'),
-      ]);
+      const core = await import('gsap');
       const gsap: any = (core as any).gsap ?? (core as any).default ?? core;
-      const ST: any = (st as any).ScrollTrigger ?? (st as any).default ?? st;
       if (!gsap || typeof gsap.to !== 'function') return null;
-      const hasST = !!(
-        gsap.core &&
-        typeof gsap.core.globals === 'function' &&
-        gsap.core.globals() &&
-        (gsap.core.globals() as any).ScrollTrigger
-      );
-      if (!hasST && typeof ST === 'function') gsap.registerPlugin(ST);
-      return { gsap, ScrollTrigger: ST };
-    } catch (_e) {
+      return { gsap };
+    } catch {
       return null;
     }
   })();

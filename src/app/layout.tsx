@@ -1,11 +1,7 @@
 import type { Metadata } from 'next';
 import { Noto_Serif_TC } from 'next/font/google';
 import './globals.css';
-import { SmoothScroll } from '@/components/SmoothScroll';
-import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
-import { LoaderStateProvider } from '@/components/providers/LoaderStateProvider';
 import { getSiteUrl, getSiteUrlMetadataBase } from '@/lib/site-url';
-import LoaderClient from './loader-client';
 
 const utoaSerif = Noto_Serif_TC({
   subsets: ['latin'],
@@ -52,16 +48,8 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body className={`${utoaSerif.variable} antialiased`} style={{ overscrollBehaviorX: 'auto' }}>
-        <SmoothScrollProvider>
-          <LoaderStateProvider>
-            {/* 啟用平滑滾動（Lenis） */}
-            <SmoothScroll />
-
-            {/* 全螢幕前導 Loader - 只在首次載入顯示 */}
-            <LoaderClient />
-            {children}
-          </LoaderStateProvider>
-        </SmoothScrollProvider>
+        {/* 平滑滾動與前導 Loader 由前台 layout 的 SiteProviders 掛載，後台不載入 */}
+        {children}
       </body>
     </html>
   );

@@ -61,6 +61,86 @@ test('findAssetCoversD1 reports collection and location covers', async () => {
   assert.equal((await findAssetCoversD1(d1(db), 'other-asset')).length, 0);
 });
 
+test('the public year/location tree loads in one batch and is shared by every lookup', async () => {
+  const db = migratedDatabase();
+  db.exec(`
+    INSERT INTO years (id, label, order_index, status, created_at, updated_at) VALUES
+      ('y25', '2025', '000002', 'published', 0, 0),
+      ('y26', '2026', '000001', 'published', 0, 0),
+      ('ydraft', '2027', '000003', 'draft', 0, 0);
+    INSERT INTO assets (id, alt, width, height, updated_at) VALUES ('cover', 'c', 1200, 800, 0), ('p1', 'p', 10, 10, 0);
+    INSERT INTO locations (id, year_id, slug, name, cover_asset_id, order_index, created_at, updated_at) VALUES
+      ('l10', 'y26', 'ten', 'Ten', 'cover', '10.0', 0, 0),
+      ('l9', 'y26', 'nine', 'Nine', NULL, '9.0', 0, 0),
+      ('lhidden', 'ydraft', 'hidden', 'Hidden', NULL, '1.0', 0, 0);
+    INSERT INTO collections (id, year_id, location_id, slug, title, status, order_index, updated_at) VALUES
+      ('c-food', 'y26', 'l10', 'food', 'Food', 'published', '1.0', 0),
+      ('c-late', 'y26', 'l10', 'late', 'Late', 'published', '000017', 0),
+      ('c-draft', 'y26', 'l10', 'draft', 'Draft', 'draft', '000002', 0),
+      ('c-hidden', 'ydraft', 'lhidden', 'secret', 'Secret', 'published', '1', 0);
+    INSERT INTO collection_assets (collection_id, asset_id, order_index) VALUES ('c-late', 'p1', '1');
+  `);
+  const adapter = d1(db);
+  let batches = 0;
+  const batch = adapter.batch;
+  adapter.batch = (statements) => { batches++; return batch(statements); };
+  // Per-request memoisation, like React cache() on the server.
+  const memo = (fn) => { const results = new Map(); return (...args) => {
+    const key = JSON.stringify(args);
+    if (!results.has(key)) results.set(key, fn(...args));
+    return results.get(key);
+  }; };
+  const load = sourceLoader({ env: { NODE_ENV: 'production' }, overrides: {
+    react: { cache: memo },
+    './d1-queries': { shouldUseD1Direct: () => true },
+    './cloudflare': { getD1Database: () => adapter },
+  } });
+  const tree = load('src/lib/year-location.ts');
+
+  const { years } = await tree.loadYearLocationData();
+  // Arrays come from the loader's VM realm, so compare joined strings.
+  assert.equal(years.map((year) => year.label).join(), '2026,2025');
+  const [y26] = years;
+  assert.equal(y26.locations.map((location) => location.slug).join(), 'nine,ten');
+  const ten = y26.locations[1];
+  assert.equal(ten.coverAssetWidth, 1200);
+  assert.equal(ten.collections.map((c) => `${c.slug}:${c.photoCount}`).join(), 'food:0,late:1');
+
+  assert.equal((await tree.loadYearLocationNavData()).map((year) => year.locations.length).join(), '2,0');
+  assert.equal((await tree.getLocationByYearAndSlugCached('2026', 'ten')).location.id, 'l10');
+  assert.equal(await tree.getLocationByYearAndSlug('2027', 'hidden'), null);
+  assert.equal((await tree.getYearByLabel('2025')).id, 'y25');
+  assert.equal(await tree.getYearByLabel('2027'), null);
+  assert.equal(batches, 1);
+  assert.equal(adapter.prepared.length, 3);
+});
+
+test('the collection viewer returns a published collection and its photos in one batch', async () => {
+  const db = migratedDatabase();
+  db.exec(`
+    INSERT INTO years (id, label, order_index, status, created_at, updated_at) VALUES ('y26', '2026', '1', 'published', 0, 0);
+    INSERT INTO locations (id, year_id, slug, name, order_index, created_at, updated_at) VALUES ('l1', 'y26', 'nz', 'NZ', '1.0', 0, 0);
+    INSERT INTO assets (id, alt, width, height, updated_at) VALUES ('p1', 'one', 10, 10, 0), ('p2', 'two', 20, 20, 0);
+    INSERT INTO collections (id, year_id, location_id, slug, title, status, order_index, updated_at) VALUES
+      ('c1', 'y26', 'l1', 'night', 'Night', 'published', '1', 0),
+      ('c2', 'y26', 'l1', 'secret', 'Secret', 'draft', '2', 0);
+    INSERT INTO collection_assets (collection_id, asset_id, order_index) VALUES ('c1', 'p2', '10'), ('c1', 'p1', '9'), ('c2', 'p1', '1');
+  `);
+  const adapter = d1(db);
+  const viewer = sourceLoader({ env: { NODE_ENV: 'production' }, overrides: {
+    react: { cache: (fn) => fn },
+    '@/lib/d1-queries': { shouldUseD1Direct: () => true },
+    '@/lib/cloudflare': { getD1Database: () => adapter },
+  } })('src/lib/viewer/collection.ts');
+
+  const night = await viewer.fetchCollectionForViewer({ yearLabel: '2026', slug: 'night' });
+  assert.equal(night.location.slug, 'nz');
+  assert.equal(night.photos.map((photo) => photo.alt).join(), 'one,two');
+  assert.equal((await viewer.fetchCollectionByIdForViewer('c1')).collection.slug, 'night');
+  assert.equal(await viewer.fetchCollectionForViewer({ yearLabel: '2026', slug: 'secret' }), null);
+  assert.equal(await viewer.fetchCollectionByIdForViewer('c2'), null);
+});
+
 test('selectIn stays under the D1 parameter limit and returns every matching row', async () => {
   const db = migratedDatabase();
   const insert = db.prepare("INSERT INTO years (id, label, order_index, status, created_at, updated_at) VALUES (?, ?, ?, 'published', 0, 0)");

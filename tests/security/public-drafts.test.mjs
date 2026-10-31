@@ -71,15 +71,18 @@ test('public collection detail hides drafts and collections of draft years', asy
 test('site viewer queries require both the collection and its year to be published', async () => {
   const statements = [];
   const db = {
-    prepare: sql => { statements.push(sql); return { bind: () => ({ first: async () => null }) }; },
+    prepare: sql => { statements.push(sql); return { bind: () => ({}) }; },
+    batch: async list => list.map(() => ({ results: [] })),
   };
   const load = sourceLoader({ env, overrides: {
+    react: { cache: fn => fn },
     '@/lib/d1-queries': d1,
     '@/lib/cloudflare': { getD1Database: () => db },
   } });
   const viewer = load('src/lib/viewer/collection.ts');
   assert.equal(await viewer.fetchCollectionForViewer({ yearLabel: '2026', slug: 'night' }), null);
   assert.equal(await viewer.fetchCollectionByIdForViewer('c1'), null);
-  assert.equal(statements.length, 2);
+  // Each lookup is one batch: the collection row and its photos, both behind the published filter.
+  assert.equal(statements.length, 4);
   for (const sql of statements) assert.match(sql, /c\.status = 'published' AND y\.status = 'published'/);
 });

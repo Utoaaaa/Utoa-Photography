@@ -13,7 +13,7 @@ jest.mock('next/navigation', () => ({
   notFound: () => mockNotFound(),
 }));
 
-jest.mock('@/lib/queries/years', () => ({
+jest.mock('@/lib/year-location', () => ({
   getYearByLabel: (label: string) => mockGetYearByLabel(label),
 }));
 

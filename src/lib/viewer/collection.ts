@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from '@/lib/d1-queries';
@@ -62,25 +63,11 @@ export interface CollectionViewerPayload {
   photos: Array<{ id: string; alt: string; caption: string | null; width: number; height: number }>;
 }
 
-async function buildCollectionResponseD1(row: D1CollectionRow): Promise<CollectionViewerPayload> {
-  const db = requireD1();
-
-  const assetsResult = await db.prepare(
-    `
-      SELECT
-        a.id,
-        a.alt,
-        a.caption,
-        a.width,
-        a.height
-      FROM collection_assets ca
-      JOIN assets a ON a.id = ca.asset_id
-      WHERE ca.collection_id = ?1
-      ORDER BY CAST(ca.order_index AS REAL) ASC, ca.order_index ASC, ca.created_at ASC
-    `,
-  ).bind(row.id).all();
-
-  const photos = (assetsResult.results ?? []).map((asset: Record<string, unknown>) => ({
+function buildCollectionResponseD1(
+  row: D1CollectionRow,
+  assetRows: Array<Record<string, unknown>>,
+): CollectionViewerPayload {
+  const photos = assetRows.map((asset) => ({
     id: String(asset.id),
     alt: String(asset.alt ?? ''),
     caption: asset.caption != null ? String(asset.caption) : null,
@@ -110,12 +97,15 @@ async function buildCollectionResponseD1(row: D1CollectionRow): Promise<Collecti
   };
 }
 
-async function fetchCollectionBySlugD1(params: { yearLabel: string; slug: string }) {
-  const { yearLabel, slug } = params;
+/**
+ * `collectionIdSql` selects the id of the one published collection to show. Both statements
+ * resolve it through that same subquery, so a single batch round trip returns the collection
+ * and its photos (previously two sequential round trips).
+ */
+async function fetchPublishedCollectionD1(collectionIdSql: string, bindings: unknown[]) {
   const db = requireD1();
-
-  const row = await db
-    .prepare(
+  const [rowResult, photosResult] = await db.batch([
+    db.prepare(
       `
         SELECT
           c.id,
@@ -132,56 +122,55 @@ async function fetchCollectionBySlugD1(params: { yearLabel: string; slug: string
         FROM collections c
         JOIN years y ON y.id = c.year_id
         LEFT JOIN locations l ON l.id = c.location_id
-        WHERE c.slug = ?1 AND y.label = ?2
-          AND c.status = 'published' AND y.status = 'published'
-        ORDER BY y.created_at DESC, c.created_at DESC
-        LIMIT 1
+        WHERE c.id = (${collectionIdSql})
       `,
-    )
-    .bind(slug, yearLabel)
-    .first() as D1CollectionRow | null;
+    ).bind(...bindings),
+    db.prepare(
+      `
+        SELECT
+          a.id,
+          a.alt,
+          a.caption,
+          a.width,
+          a.height
+        FROM collection_assets ca
+        JOIN assets a ON a.id = ca.asset_id
+        WHERE ca.collection_id = (${collectionIdSql})
+        ORDER BY CAST(ca.order_index AS REAL) ASC, ca.order_index ASC, ca.created_at ASC
+      `,
+    ).bind(...bindings),
+  ]);
 
-  if (!row) {
-    return null;
-  }
-
-  return buildCollectionResponseD1(row);
+  const row = (rowResult.results ?? [])[0] as D1CollectionRow | undefined;
+  return row ? buildCollectionResponseD1(row, photosResult.results ?? []) : null;
 }
 
-async function fetchCollectionByIdD1(collectionId: string) {
-  const db = requireD1();
+function fetchCollectionBySlugD1(params: { yearLabel: string; slug: string }) {
+  return fetchPublishedCollectionD1(
+    `
+      SELECT c.id
+      FROM collections c
+      JOIN years y ON y.id = c.year_id
+      WHERE c.slug = ?1 AND y.label = ?2
+        AND c.status = 'published' AND y.status = 'published'
+      ORDER BY y.created_at DESC, c.created_at DESC
+      LIMIT 1
+    `,
+    [params.slug, params.yearLabel],
+  );
+}
 
-  const row = await db
-    .prepare(
-      `
-        SELECT
-          c.id,
-          c.slug,
-          c.title,
-          c.summary,
-          c.location_id,
-          c.year_id,
-          y.label AS year_label,
-          y.status AS year_status,
-          l.slug AS location_slug,
-          l.name AS location_name,
-          l.summary AS location_summary
-        FROM collections c
-        JOIN years y ON y.id = c.year_id
-        LEFT JOIN locations l ON l.id = c.location_id
-        WHERE c.id = ?1
-          AND c.status = 'published' AND y.status = 'published'
-        LIMIT 1
-      `,
-    )
-    .bind(collectionId)
-    .first() as D1CollectionRow | null;
-
-  if (!row) {
-    return null;
-  }
-
-  return buildCollectionResponseD1(row);
+function fetchCollectionByIdD1(collectionId: string) {
+  return fetchPublishedCollectionD1(
+    `
+      SELECT c.id
+      FROM collections c
+      JOIN years y ON y.id = c.year_id
+      WHERE c.id = ?1
+        AND c.status = 'published' AND y.status = 'published'
+    `,
+    [collectionId],
+  );
 }
 
 function mapPrismaCollection(collection: NonNullable<PrismaCollectionWithRelations>): CollectionViewerPayload {
@@ -216,7 +205,11 @@ export async function fetchCollectionForViewer(params: {
   yearLabel: string;
   slug: string;
 }): Promise<CollectionViewerPayload | null> {
-  const { yearLabel, slug } = params;
+  // Primitive arguments so generateMetadata and the page share one lookup per request.
+  return fetchPublishedCollection(params.yearLabel, params.slug);
+}
+
+const fetchPublishedCollection = cache(async (yearLabel: string, slug: string) => {
   if (localTestDataForced) {
     return getLocalCollectionForViewer({ yearLabel, slug });
   }
@@ -260,7 +253,7 @@ export async function fetchCollectionForViewer(params: {
     console.warn(`[local-test-data] Falling back to local collection data for ${yearLabel}/${slug}:`, error);
     return getLocalCollectionForViewer({ yearLabel, slug });
   }
-}
+});
 
 export async function fetchCollectionByIdForViewer(collectionId: string): Promise<CollectionViewerPayload | null> {
   if (shouldUseD1Direct()) {

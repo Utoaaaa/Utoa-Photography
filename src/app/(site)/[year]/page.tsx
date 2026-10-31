@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { buildYearHref } from '@/lib/site-paths';
-import { getYearByLabel } from '@/lib/queries/years';
+// Published years only, read from the tree the site layout already loaded for this request.
+import { getYearByLabel } from '@/lib/year-location';
 
 interface YearPageProps {
   params: Promise<{

@@ -4,11 +4,8 @@ import { useEffect, useRef } from 'react';
 import { useSmoothScroll } from '@/components/providers/SmoothScrollProvider';
 
 interface LenisLike {
-  scroll: number;
   raf: (time: number) => void;
-  on: (event: 'scroll', handler: () => void) => void;
   destroy: () => void;
-  resize?: () => void;
   scrollTo: (value: number | HTMLElement | string, options?: { immediate?: boolean }) => void;
 }
 
@@ -36,14 +33,16 @@ export function SmoothScroll() {
     }
 
     let active = true;
-    let scrollTriggerCleanup: (() => void) | null = null;
 
     (async () => {
       try {
         console.log('[Lenis] Starting initialization...');
-        
+
         // 動態匯入 Lenis
         const mod = await import('lenis');
+        // The effect may have been cleaned up while the import was pending; an instance created
+        // now would never be destroyed and would keep swallowing wheel events.
+        if (!active) return;
         const Lenis = mod.default as unknown;
         if (typeof Lenis !== 'function') {
           console.warn('[Lenis] Module missing default export. Abort initialization.');
@@ -59,64 +58,12 @@ export function SmoothScroll() {
           touchMultiplier: 2,
         });
         lenisRef.current = lenis;
-  setLenis(lenis);
+        setLenis(lenis);
 
         console.log('[Lenis] Instance created');
 
-        // 整合 GSAP ScrollTrigger
-        try {
-          const gsapModule = await import('gsap');
-          const ScrollTriggerModule = await import('gsap/ScrollTrigger');
-          const gsap = gsapModule.gsap || gsapModule.default;
-          const ScrollTrigger = ScrollTriggerModule.ScrollTrigger || ScrollTriggerModule.default;
-
-          if (gsap && ScrollTrigger) {
-            gsap.registerPlugin(ScrollTrigger);
-            
-            // 讓 ScrollTrigger 跟著 Lenis 更新
-            lenis.on('scroll', () => ScrollTrigger.update());
-            
-            const scroller = document.documentElement;
-
-            ScrollTrigger.scrollerProxy(scroller, {
-              scrollTop(value) {
-                if (typeof value === 'number') {
-                  lenis.scrollTo(value, { immediate: true });
-                  return;
-                }
-                return lenis.scroll ?? window.scrollY;
-              },
-              getBoundingClientRect() {
-                return {
-                  top: 0,
-                  left: 0,
-                  width: window.innerWidth,
-                  height: window.innerHeight,
-                };
-              },
-              pinType: document.body.style.transform ? 'transform' : 'fixed',
-            });
-
-            const onRefresh = () => {
-              if (typeof lenis.resize === 'function') {
-                lenis.resize();
-              }
-            };
-            ScrollTrigger.addEventListener('refresh', onRefresh);
-
-            ScrollTrigger.refresh();
-
-            scrollTriggerCleanup = () => {
-              ScrollTrigger.removeEventListener('refresh', onRefresh);
-            };
-
-            gsap.ticker.lagSmoothing(0);
-            
-            console.log('[Lenis] GSAP ScrollTrigger integrated');
-          }
-        } catch (gsapError) {
-          console.warn('[Lenis] GSAP integration skipped:', gsapError);
-        }
+        // No live component creates ScrollTriggers, so Lenis is not wired to GSAP; this also
+        // keeps GSAP and ScrollTrigger out of the smooth-scroll code path.
 
         // 啟動 RAF 循環
         const raf = (time: number) => {
@@ -138,10 +85,6 @@ export function SmoothScroll() {
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
       }
-      if (scrollTriggerCleanup) {
-        scrollTriggerCleanup();
-      }
-      scrollTriggerCleanup = null;
 
       if (lenisRef.current) {
         const lenis = lenisRef.current;

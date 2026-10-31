@@ -1,4 +1,4 @@
-import type { YearEntry, YearLocationPayload, YearNavEntry } from './year-location';
+import type { YearEntry, YearLocationPayload } from './year-location';
 import type { CollectionViewerPayload } from './viewer/collection';
 
 export const localTestDataForced = process.env.UTOA_ENABLE_LOCAL_TEST_DATA === 'true';
@@ -196,37 +196,6 @@ export function getLocalYearLocationData(): YearLocationPayload {
     generatedAt: localYearLocationData.generatedAt,
     years: localYearLocationData.years.map(cloneYear),
   };
-}
-
-export function getLocalYearByLabel(label: string): YearEntry | null {
-  const year = localYearLocationData.years.find((entry) => entry.label === label);
-  return year ? cloneYear(year) : null;
-}
-
-export function getLocalLocationByYearAndSlug(
-  label: string,
-  slug: string,
-): { year: YearEntry; location: YearEntry['locations'][number] } | null {
-  const year = getLocalYearByLabel(label);
-  if (!year) return null;
-
-  const location = year.locations.find((entry) => entry.slug === slug);
-  return location ? { year, location } : null;
-}
-
-export function getLocalYearLocationNavData(): YearNavEntry[] {
-  return localYearLocationData.years.map((year) => ({
-    id: year.id,
-    label: year.label,
-    orderIndex: year.orderIndex,
-    status: year.status,
-    locations: year.locations.map((location) => ({
-      id: location.id,
-      slug: location.slug,
-      name: location.name,
-      orderIndex: location.orderIndex,
-    })),
-  }));
 }
 
 export function getLocalCollectionForViewer(params: {

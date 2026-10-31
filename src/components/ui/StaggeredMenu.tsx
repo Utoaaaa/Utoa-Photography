@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import GlassSurface from '@/components/ui/GlassSurface';
 import { useLenisInstance } from '@/components/providers/SmoothScrollProvider';
 import { loadGSAP } from '@/lib/gsap-loader';
@@ -748,12 +749,16 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                       className="sm-panel-itemWrap relative overflow-hidden leading-none"
                       key={it.label + idx}
                     >
-                      <a
+                      {/* Client-side navigation: a plain <a> reloaded the whole page (JS, Lenis,
+                          menu data) on every menu click. No prefetch, to avoid a Worker request
+                          per link each time the menu opens. */}
+                      <Link
                         className={
                           'sm-panel-item relative text-gray-900 font-serif font-semibold cursor-pointer leading-none tracking-tight transition-colors duration-300 ease-out inline-block no-underline ' +
                           (it.variant ? `sm-panel-item--${it.variant}` : 'sm-panel-item--default')
                         }
                         href={it.link}
+                        prefetch={false}
                         aria-label={it.ariaLabel}
                         data-index={idx + 1}
                         onClick={handleMenuItemClick}
@@ -761,7 +766,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                         <span className="sm-panel-itemLabel inline-block [transform-origin:50%_100%] will-change-transform">
                           {it.label}
                         </span>
-                      </a>
+                      </Link>
                     </li>
                   ))
                 ) : (
@@ -798,15 +803,26 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
                           return (
                             <li key={item.label + i} className="sm-utility-item">
-                              <a
-                                href={item.link}
-                                target={isExternal ? '_blank' : undefined}
-                                rel={isExternal ? 'noopener noreferrer' : undefined}
-                                className="sm-utility-link text-base font-light text-gray-700 no-underline relative inline-block transition-colors duration-300 ease-out hover:text-gray-900"
-                                onClick={handleMenuItemClick}
-                              >
-                                {item.label}
-                              </a>
+                              {isExternal ? (
+                                <a
+                                  href={item.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="sm-utility-link text-base font-light text-gray-700 no-underline relative inline-block transition-colors duration-300 ease-out hover:text-gray-900"
+                                  onClick={handleMenuItemClick}
+                                >
+                                  {item.label}
+                                </a>
+                              ) : (
+                                <Link
+                                  href={item.link}
+                                  prefetch={false}
+                                  className="sm-utility-link text-base font-light text-gray-700 no-underline relative inline-block transition-colors duration-300 ease-out hover:text-gray-900"
+                                  onClick={handleMenuItemClick}
+                                >
+                                  {item.label}
+                                </Link>
+                              )}
                             </li>
                           );
                         })}

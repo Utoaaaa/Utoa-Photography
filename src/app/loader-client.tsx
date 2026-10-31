@@ -6,15 +6,24 @@ import { gsap } from 'gsap';
 import Loader from '@/components/Loader';
 import { useLoaderState } from '@/components/providers/LoaderStateProvider';
 
+// The site layouts mount this again when a client navigation enters them from another
+// layout (e.g. /classic → /). The loader belongs to the first page load only.
+let mountedBefore = false;
+
 export default function LoaderClient() {
   const pathname = usePathname();
   const hideTimeoutRef = useRef<number | null>(null);
+  const revealingRef = useRef(false);
   const isAdminRoute = !!pathname && pathname.startsWith('/admin');
-  const shouldSkipInitially = !!pathname && pathname !== '/' && !isAdminRoute;
+  const shouldSkipInitially = mountedBefore || (!!pathname && pathname !== '/' && !isAdminRoute);
   const { setLoaderActive } = useLoaderState();
 
   const [skipLoader, setSkipLoader] = useState(() => isAdminRoute || shouldSkipInitially);
   const [show, setShow] = useState(() => !(isAdminRoute || shouldSkipInitially));
+
+  useEffect(() => {
+    mountedBefore = true;
+  }, []);
 
   useEffect(() => {
     setLoaderActive(!skipLoader && show);
@@ -25,7 +34,9 @@ export default function LoaderClient() {
       const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
       if (mainContent) {
         mainContent.classList.remove('animated-loader-pending');
-        gsap.set(mainContent, { opacity: 1, scale: 1 });
+        // Clear instead of setting scale:1 — GSAP would leave `transform: translate(0, 0)`,
+        // which turns <main> into the containing block of its position:fixed backgrounds.
+        gsap.set(mainContent, { clearProps: 'opacity,transform' });
       }
     };
 
@@ -85,10 +96,10 @@ export default function LoaderClient() {
     if (mainContent && !skipLoader && show) {
       mainContent.classList.add('animated-loader-pending');
       gsap.set(mainContent, { opacity: 0, scale: 0.98 });
-    } else if (mainContent) {
-      // 客戶端導航時,確保內容可見
+    } else if (mainContent && !revealingRef.current) {
+      // 客戶端導航時,確保內容可見（入場動畫進行中時不打斷它）
       mainContent.classList.remove('animated-loader-pending');
-      gsap.set(mainContent, { opacity: 1, scale: 1 });
+      gsap.set(mainContent, { clearProps: 'opacity,transform' });
     }
 
     return () => observer.disconnect();
@@ -107,14 +118,19 @@ export default function LoaderClient() {
     const mainContent = document.querySelector('main') || document.querySelector('[data-main-content]');
     if (mainContent) {
       mainContent.classList.remove('animated-loader-pending');
+      revealingRef.current = true;
       gsap.to(
         mainContent,
-        { 
+        {
           opacity: 1,
           scale: 1,
           duration: 0.8,
           ease: 'power2.out',
           delay: 0.1,
+          clearProps: 'opacity,transform',
+          onComplete: () => {
+            revealingRef.current = false;
+          },
         }
       );
     }

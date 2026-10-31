@@ -3,14 +3,7 @@ import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from './d1-queries';
 import { getD1Database } from './cloudflare';
-import {
-  getLocalLocationByYearAndSlug,
-  getLocalYearByLabel,
-  getLocalYearLocationData,
-  getLocalYearLocationNavData,
-  localTestDataForced,
-  localTestDataEnabled,
-} from './local-test-data';
+import { getLocalYearLocationData, localTestDataForced, localTestDataEnabled } from './local-test-data';
 
 export interface LocationCollectionSummary {
   id: string;
@@ -229,45 +222,6 @@ async function fetchYears(where: YearWhereInput): Promise<YearRecord[]> {
   return attachCoverDimensions(years as unknown as YearRecord[], prisma);
 }
 
-async function fetchSingleYear(where: YearWhereInput): Promise<YearRecord | null> {
-  const prisma = await getPrisma();
-  const year = await prisma.year.findFirst({
-    where,
-    orderBy: { order_index: 'asc' },
-    include: {
-      locations: {
-        orderBy: { order_index: 'asc' },
-        include: {
-          collections: {
-            where: { status: 'published' },
-            orderBy: { order_index: 'asc' },
-            select: {
-              id: true,
-              slug: true,
-              title: true,
-              summary: true,
-              cover_asset_id: true,
-              order_index: true,
-              captured_at: true,
-              published_at: true,
-              updated_at: true,
-              _count: {
-                select: { collection_assets: true },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!year) {
-    return null;
-  }
-
-  return (await attachCoverDimensions([year as unknown as YearRecord], prisma))[0];
-}
-
 type D1YearRow = {
   id: string;
   label: string;
@@ -289,6 +243,7 @@ type D1LocationRow = {
 
 type D1CollectionRow = {
   id: string;
+  location_id: string;
   slug: string;
   title: string;
   summary: string | null;
@@ -302,31 +257,50 @@ type D1CollectionRow = {
   updated_at: string | null;
 };
 
-type D1LocationWithYearRow = {
-  year_id: string;
-  year_label: string;
-  year_order_index: string;
-  year_status: string;
-  location_id: string;
-  location_year_id: string;
-  location_slug: string;
-  location_name: string;
-  location_summary: string | null;
-  location_cover_asset_id: string | null;
-  location_cover_asset_width: number | null;
-  location_cover_asset_height: number | null;
-  location_order_index: string;
-};
+function mapCollectionRowD1(row: D1CollectionRow): LocationCollectionSummary {
+  return {
+    id: String(row.id),
+    slug: String(row.slug),
+    title: String(row.title),
+    summary: row.summary ?? null,
+    photoCount: Number(row.photo_count ?? 0),
+    coverAssetId: row.cover_asset_id ?? null,
+    coverAssetWidth: row.cover_asset_width != null ? Number(row.cover_asset_width) : null,
+    coverAssetHeight: row.cover_asset_height != null ? Number(row.cover_asset_height) : null,
+    orderIndex: String(row.order_index),
+    capturedAt: row.captured_at ? new Date(row.captured_at).toISOString() : null,
+    publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
+    updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
+  };
+}
 
-async function fetchCollectionsForLocationD1(
-  db: D1Database,
-  locationId: string
-): Promise<LocationCollectionSummary[]> {
-  const result = await db
-    .prepare(
-      `
+type D1Database = ReturnType<typeof getD1Database>;
+
+/**
+ * The whole published tree in a single batch round trip. Loading it as years → locations per
+ * year → collections per location cost three sequential D1 round trips and 1 + Y + L queries.
+ */
+async function fetchYearsD1(): Promise<YearEntry[]> {
+  const db: D1Database = requireD1();
+  const [yearsResult, locationsResult, collectionsResult] = await db.batch([
+    db.prepare(`
+      SELECT id, label, order_index, status
+      FROM years
+      WHERE status = 'published'
+      ORDER BY CAST(order_index AS REAL) ASC, order_index ASC
+    `),
+    db.prepare(`
+      SELECT l.id, l.year_id, l.slug, l.name, l.summary, l.cover_asset_id, l.order_index,
+             a.width AS cover_asset_width, a.height AS cover_asset_height
+      FROM locations l
+      JOIN years y ON y.id = l.year_id AND y.status = 'published'
+      LEFT JOIN assets a ON a.id = l.cover_asset_id
+      ORDER BY CAST(l.order_index AS REAL) ASC, l.order_index ASC
+    `),
+    db.prepare(`
       SELECT
         c.id,
+        c.location_id,
         c.slug,
         c.title,
         c.summary,
@@ -343,52 +317,27 @@ async function fetchCollectionsForLocationD1(
         c.published_at,
         c.updated_at
       FROM collections c
+      JOIN locations l ON l.id = c.location_id
+      JOIN years y ON y.id = l.year_id AND y.status = 'published'
       LEFT JOIN assets a ON a.id = c.cover_asset_id
-      WHERE c.location_id = ?1 AND c.status = 'published'
+      WHERE c.status = 'published'
       ORDER BY CAST(c.order_index AS REAL) ASC, c.order_index ASC
-    `
-    )
-    .bind(locationId)
-    .all();
+    `),
+  ]);
 
-  const rows = (result.results ?? []) as D1CollectionRow[];
-  return rows.map((row) => ({
-    id: String(row.id),
-    slug: String(row.slug),
-    title: String(row.title),
-    summary: row.summary ?? null,
-    photoCount: Number(row.photo_count ?? 0),
-    coverAssetId: row.cover_asset_id ?? null,
-    coverAssetWidth: row.cover_asset_width != null ? Number(row.cover_asset_width) : null,
-    coverAssetHeight: row.cover_asset_height != null ? Number(row.cover_asset_height) : null,
-    orderIndex: String(row.order_index),
-    capturedAt: row.captured_at ? new Date(row.captured_at).toISOString() : null,
-    publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
-    updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
-  }));
-}
+  const collectionsByLocation = new Map<string, LocationCollectionSummary[]>();
+  for (const row of (collectionsResult.results ?? []) as D1CollectionRow[]) {
+    const key = String(row.location_id);
+    collectionsByLocation.set(key, [...(collectionsByLocation.get(key) ?? []), mapCollectionRowD1(row)]);
+  }
 
-async function fetchLocationsForYearD1(db: D1Database, yearId: string): Promise<LocationEntry[]> {
-  const result = await db
-    .prepare(
-      `
-      SELECT l.id, l.year_id, l.slug, l.name, l.summary, l.cover_asset_id, l.order_index,
-             a.width AS cover_asset_width, a.height AS cover_asset_height
-      FROM locations l
-      LEFT JOIN assets a ON a.id = l.cover_asset_id
-      WHERE l.year_id = ?1
-      ORDER BY CAST(l.order_index AS REAL) ASC, l.order_index ASC
-    `
-    )
-    .bind(yearId)
-    .all();
-
-  const rows = (result.results ?? []) as D1LocationRow[];
-
-  const locations = await Promise.all(
-    rows.map(async (row) => {
-      const collections = await fetchCollectionsForLocationD1(db, String(row.id));
-      return {
+  const locationsByYear = new Map<string, LocationEntry[]>();
+  for (const row of (locationsResult.results ?? []) as D1LocationRow[]) {
+    const collections = collectionsByLocation.get(String(row.id)) ?? [];
+    const key = String(row.year_id);
+    locationsByYear.set(key, [
+      ...(locationsByYear.get(key) ?? []),
+      {
         id: String(row.id),
         yearId: String(row.year_id),
         slug: String(row.slug),
@@ -400,201 +349,32 @@ async function fetchLocationsForYearD1(db: D1Database, yearId: string): Promise<
         orderIndex: String(row.order_index),
         collectionCount: collections.length,
         collections,
-      };
-    })
-  );
-  return locations;
-}
+      },
+    ]);
+  }
 
-async function fetchNavLocationsForYearD1(
-  db: D1Database,
-  yearId: string
-): Promise<LocationNavEntry[]> {
-  const result = await db
-    .prepare(
-      `
-      SELECT id, slug, name, order_index
-      FROM locations
-      WHERE year_id = ?1
-      ORDER BY CAST(order_index AS REAL) ASC, order_index ASC
-    `
-    )
-    .bind(yearId)
-    .all();
-
-  const rows = (result.results ?? []) as D1LocationRow[];
-  return rows.map((row) => ({
+  return ((yearsResult.results ?? []) as D1YearRow[]).map((row) => ({
     id: String(row.id),
-    slug: String(row.slug),
-    name: String(row.name),
+    label: String(row.label),
     orderIndex: String(row.order_index),
+    status: String(row.status),
+    locations: locationsByYear.get(String(row.id)) ?? [],
   }));
 }
 
-type D1Database = ReturnType<typeof getD1Database>;
-async function fetchYearsD1(): Promise<YearEntry[]> {
-  const db = requireD1();
-  const result = await db
-    .prepare(
-      `
-      SELECT id, label, order_index, status
-      FROM years
-      WHERE status = 'published'
-      ORDER BY CAST(order_index AS REAL) ASC, order_index ASC
-    `
-    )
-    .all();
-
-  const rows = (result.results ?? []) as D1YearRow[];
-
-  const entries = await Promise.all(
-    rows.map(async (row) => {
-      const locations = await fetchLocationsForYearD1(db, String(row.id));
-      return {
-        id: String(row.id),
-        label: String(row.label),
-        orderIndex: String(row.order_index),
-        status: String(row.status),
-        locations,
-      };
-    })
-  );
-
-  return entries;
-}
-
-async function fetchYearsNavD1(): Promise<YearNavEntry[]> {
-  const db = requireD1();
-  const result = await db
-    .prepare(
-      `
-      SELECT id, label, order_index, status
-      FROM years
-      WHERE status = 'published'
-      ORDER BY CAST(order_index AS REAL) ASC, order_index ASC
-    `
-    )
-    .all();
-
-  const rows = (result.results ?? []) as D1YearRow[];
-
-  const entries = await Promise.all(
-    rows.map(async (row) => {
-      const locations = await fetchNavLocationsForYearD1(db, String(row.id));
-      return {
-        id: String(row.id),
-        label: String(row.label),
-        orderIndex: String(row.order_index),
-        status: String(row.status),
-        locations,
-      };
-    })
-  );
-
-  return entries;
-}
-
-async function fetchYearByLabelD1(label: string): Promise<YearEntry | null> {
-  const db = requireD1();
-  const year = (await db
-    .prepare(
-      `
-      SELECT id, label, order_index, status
-      FROM years
-      WHERE label = ?1 AND status = 'published'
-      LIMIT 1
-    `
-    )
-    .bind(label)
-    .first()) as D1YearRow | null;
-
-  if (!year) {
-    return null;
-  }
-
-  const locations = await fetchLocationsForYearD1(db, String(year.id));
-  return {
-    id: String(year.id),
-    label: String(year.label),
-    orderIndex: String(year.order_index),
-    status: String(year.status),
-    locations,
-  };
-}
-
-async function fetchLocationBySlugD1(
-  label: string,
-  slug: string
-): Promise<{ year: YearEntry; location: LocationEntry } | null> {
-  const db = requireD1();
-  const row = (await db
-    .prepare(
-      `
-      SELECT
-        y.id AS year_id,
-        y.label AS year_label,
-        y.order_index AS year_order_index,
-        y.status AS year_status,
-        l.id AS location_id,
-        l.year_id AS location_year_id,
-        l.slug AS location_slug,
-        l.name AS location_name,
-        l.summary AS location_summary,
-        l.cover_asset_id AS location_cover_asset_id,
-        a.width AS location_cover_asset_width,
-        a.height AS location_cover_asset_height,
-        l.order_index AS location_order_index
-      FROM years y
-      INNER JOIN locations l ON l.year_id = y.id
-      LEFT JOIN assets a ON a.id = l.cover_asset_id
-      WHERE y.label = ?1 AND y.status = 'published' AND l.slug = ?2
-      LIMIT 1
-    `
-    )
-    .bind(label, slug)
-    .first()) as D1LocationWithYearRow | null;
-
-  if (!row) {
-    return null;
-  }
-
-  const collections = await fetchCollectionsForLocationD1(db, String(row.location_id));
-
-  const location: LocationEntry = {
-    id: String(row.location_id),
-    yearId: String(row.location_year_id),
-    slug: String(row.location_slug),
-    name: String(row.location_name),
-    summary: row.location_summary ?? null,
-    coverAssetId: row.location_cover_asset_id ?? null,
-    coverAssetWidth: row.location_cover_asset_width ?? null,
-    coverAssetHeight: row.location_cover_asset_height ?? null,
-    orderIndex: String(row.location_order_index),
-    collectionCount: collections.length,
-    collections,
-  };
-
-  const year: YearEntry = {
-    id: String(row.year_id),
-    label: String(row.year_label),
-    orderIndex: String(row.year_order_index),
-    status: String(row.year_status),
-    locations: [location],
-  };
-
-  return { year, location };
-}
-
-export async function loadYearLocationData(): Promise<YearLocationPayload> {
+/**
+ * The published year → location → collection tree, loaded once per request (React cache):
+ * the site layout's menu, the page and generateMetadata all read this same result.
+ */
+export const loadYearLocationData = cache(async (): Promise<YearLocationPayload> => {
   if (localTestDataForced) {
     return getLocalYearLocationData();
   }
 
   if (shouldUseD1Direct()) {
-    const years = await fetchYearsD1();
     return {
       generatedAt: new Date().toISOString(),
-      years,
+      years: await fetchYearsD1(),
     };
   }
 
@@ -614,36 +394,18 @@ export async function loadYearLocationData(): Promise<YearLocationPayload> {
   }
 
   return getLocalYearLocationData();
-}
+});
 
+/** A published year by label, read from the per-request tree (no extra query). */
 export async function getYearByLabel(label: string): Promise<YearEntry | null> {
   if (!label) {
     return null;
   }
-
-  if (localTestDataForced) {
-    return getLocalYearByLabel(label);
-  }
-
-  if (shouldUseD1Direct()) {
-    return fetchYearByLabelD1(label);
-  }
-
-  try {
-    const year = await fetchSingleYear({ label, status: 'published' });
-    if (year || !localTestDataEnabled) {
-      return year ? mapYear(year) : null;
-    }
-  } catch (error) {
-    if (!localTestDataEnabled) {
-      throw error;
-    }
-    console.warn(`[local-test-data] Falling back to local year data for ${label}:`, error);
-  }
-
-  return getLocalYearByLabel(label);
+  const { years } = await loadYearLocationData();
+  return years.find((year) => year.label === label && year.status === 'published') ?? null;
 }
 
+/** A location of a published year, read from the per-request tree (no extra query). */
 export async function getLocationByYearAndSlug(
   label: string,
   slug: string
@@ -651,91 +413,26 @@ export async function getLocationByYearAndSlug(
   if (!label || !slug) {
     return null;
   }
-
-  if (localTestDataForced) {
-    return getLocalLocationByYearAndSlug(label, slug);
+  const { years } = await loadYearLocationData();
+  // Labels are not unique, so look in every published year with this label.
+  for (const year of years) {
+    if (year.label !== label || year.status !== 'published') continue;
+    const location = year.locations.find((entry) => entry.slug === slug);
+    if (location) return { year, location };
   }
-
-  if (shouldUseD1Direct()) {
-    return fetchLocationBySlugD1(label, slug);
-  }
-
-  try {
-    const year = await fetchSingleYear({ label, status: 'published' });
-    if (!year) {
-      return localTestDataEnabled ? getLocalLocationByYearAndSlug(label, slug) : null;
-    }
-
-    const mappedYear = mapYear(year);
-    const location = mappedYear.locations.find((entry) => entry.slug === slug);
-    if (!location) {
-      return localTestDataEnabled ? getLocalLocationByYearAndSlug(label, slug) : null;
-    }
-
-    return { year: mappedYear, location };
-  } catch (error) {
-    if (!localTestDataEnabled) {
-      throw error;
-    }
-    console.warn(`[local-test-data] Falling back to local location data for ${label}/${slug}:`, error);
-    return getLocalLocationByYearAndSlug(label, slug);
-  }
+  return null;
 }
 
 export const getLocationByYearAndSlugCached = cache(getLocationByYearAndSlug);
 
+/** Menu data, derived from the same per-request tree the page uses (one load for both). */
 export async function loadYearLocationNavData(): Promise<YearNavEntry[]> {
-  if (localTestDataForced) {
-    return getLocalYearLocationNavData();
-  }
-
-  if (shouldUseD1Direct()) {
-    return fetchYearsNavD1();
-  }
-
-  try {
-    const prisma = await getPrisma();
-    const years = await prisma.year.findMany({
-      where: { status: 'published' },
-      orderBy: { order_index: 'asc' },
-      select: {
-        id: true,
-        label: true,
-        order_index: true,
-        status: true,
-        locations: {
-          orderBy: { order_index: 'asc' },
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            order_index: true,
-          },
-        },
-      },
-    });
-
-    if (years.length === 0 && localTestDataEnabled) {
-      return getLocalYearLocationNavData();
-    }
-
-    return years.map((year) => ({
-      id: year.id,
-      label: year.label,
-      orderIndex: year.order_index,
-      status: year.status,
-      locations: (year.locations ?? []).map((location) => ({
-        id: location.id,
-        slug: location.slug,
-        name: location.name,
-        orderIndex: location.order_index,
-      })),
-    }));
-  } catch (error) {
-    if (!localTestDataEnabled) {
-      throw error;
-    }
-    console.warn('[local-test-data] Falling back to local navigation data:', error);
-    return getLocalYearLocationNavData();
-  }
+  const { years } = await loadYearLocationData();
+  return years.map((year) => ({
+    id: year.id,
+    label: year.label,
+    orderIndex: year.orderIndex,
+    status: year.status,
+    locations: year.locations.map(({ id, slug, name, orderIndex }) => ({ id, slug, name, orderIndex })),
+  }));
 }
