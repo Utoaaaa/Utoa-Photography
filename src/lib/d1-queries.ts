@@ -73,7 +73,8 @@ export async function d1GetYears(
     bindings.push(status);
   }
 
-  query += ` ORDER BY order_index ${order === 'asc' ? 'ASC' : 'DESC'}`;
+  const direction = order === 'asc' ? 'ASC' : 'DESC';
+  query += ` ORDER BY CAST(order_index AS REAL) ${direction}, order_index ${direction}`;
 
   const stmt = bindings.length > 0 ? db.prepare(query).bind(...bindings) : db.prepare(query);
 
@@ -277,11 +278,13 @@ export async function d1CreateAuditLog(data: {
 
   const now = new Date().toISOString();
 
+  // audit_logs.id has no SQL default (Prisma generates it client-side) and the time column is `timestamp`.
   await db
     .prepare(
-      'INSERT INTO audit_logs (actor, actor_type, entity_type, entity_id, action, meta, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO audit_logs (id, actor, actor_type, entity_type, entity_id, action, meta, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     )
     .bind(
+      crypto.randomUUID(),
       data.actor,
       data.actor_type,
       data.entity_type,

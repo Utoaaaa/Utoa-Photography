@@ -83,10 +83,14 @@ describe('location-service', () => {
     }
   });
 
-  test('createLocation computes next order index when missing', async () => {
-    prismaMock.location.findFirst
-      .mockResolvedValueOnce(null) // slug availability
-      .mockResolvedValueOnce({ order_index: '3.0' }); // last order index
+  test('createLocation computes the next order index numerically when missing', async () => {
+    prismaMock.location.findFirst.mockResolvedValueOnce(null); // slug availability
+    // As text, "9.0" is the maximum; numerically it is 10.0.
+    prismaMock.location.findMany.mockResolvedValueOnce([
+      { order_index: '3.0' },
+      { order_index: '10.0' },
+      { order_index: '9.0' },
+    ]);
 
     prismaMock.location.create.mockResolvedValue({
       id: 'loc-1',
@@ -95,7 +99,7 @@ describe('location-service', () => {
       slug: 'kyoto-24',
       summary: null,
       cover_asset_id: null,
-      order_index: '4.0',
+      order_index: '11.0',
       created_at: new Date('2024-01-01T00:00:00Z'),
       updated_at: new Date('2024-01-01T00:00:00Z'),
       _count: { collections: 0 },
@@ -104,9 +108,9 @@ describe('location-service', () => {
     const result = await createLocation('year-1', { name: 'Kyoto', slug: 'kyoto-24' });
 
     expect(prismaMock.location.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ order_index: '4.0' }),
+      data: expect.objectContaining({ order_index: '11.0' }),
     }));
-    expect(result.order_index).toBe('4.0');
+    expect(result.order_index).toBe('11.0');
   });
 
   test('updateLocation returns changes payload', async () => {

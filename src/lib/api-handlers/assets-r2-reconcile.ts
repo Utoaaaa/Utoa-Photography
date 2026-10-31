@@ -2,6 +2,7 @@ import { adminAuthError } from '@/lib/auth';
 import { NextRequest, NextResponse, after } from 'next/server';
 
 import { shouldUseD1Direct } from '@/lib/d1-queries';
+import { selectIn } from '@/lib/d1/select-in';
 import { getD1Database } from '@/lib/cloudflare';
 import { deleteR2ObjectsForAsset, listR2ImageIds } from '@/lib/r2-assets';
 
@@ -30,11 +31,11 @@ async function fetchExistingAssetIds(ids: string[], useD1: boolean): Promise<Set
   }
 
   if (useD1) {
-    const db = requireD1();
-    const placeholders = ids.map(() => '?').join(', ');
-    const query = `SELECT id FROM assets WHERE id IN (${placeholders})`;
-    const result = await db.prepare(query).bind(...ids).all();
-    const rows = (result.results ?? []) as { id: string }[];
+    const rows = await selectIn<{ id: string }>(
+      requireD1(),
+      (placeholders) => `SELECT id FROM assets WHERE id IN (${placeholders})`,
+      ids,
+    );
     return new Set(rows.map((row) => String(row.id)));
   }
 
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
     const rawIterations = Number(body?.maxIterations ?? 5);
     const limit = Number.isFinite(rawLimit)
       ? Math.max(1, Math.min(500, Math.floor(rawLimit)))
-      : 500; // keep under SQLite/D1 placeholder limit
+      : 500; // existence lookups are chunked under D1's 100-parameter limit (selectIn)
     const maxIterations = Number.isFinite(rawIterations) ? Math.max(1, Math.min(20, Math.floor(rawIterations))) : 5;
     const cursor = typeof body?.cursor === 'string' && body.cursor.length > 0 ? body.cursor : undefined;
     const dryRun = Boolean(body?.dryRun);

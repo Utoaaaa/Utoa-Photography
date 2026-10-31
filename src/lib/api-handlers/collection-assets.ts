@@ -6,6 +6,7 @@ import type { AuditAction } from '@/lib/db';
 import { parseRequestJsonSafe, writeAudit } from '@/lib/utils';
 import { invalidateCache, CACHE_TAGS } from '@/lib/cache';
 import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
+import { selectIn } from '@/lib/d1/select-in';
 import { getD1Database } from '@/lib/cloudflare';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
@@ -71,10 +72,6 @@ async function recordAudit(
   });
 }
 
-function createPlaceholders(count: number) {
-  return Array.from({ length: count }, (_, index) => `?${index + 1}`).join(', ');
-}
-
 export const dynamic = 'force-dynamic';
 
 export async function POST(
@@ -130,14 +127,13 @@ export async function POST(
         );
       }
 
-      const placeholders = createPlaceholders(assetIds.length);
-      const assetsResult = await db.prepare(
-        `SELECT id FROM assets WHERE id IN (${placeholders})`,
-      ).bind(...assetIds).all();
-
-      const foundAssets = new Set(
-        (assetsResult.results ?? []).map((row: Record<string, unknown>) => String(row.id)),
+      const assetRows = await selectIn<{ id: unknown }>(
+        db,
+        (placeholders) => `SELECT id FROM assets WHERE id IN (${placeholders})`,
+        assetIds,
       );
+
+      const foundAssets = new Set(assetRows.map((row) => String(row.id)));
 
       if (foundAssets.size !== assetIds.length) {
         return NextResponse.json(

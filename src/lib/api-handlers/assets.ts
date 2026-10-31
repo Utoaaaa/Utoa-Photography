@@ -12,6 +12,7 @@ import {
   d1CreateAuditLog,
 } from '@/lib/d1-queries';
 import { d1FindLocationById } from '@/lib/d1/location-service';
+import { selectIn } from '@/lib/d1/select-in';
 import { getD1Database } from '@/lib/cloudflare';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
@@ -332,8 +333,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
-    const offset = parseInt(searchParams.get('offset') || '0', 10);
+    // D1 treats LIMIT -1 as "no limit"; Prisma's take:-1 returns one row. Keep both within [1, 200].
+    const limit = Math.max(1, Math.min(parseInt(searchParams.get('limit') || '50', 10), 200));
+    const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10));
 
     const locationFilter =
       searchParams.get('location_id') ?? searchParams.get('location_folder_id');
@@ -360,18 +362,13 @@ export async function GET(request: NextRequest) {
 
       if (db && baseAssets.length > 0) {
         const ids = baseAssets.map((asset) => asset.id);
-        const placeholders = ids.map(() => '?').join(', ');
         try {
-          const usageStmt = db
-            .prepare(
-              `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`
-            )
-            .bind(...ids);
-          const usageResult = await usageStmt.all();
-          const rows = (usageResult.results ?? []) as Array<{
-            asset_id: string;
-            count: number | string | null;
-          }>;
+          const rows = await selectIn<{ asset_id: string; count: number | string | null }>(
+            db,
+            (placeholders) =>
+              `SELECT asset_id, COUNT(*) as count FROM collection_assets WHERE asset_id IN (${placeholders}) GROUP BY asset_id`,
+            ids
+          );
           rows.forEach((row) => {
             const count = typeof row.count === 'string' ? Number(row.count) : (row.count ?? 0);
             usageMap.set(row.asset_id, count);
@@ -389,19 +386,16 @@ export async function GET(request: NextRequest) {
         );
 
         if (locationIds.length > 0) {
-          const locationPlaceholders = locationIds.map(() => '?').join(', ');
           try {
-            const locationsStmt = db
-              .prepare(
-                `SELECT id, name, year_id FROM locations WHERE id IN (${locationPlaceholders})`
-              )
-              .bind(...locationIds);
-            const locationsResult = await locationsStmt.all();
-            const locationRows = (locationsResult.results ?? []) as Array<{
+            const locationRows = await selectIn<{
               id: string;
               name: string | null;
               year_id: string | null;
-            }>;
+            }>(
+              db,
+              (placeholders) => `SELECT id, name, year_id FROM locations WHERE id IN (${placeholders})`,
+              locationIds
+            );
             locationRows.forEach((row) => {
               locationMap.set(row.id, row);
             });
@@ -414,16 +408,12 @@ export async function GET(request: NextRequest) {
               )
             );
             if (yearIds.length > 0) {
-              const yearPlaceholders = yearIds.map(() => '?').join(', ');
               try {
-                const yearsStmt = db
-                  .prepare(`SELECT id, label FROM years WHERE id IN (${yearPlaceholders})`)
-                  .bind(...yearIds);
-                const yearsResult = await yearsStmt.all();
-                const yearRows = (yearsResult.results ?? []) as Array<{
-                  id: string;
-                  label: string | null;
-                }>;
+                const yearRows = await selectIn<{ id: string; label: string | null }>(
+                  db,
+                  (placeholders) => `SELECT id, label FROM years WHERE id IN (${placeholders})`,
+                  yearIds
+                );
                 yearRows.forEach((row) => {
                   if (typeof row.label === 'string') {
                     yearLabelMap.set(row.id, row.label);

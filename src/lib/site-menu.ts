@@ -1,6 +1,7 @@
 import type { StaggeredMenuItem } from '@/components/ui/StaggeredMenu';
 import { buildHomeHref, buildLocationHref, buildYearHref } from '@/lib/site-paths';
 import { loadYearLocationNavData, type YearNavEntry } from '@/lib/year-location';
+import { compareOrderIndex } from '@/lib/order-index';
 
 export function buildSiteMenuItemsFromNavData(data: YearNavEntry[], basePath?: string): StaggeredMenuItem[] {
   const items: StaggeredMenuItem[] = [
@@ -14,7 +15,7 @@ export function buildSiteMenuItemsFromNavData(data: YearNavEntry[], basePath?: s
 
   const publishedYears = [...data]
     .filter((year) => year.status === 'published')
-    .sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+    .sort((a, b) => compareOrderIndex(a.orderIndex, b.orderIndex));
 
   publishedYears.forEach((year) => {
     items.push({
@@ -24,7 +25,7 @@ export function buildSiteMenuItemsFromNavData(data: YearNavEntry[], basePath?: s
       variant: 'year',
     });
 
-    const orderedLocations = [...(year.locations ?? [])].sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+    const orderedLocations = [...(year.locations ?? [])].sort((a, b) => compareOrderIndex(a.orderIndex, b.orderIndex));
 
     orderedLocations.forEach((location, index) => {
       items.push({

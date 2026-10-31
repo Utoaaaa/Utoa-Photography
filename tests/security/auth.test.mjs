@@ -274,9 +274,12 @@ for (const entry of retired) {
     });
   }
   if (entry.getPreserved) {
-    test(`GET ${entry.route} retains its original handler`, () => {
+    test(`GET ${entry.route} retains its shared handler`, () => {
       const { load } = fixture();
-      assert.equal(load(`src/app${entry.route}/route.ts`).GET, load(`src/lib/api-handlers/${entry.handler}.ts`).GET);
+      const handler = load(`src/lib/api-handlers/${entry.handler}.ts`);
+      // Where a handler offers a published-only variant, the anonymous route must use it
+      // (see tests/security/public-drafts.test.mjs); the rest keep their admin-checked GET.
+      assert.equal(load(`src/app${entry.route}/route.ts`).GET, handler.GETPublished ?? handler.GET);
     });
   }
 }

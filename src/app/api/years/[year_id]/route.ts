@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export { GET } from '@/lib/api-handlers/year';
+export { GETPublished as GET } from '@/lib/api-handlers/year';
 
 // Retired write endpoint. Never redirect mutations or read the request body.
 export async function PUT() {

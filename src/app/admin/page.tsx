@@ -2,6 +2,9 @@ import { getAllYears } from '@/lib/queries/years';
 import { getAllCollections } from '@/lib/queries/collections';
 import AdminDashboardContent from '@/components/admin/AdminDashboardContent';
 
+// Without this the page is prerendered at build time with the build machine's local SQLite counts.
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboard() {
   try {
     const [years, collections] = await Promise.all([

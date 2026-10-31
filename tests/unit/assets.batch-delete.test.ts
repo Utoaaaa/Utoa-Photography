@@ -15,6 +15,8 @@ jest.mock('../../src/lib/db', () => {
     collectionAsset: {
       findMany: jest.fn(),
     },
+    collection: { findMany: jest.fn().mockResolvedValue([]) },
+    location: { findMany: jest.fn().mockResolvedValue([]) },
   };
   return { __esModule: true, prisma: prismaMock, logAudit: jest.fn() };
 });
@@ -63,5 +65,18 @@ describe('POST /api/assets/batch-delete', () => {
     expect(res.status).toBe(200);
     expect(res.body.deletedIds).toEqual(['a2']);
     expect(db.logAudit).toHaveBeenCalledWith(expect.objectContaining({ action: 'delete', entity: 'asset/a2' }));
+  });
+
+  it('refuses to delete an asset that is still a cover', async () => {
+    db.prisma.asset.findUnique.mockResolvedValue({ id: 'a3' });
+    db.prisma.collectionAsset.findMany.mockResolvedValueOnce([]);
+    db.prisma.location.findMany.mockResolvedValueOnce([{ id: 'loc1' }]);
+    const res: any = await route.POST(makeJsonRequest({ asset_ids: ['a3'] }));
+    expect(res.status).toBe(200);
+    expect(res.body.deletedIds).toEqual([]);
+    expect(res.body.failed).toEqual([
+      { id: 'a3', reason: 'referenced', details: { covers: [{ kind: 'location', id: 'loc1' }], count: 1 } },
+    ]);
+    expect(db.prisma.asset.delete).not.toHaveBeenCalled();
   });
 });

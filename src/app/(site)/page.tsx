@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { AnimatedArchiveHome } from '@/components/site/animated';
 import { getPageSEO } from '@/lib/seo/store';
 import { loadYearLocationData } from '@/lib/year-location';
+import { compareOrderIndex } from '@/lib/order-index';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,7 @@ export default async function Homepage() {
 
   const years = data.years
     .filter((year) => year.status === 'published')
-    .sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+    .sort((a, b) => compareOrderIndex(a.orderIndex, b.orderIndex));
 
   return <AnimatedArchiveHome years={years} />;
 }

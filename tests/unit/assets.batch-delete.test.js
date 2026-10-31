@@ -15,6 +15,8 @@ jest.mock('../../src/lib/db', () => {
     collectionAsset: {
       findMany: jest.fn(),
     },
+    collection: { findMany: jest.fn().mockResolvedValue([]) },
+    location: { findMany: jest.fn().mockResolvedValue([]) },
   };
   return { __esModule: true, prisma: prismaMock, logAudit: jest.fn() };
 });

@@ -109,28 +109,13 @@ async function ensureSlugAvailable(
 }
 
 async function computeNextOrderIndex(db: D1Database, yearId: string): Promise<string> {
+  // Numeric max: the text maximum of "9.0" and "10.0" is "9.0", which made every later location "10.0".
   const row = await db.prepare(
-    `
-      SELECT order_index
-      FROM locations
-      WHERE year_id = ?1
-      ORDER BY order_index DESC
-      LIMIT 1
-    `,
+    'SELECT MAX(CAST(order_index AS REAL)) AS max_index FROM locations WHERE year_id = ?1',
   ).bind(yearId).first();
 
-  const orderIndex = (row as { order_index?: string } | null)?.order_index;
-
-  if (!orderIndex) {
-    return '1.0';
-  }
-
-  const numeric = Number.parseFloat(orderIndex);
-  if (Number.isFinite(numeric)) {
-    return (numeric + 1).toFixed(1);
-  }
-
-  return `${Date.now()}.0`;
+  const max = Number((row as { max_index?: number | null } | null)?.max_index ?? 0);
+  return (Number.isFinite(max) ? max + 1 : 1).toFixed(1);
 }
 
 function handleValidationError(error: LocationValidationError): never {
@@ -169,7 +154,7 @@ export async function d1ListLocationsForYear(yearId: string): Promise<D1Location
         ) AS collection_count
       FROM locations l
       WHERE l.year_id = ?1
-      ORDER BY l.order_index ASC
+      ORDER BY CAST(l.order_index AS REAL) ASC, l.order_index ASC
     `,
   ).bind(yearId).all();
 

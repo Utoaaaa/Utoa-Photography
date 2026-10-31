@@ -8,6 +8,20 @@ import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
 import { d1FindLocationById } from '@/lib/d1/location-service';
 import { getD1Database } from '@/lib/cloudflare';
 import { deleteR2ObjectsForAsset } from '@/lib/r2-assets';
+import { findAssetCoversD1, findAssetCoversPrisma, type AssetCoverReference } from '@/lib/asset-references';
+
+// Deleting a cover would leave public pages pointing at removed R2 objects.
+function coverConflict(covers: AssetCoverReference[]) {
+  return NextResponse.json(
+    {
+      error: 'Conflict',
+      message: 'Asset is used as a collection or location cover and cannot be deleted',
+      covers,
+      count: covers.length,
+    },
+    { status: 409 }
+  );
+}
 
 type PrismaClient = import('@prisma/client').PrismaClient;
 type LogAuditFn = typeof import('@/lib/db').logAudit;
@@ -293,6 +307,8 @@ export async function DELETE(
             { status: 409 }
           );
         }
+        const covers = await findAssetCoversD1(db, asset_id);
+        if (covers.length > 0) return coverConflict(covers);
       } catch (error) {
         console.error('Error checking asset references before delete (D1):', error);
         return NextResponse.json(
@@ -338,6 +354,8 @@ export async function DELETE(
           { status: 409 }
         );
       }
+      const covers = await findAssetCoversPrisma(prisma, asset_id);
+      if (covers.length > 0) return coverConflict(covers);
     } catch (e) {
       console.error('Error checking asset references before delete:', e);
       return NextResponse.json(

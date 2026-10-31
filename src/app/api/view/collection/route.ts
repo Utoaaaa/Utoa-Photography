@@ -24,10 +24,6 @@ export async function GET(request: NextRequest) {
 
     const isDev = process.env.NODE_ENV !== 'production';
     let response = await fetchCollectionForViewer({ yearLabel, slug });
-    if (!response && isDev) {
-      console.log('[GET /api/view/collection] collection not found in published year, allowAnyYearStatus fallback');
-      response = await fetchCollectionForViewer({ yearLabel, slug, allowAnyYearStatus: true });
-    }
     if (!response && isUUID(slug)) {
       response = await fetchCollectionByIdForViewer(slug);
       if (isDev) {

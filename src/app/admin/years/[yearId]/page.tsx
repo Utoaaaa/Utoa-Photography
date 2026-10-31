@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Breadcrumb from '@/components/admin/Breadcrumb';
+import { compareOrderIndex } from '@/lib/order-index';
 import { ToastProvider, useToast } from '@/components/admin/Toast';
 import type { AdminCollectionSummary } from '@/app/admin/years/[yearId]/collections/AssignLocation';
 import type { AdminLocation } from './locations/Form';
@@ -272,9 +273,9 @@ function AdminYearWorkspacePage() {
       if (index >= 0) {
         const next = [...prev];
         next[index] = location;
-        return next.sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+        return next.sort((a, b) => compareOrderIndex(a.orderIndex, b.orderIndex));
       }
-      return [...prev, location].sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+      return [...prev, location].sort((a, b) => compareOrderIndex(a.orderIndex, b.orderIndex));
     });
     setActiveLocationId(location.id);
     setIsLocationFormOpen(false);
@@ -353,7 +354,7 @@ function AdminYearWorkspacePage() {
         throw new Error('排序結果為空。');
       }
 
-      setLocations(data.sort((a, b) => a.orderIndex.localeCompare(b.orderIndex)));
+      setLocations(data.sort((a, b) => compareOrderIndex(a.orderIndex, b.orderIndex)));
       setActiveLocationId(location.id);
       toast.success('排序已更新。');
       setLocationsError(null);

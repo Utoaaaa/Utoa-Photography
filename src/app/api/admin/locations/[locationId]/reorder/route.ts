@@ -210,7 +210,7 @@ async function postImpl(request: NextRequest, context: RouteContextLike) {
       }
 
       const existingLocationsResult = await db.prepare(
-        'SELECT id FROM locations WHERE year_id = ?1 ORDER BY order_index ASC',
+        'SELECT id FROM locations WHERE year_id = ?1 ORDER BY CAST(order_index AS REAL) ASC, order_index ASC',
       ).bind(year.id).all();
 
       const existingLocations = (existingLocationsResult.results ?? []).map((row: Record<string, unknown>) => String(row.id));
@@ -246,7 +246,7 @@ async function postImpl(request: NextRequest, context: RouteContextLike) {
             ) AS collections_count
           FROM locations l
           WHERE l.year_id = ?1
-          ORDER BY l.order_index ASC
+          ORDER BY CAST(l.order_index AS REAL) ASC, l.order_index ASC
         `,
       ).bind(year.id).all();
 

@@ -5,6 +5,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 import Link from 'next/link';
 import AdminPageLayout from '@/components/admin/AdminPageLayout';
 import AccessibleDialog from '@/components/ui/AccessibleDialog';
+import { compareOrderIndex, maxOrderIndex } from '@/lib/order-index';
 
 interface Year {
   id: string;
@@ -116,7 +117,7 @@ export default function YearsPage() {
         throw new Error('invalid payload');
       }
       const sorted = [...payload].sort(
-        (a, b) => a.order_index.localeCompare(b.order_index) || a.label.localeCompare(b.label, 'zh-TW')
+        (a, b) => compareOrderIndex(a.order_index, b.order_index) || a.label.localeCompare(b.label, 'zh-TW')
       );
       const withCollections = await Promise.all(
         sorted.map(async (year) => ({
@@ -193,7 +194,8 @@ export default function YearsPage() {
           body: JSON.stringify(payload),
         });
       } else {
-        const nextOrderIndex = padOrderIndex(years.length + 1);
+        // max + 1, not count + 1: after a deletion the count collides with an existing index.
+        const nextOrderIndex = padOrderIndex(Math.floor(maxOrderIndex(years.map((y) => y.order_index))) + 1);
         response = await fetch('/api/admin/years', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },

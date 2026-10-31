@@ -84,7 +84,7 @@ export async function d1ListCollectionsForYear(params: {
     bindings.push(status);
   }
 
-  query += ' ORDER BY order_index ASC';
+  query += ' ORDER BY CAST(order_index AS REAL) ASC, order_index ASC';
 
   const result = await db
     .prepare(query)

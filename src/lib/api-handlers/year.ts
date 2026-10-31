@@ -81,17 +81,25 @@ async function recordAudit(
   });
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ year_id: string }> },
-) {
+type YearContext = { params: Promise<{ year_id: string }> };
+
+export async function GET(request: NextRequest, context: YearContext) {
+  return getYear(context, false);
+}
+
+/** Anonymous endpoint: draft years answer 404 exactly like missing ones. */
+export async function GETPublished(_request: NextRequest, context: YearContext) {
+  return getYear(context, true);
+}
+
+async function getYear({ params }: YearContext, publishedOnly: boolean) {
   try {
     const { year_id } = await params;
     const useD1 = shouldUseD1Direct();
 
     if (useD1) {
       const year = await d1FindYearByIdentifier(year_id);
-      if (!year) {
+      if (!year || (publishedOnly && year.status !== 'published')) {
         return NextResponse.json(
           { error: 'Not found', message: 'Year not found' },
           { status: 404 },
@@ -106,7 +114,7 @@ export async function GET(
       ? await prisma.year.findUnique({ where: { id: year_id } })
       : await prisma.year.findFirst({ where: { label: year_id } });
 
-    if (!year) {
+    if (!year || (publishedOnly && year.status !== 'published')) {
       return NextResponse.json(
         { error: 'Not found', message: 'Year not found' },
         { status: 404 },

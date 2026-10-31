@@ -345,7 +345,7 @@ async function fetchCollectionsForLocationD1(
       FROM collections c
       LEFT JOIN assets a ON a.id = c.cover_asset_id
       WHERE c.location_id = ?1 AND c.status = 'published'
-      ORDER BY order_index ASC
+      ORDER BY CAST(c.order_index AS REAL) ASC, c.order_index ASC
     `
     )
     .bind(locationId)
@@ -377,7 +377,7 @@ async function fetchLocationsForYearD1(db: D1Database, yearId: string): Promise<
       FROM locations l
       LEFT JOIN assets a ON a.id = l.cover_asset_id
       WHERE l.year_id = ?1
-      ORDER BY l.order_index ASC
+      ORDER BY CAST(l.order_index AS REAL) ASC, l.order_index ASC
     `
     )
     .bind(yearId)
@@ -416,7 +416,7 @@ async function fetchNavLocationsForYearD1(
       SELECT id, slug, name, order_index
       FROM locations
       WHERE year_id = ?1
-      ORDER BY order_index ASC
+      ORDER BY CAST(order_index AS REAL) ASC, order_index ASC
     `
     )
     .bind(yearId)
@@ -440,7 +440,7 @@ async function fetchYearsD1(): Promise<YearEntry[]> {
       SELECT id, label, order_index, status
       FROM years
       WHERE status = 'published'
-      ORDER BY order_index ASC
+      ORDER BY CAST(order_index AS REAL) ASC, order_index ASC
     `
     )
     .all();
@@ -471,7 +471,7 @@ async function fetchYearsNavD1(): Promise<YearNavEntry[]> {
       SELECT id, label, order_index, status
       FROM years
       WHERE status = 'published'
-      ORDER BY order_index ASC
+      ORDER BY CAST(order_index AS REAL) ASC, order_index ASC
     `
     )
     .all();

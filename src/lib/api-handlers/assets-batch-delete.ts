@@ -6,6 +6,7 @@ import { shouldUseD1Direct, d1CreateAuditLog } from '@/lib/d1-queries';
 import { getD1Database } from '@/lib/cloudflare';
 import { writeAudit } from '@/lib/utils';
 import { deleteR2ObjectsForAsset } from '@/lib/r2-assets';
+import { findAssetCoversD1, findAssetCoversPrisma } from '@/lib/asset-references';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
 type LogAuditFn = typeof import('@/lib/db').logAudit;
@@ -107,6 +108,11 @@ export async function POST(request: NextRequest) {
             });
             continue;
           }
+          const covers = await findAssetCoversD1(db, id);
+          if (covers.length > 0) {
+            failed.push({ id, reason: 'referenced', details: { covers, count: covers.length } });
+            continue;
+          }
 
           await db.prepare('DELETE FROM assets WHERE id = ?1').bind(id).run();
           await recordAudit(true, id);
@@ -129,6 +135,11 @@ export async function POST(request: NextRequest) {
               reason: 'referenced',
               details: { referenced_by: refs.map((r) => r.collection_id), count: refs.length },
             });
+            continue;
+          }
+          const covers = await findAssetCoversPrisma(prisma, id);
+          if (covers.length > 0) {
+            failed.push({ id, reason: 'referenced', details: { covers, count: covers.length } });
             continue;
           }
           await prisma.asset.delete({ where: { id } });

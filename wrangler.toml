@@ -60,7 +60,9 @@ binding = "UPLOADS"
 bucket_name = "utoa-photography-assets"
 
 [env.staging]
-name = "utoa-photography"
+# Must differ from production: an explicit env name is used verbatim, so the same name
+# would replace the production Worker and its vars. Note D1/R2 below are still shared.
+name = "utoa-photography-staging"
 workers_dev = true
 
 [[env.staging.d1_databases]]

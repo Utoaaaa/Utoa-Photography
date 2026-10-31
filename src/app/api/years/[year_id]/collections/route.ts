@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
-export { GET } from '@/lib/api-handlers/year-collections';
+export { GETPublished as GET } from '@/lib/api-handlers/year-collections';
 
 // Retired write endpoint. Never redirect mutations or read the request body.
 export async function POST() {

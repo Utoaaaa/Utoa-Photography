@@ -221,10 +221,21 @@ async function fetchCollectionD1(
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ collection_id: string }> }
-) {
+type CollectionContext = { params: Promise<{ collection_id: string }> };
+
+const isPublic = (collection: { status?: unknown; year?: { status?: unknown } | null }) =>
+  collection.status === 'published' && collection.year?.status === 'published';
+
+export async function GET(request: NextRequest, context: CollectionContext) {
+  return getCollection(request, context, false);
+}
+
+/** Anonymous endpoint: drafts, and collections of draft years, answer 404. */
+export async function GETPublished(request: NextRequest, context: CollectionContext) {
+  return getCollection(request, context, true);
+}
+
+async function getCollection(request: NextRequest, { params }: CollectionContext, publishedOnly: boolean) {
   try {
     const { collection_id } = await params;
     const { searchParams } = new URL(request.url);
@@ -248,7 +259,7 @@ export async function GET(
         allowSlug: true,
         includeAssets,
       });
-      if (!collection) {
+      if (!collection || (publishedOnly && !isPublic(collection))) {
         return NextResponse.json(
           { error: 'Not found', message: 'Collection not found' },
           { status: 404 }
@@ -282,7 +293,7 @@ export async function GET(
       });
     }
 
-    if (!collection) {
+    if (!collection || (publishedOnly && !isPublic(collection))) {
       return NextResponse.json(
         { error: 'Not found', message: 'Collection not found' },
         { status: 404 }

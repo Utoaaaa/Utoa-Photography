@@ -12,9 +12,18 @@ export const runtime = 'nodejs';
 type YearStatus = 'draft' | 'published';
 
 export async function GET(request: NextRequest) {
+  return listYears(request, false);
+}
+
+/** Anonymous endpoint: drafts are never listed, whatever the status parameter says. */
+export async function GETPublished(request: NextRequest) {
+  return listYears(request, true);
+}
+
+async function listYears(request: NextRequest, publishedOnly: boolean) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
+    const status = publishedOnly ? 'published' : searchParams.get('status');
     const order = searchParams.get('order') || 'desc';
 
     // Validate status parameter

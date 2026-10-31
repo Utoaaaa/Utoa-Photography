@@ -36,7 +36,7 @@ interface CollectionManagerProps {
 type CollectionFormPayload = {
   slug: string;
   title: string;
-  summary?: string;
+  summary?: string | null;
   status: 'draft' | 'published';
   captured_at?: string | null;
   location_id?: string;
@@ -331,7 +331,11 @@ export default function CollectionManager({
 
     try {
       const payload: CollectionFormPayload = { ...form };
-      if (!payload.summary) delete payload.summary;
+      // An emptied summary must reach the server as null, otherwise the old text is kept.
+      if (!payload.summary) {
+        if (editing) payload.summary = null;
+        else delete payload.summary;
+      }
       if (!payload.captured_at) payload.captured_at = null;
       if (payload.cover_asset_id === undefined) payload.cover_asset_id = null;
 
@@ -345,32 +349,26 @@ export default function CollectionManager({
         });
         await ensureOk(res, '更新失敗');
       } else {
-        const existing = collections.find((c) => c.slug === form.slug);
-        if (existing) {
-          const res = await fetch(`/api/admin/collections/${existing.id}`, {
-            method: 'PUT',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          await ensureOk(res, '更新失敗');
-        } else {
-          if (activeLocationId) {
-            payload.location_id = activeLocationId;
-          }
-          const res = await fetch(`/api/admin/years/${encodeURIComponent(yearId)}/collections`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          const clone = res.clone();
-          if (!res.ok) {
-            const info = await safeJson<{ message?: string; error?: string }>(clone, {});
-            throw new Error(info?.message || info?.error || '建立失敗');
-          }
-          createdRecord = await safeJson<CollectionRecord | null>(res, null, isCollectionRecord);
-          if (!createdRecord) {
-            throw new Error('建立作品集的回應格式不正確。');
-          }
+        // Creating must never update another collection that happens to share the slug.
+        if (collections.some((c) => c.slug === form.slug)) {
+          throw new Error(`Slug「${form.slug}」已被本年份的其他作品集使用，請改用其他 Slug。`);
+        }
+        if (activeLocationId) {
+          payload.location_id = activeLocationId;
+        }
+        const res = await fetch(`/api/admin/years/${encodeURIComponent(yearId)}/collections`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const clone = res.clone();
+        if (!res.ok) {
+          const info = await safeJson<{ message?: string; error?: string }>(clone, {});
+          throw new Error(info?.message || info?.error || '建立失敗');
+        }
+        createdRecord = await safeJson<CollectionRecord | null>(res, null, isCollectionRecord);
+        if (!createdRecord) {
+          throw new Error('建立作品集的回應格式不正確。');
         }
       }
 

@@ -6,6 +6,7 @@ import { LocationCard } from '@/components/LocationCard';
 import GlassSurface from '@/components/ui/GlassSurface';
 import { buildYearAnchorId } from '@/lib/site-paths';
 import { loadYearLocationData } from '@/lib/year-location';
+import { compareOrderIndex } from '@/lib/order-index';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ export default async function ClassicHomepage() {
 
   const years = data.years
     .filter((year) => year.status === 'published')
-    .sort((a, b) => a.orderIndex.localeCompare(b.orderIndex));
+    .sort((a, b) => compareOrderIndex(a.orderIndex, b.orderIndex));
   const hasYears = years.length > 0;
   const firstPriorityLocationId = years.find((year) => year.locations.length > 0)?.locations[0]?.id ?? null;
 

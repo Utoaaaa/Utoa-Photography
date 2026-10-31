@@ -110,8 +110,8 @@ async function buildCollectionResponseD1(row: D1CollectionRow): Promise<Collecti
   };
 }
 
-async function fetchCollectionBySlugD1(params: { yearLabel: string; slug: string; allowAnyYearStatus?: boolean }) {
-  const { yearLabel, slug, allowAnyYearStatus } = params;
+async function fetchCollectionBySlugD1(params: { yearLabel: string; slug: string }) {
+  const { yearLabel, slug } = params;
   const db = requireD1();
 
   const row = await db
@@ -133,7 +133,7 @@ async function fetchCollectionBySlugD1(params: { yearLabel: string; slug: string
         JOIN years y ON y.id = c.year_id
         LEFT JOIN locations l ON l.id = c.location_id
         WHERE c.slug = ?1 AND y.label = ?2
-        ${allowAnyYearStatus ? '' : "AND y.status = 'published'"}
+          AND c.status = 'published' AND y.status = 'published'
         ORDER BY y.created_at DESC, c.created_at DESC
         LIMIT 1
       `,
@@ -170,6 +170,7 @@ async function fetchCollectionByIdD1(collectionId: string) {
         JOIN years y ON y.id = c.year_id
         LEFT JOIN locations l ON l.id = c.location_id
         WHERE c.id = ?1
+          AND c.status = 'published' AND y.status = 'published'
         LIMIT 1
       `,
     )
@@ -210,18 +211,18 @@ function mapPrismaCollection(collection: NonNullable<PrismaCollectionWithRelatio
   };
 }
 
+/** Public viewer data: only published collections of published years are ever returned. */
 export async function fetchCollectionForViewer(params: {
   yearLabel: string;
   slug: string;
-  allowAnyYearStatus?: boolean;
 }): Promise<CollectionViewerPayload | null> {
-  const { yearLabel, slug, allowAnyYearStatus = false } = params;
+  const { yearLabel, slug } = params;
   if (localTestDataForced) {
     return getLocalCollectionForViewer({ yearLabel, slug });
   }
 
   if (shouldUseD1Direct()) {
-    return fetchCollectionBySlugD1({ yearLabel, slug, allowAnyYearStatus });
+    return fetchCollectionBySlugD1({ yearLabel, slug });
   }
 
   try {
@@ -230,10 +231,8 @@ export async function fetchCollectionForViewer(params: {
     const collection = await prisma.collection.findFirst({
       where: {
         slug,
-        year: {
-          label: yearLabel,
-          ...(allowAnyYearStatus ? {} : { status: 'published' }),
-        },
+        status: 'published',
+        year: { label: yearLabel, status: 'published' },
       },
       orderBy: [
         { year: { created_at: 'desc' } },
@@ -269,8 +268,8 @@ export async function fetchCollectionByIdForViewer(collectionId: string): Promis
   }
 
   const prisma = await getPrisma();
-  const collection = await prisma.collection.findUnique({
-    where: { id: collectionId },
+  const collection = await prisma.collection.findFirst({
+    where: { id: collectionId, status: 'published', year: { status: 'published' } },
     include: {
       collection_assets: {
         include: { asset: true },

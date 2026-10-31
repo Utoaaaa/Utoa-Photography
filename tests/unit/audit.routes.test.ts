@@ -22,6 +22,10 @@ jest.mock('../../src/lib/db', () => {
     },
     collection: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
+    },
+    location: {
+      findMany: jest.fn(),
     },
     collectionAsset: {
       findUnique: jest.fn(),
@@ -106,6 +110,8 @@ describe('Route audit integration (T025)', () => {
   (db.logAudit as jest.Mock).mockResolvedValue(undefined);
   prismaMock.asset.findUnique.mockResolvedValue({ id: 'a1' } as any);
   prismaMock.collectionAsset.findMany.mockResolvedValue([]);
+  prismaMock.collection.findMany.mockResolvedValue([]); // not a collection cover
+  prismaMock.location.findMany.mockResolvedValue([]); // not a location cover
   prismaMock.asset.delete.mockResolvedValue({ id: 'a1' } as any);
 
     const req = makeJsonRequest({});

@@ -14,7 +14,8 @@ const baseConfig: NextConfig = {
   
   // Performance optimizations
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    // Keep error/warn: they are the only production failure signal in Workers logs.
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   
   // Image optimization (we serve from external CDN directly)

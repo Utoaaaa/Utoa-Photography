@@ -193,7 +193,7 @@ const formatBatchDeleteFailure = (failed: BatchDeleteFailure[], total: number): 
         : entry.id;
     });
     const suffix = examples.length > 0 ? `：${examples.join('、')}${referenced.length > 3 ? '…' : ''}` : '';
-    return `有 ${referenced.length}/${total} 張素材仍在作品集中，請先從作品集移除後再刪除${suffix}`;
+    return `有 ${referenced.length}/${total} 張素材仍在作品集中或被設為封面，請先從作品集移除或更換封面後再刪除${suffix}`;
   }
 
   const notFound = failed.filter((entry) => entry.reason === 'not_found').length;

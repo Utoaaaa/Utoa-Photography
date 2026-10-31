@@ -91,7 +91,7 @@ export async function getCollectionsByYear(yearId: string) {
             ) AS asset_count
           FROM collections c
           WHERE c.year_id = ?1 AND c.status = 'published'
-          ORDER BY c.order_index ASC
+          ORDER BY CAST(c.order_index AS REAL) ASC, c.order_index ASC
         `
         )
         .bind(yearId)
@@ -226,7 +226,8 @@ export async function getAllCollections() {
             ) AS asset_count
           FROM collections c
           JOIN years y ON y.id = c.year_id
-          ORDER BY y.order_index DESC, c.order_index ASC
+          ORDER BY CAST(y.order_index AS REAL) DESC, y.order_index DESC,
+            CAST(c.order_index AS REAL) ASC, c.order_index ASC
         `
         )
         .all();

@@ -82,17 +82,25 @@ async function recordAudit(
   });
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ year_id: string }> }
-) {
+type YearContext = { params: Promise<{ year_id: string }> };
+
+export async function GET(request: NextRequest, context: YearContext) {
+  return listYearCollections(request, context, false);
+}
+
+/** Anonymous endpoint: only published collections of a published year. */
+export async function GETPublished(request: NextRequest, context: YearContext) {
+  return listYearCollections(request, context, true);
+}
+
+async function listYearCollections(request: NextRequest, { params }: YearContext, publishedOnly: boolean) {
   try {
     const { year_id } = await params;
     if (process.env.NODE_ENV !== 'production') {
       console.log('[GET /years/:id/collections] year_id:', year_id, 'url:', request.url);
     }
     const { searchParams } = new URL(request.url);
-    const status = (searchParams.get('status') || 'all') as CollectionStatus;
+    const status = (publishedOnly ? 'published' : searchParams.get('status') || 'all') as CollectionStatus;
 
     if (!['draft', 'published', 'all'].includes(status)) {
       return NextResponse.json(
@@ -103,7 +111,7 @@ export async function GET(
 
     const useD1 = shouldUseD1Direct();
     const year = await ensureYear(year_id, useD1);
-    if (!year) {
+    if (!year || (publishedOnly && year.status !== 'published')) {
       return NextResponse.json({ error: 'Not found', message: 'Year not found' }, { status: 404 });
     }
 

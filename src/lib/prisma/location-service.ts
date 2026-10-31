@@ -2,6 +2,7 @@ import type { Prisma, Location, Year } from '@prisma/client';
 import { Prisma as PrismaNamespace } from '@prisma/client';
 
 import { prisma } from '@/lib/db';
+import { maxOrderIndex } from '@/lib/order-index';
 import {
   LocationValidationError,
   LOCATION_SLUG_REGEX,
@@ -65,22 +66,12 @@ async function ensureSlugAvailable(yearId: string, slug: string, db: PrismaClien
 }
 
 async function computeNextOrderIndex(yearId: string, db: PrismaClientLike): Promise<string> {
-  const last = await db.location.findFirst({
+  // Prisma can only order this TEXT column as text, so take the numeric max in JS.
+  const rows = await db.location.findMany({
     where: { year_id: yearId },
-    orderBy: { order_index: 'desc' },
     select: { order_index: true },
   });
-
-  if (!last || typeof last.order_index !== 'string') {
-    return '1.0';
-  }
-
-  const numeric = Number.parseFloat(last.order_index);
-  if (Number.isFinite(numeric)) {
-    return (numeric + 1).toFixed(1);
-  }
-
-  return `${Date.now()}.0`;
+  return (maxOrderIndex(rows.map((row) => row.order_index)) + 1).toFixed(1);
 }
 
 export async function createLocation(
