@@ -21,6 +21,7 @@ export const CACHE_TAGS = {
 } as const;
 
 import { logAudit } from '@/lib/db';
+import { invalidatePublicData } from '@/lib/edge-cache';
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -109,6 +110,8 @@ export async function revalidatePathsWithRetry(paths: string[], opts: RetryOpts 
 }
 
 export async function invalidateCache(tags: string[]) {
+  // The public pages read from the edge cache; every admin write calls this after committing.
+  await invalidatePublicData();
   const { failed } = await revalidateTagsWithRetry(tags, { auditOnFailure: true });
   if (failed.length) {
     const err = new Error(`Failed to invalidate tags: ${failed.map(f => f.value).join(', ')}`);

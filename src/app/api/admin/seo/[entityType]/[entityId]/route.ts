@@ -37,6 +37,8 @@ export async function PUT(request: NextRequest, context: Context) {
       return NextResponse.json({ error: '分享圖片不存在，請重新選擇。' }, { status: 400 });
     }
     await saveSEO(target.type, target.id, body.data);
+    const { invalidatePublicData } = await import('@/lib/edge-cache');
+    await invalidatePublicData();
     const { revalidatePath } = await import('next/cache');
     let warning: string | undefined;
     try { revalidatePath(target.path); } catch (error) {

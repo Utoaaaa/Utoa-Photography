@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from '@/lib/d1-queries';
 import { getD1Database } from '@/lib/cloudflare';
+import { cachedPublicData } from '@/lib/edge-cache';
 import { getLocalCollectionForViewer, localTestDataEnabled, localTestDataForced } from '@/lib/local-test-data';
 
 type PrismaClient = import('@prisma/client').PrismaClient;
@@ -215,7 +216,8 @@ const fetchPublishedCollection = cache(async (yearLabel: string, slug: string) =
   }
 
   if (shouldUseD1Direct()) {
-    return fetchCollectionBySlugD1({ yearLabel, slug });
+    // Not-found results are cached too, so unknown URLs do not reach D1 on every request.
+    return cachedPublicData(`collection/${yearLabel}/${slug}`, () => fetchCollectionBySlugD1({ yearLabel, slug }));
   }
 
   try {

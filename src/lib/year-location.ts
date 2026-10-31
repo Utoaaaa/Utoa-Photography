@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 
 import { shouldUseD1Direct } from './d1-queries';
 import { getD1Database } from './cloudflare';
+import { cachedPublicData } from './edge-cache';
 import { getLocalYearLocationData, localTestDataForced, localTestDataEnabled } from './local-test-data';
 
 export interface LocationCollectionSummary {
@@ -372,10 +373,10 @@ export const loadYearLocationData = cache(async (): Promise<YearLocationPayload>
   }
 
   if (shouldUseD1Direct()) {
-    return {
+    return cachedPublicData('year-location-tree', async () => ({
       generatedAt: new Date().toISOString(),
       years: await fetchYearsD1(),
-    };
+    }));
   }
 
   try {

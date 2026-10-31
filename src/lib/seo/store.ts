@@ -1,6 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { getD1Database } from '@/lib/cloudflare';
 import { shouldUseD1Direct } from '@/lib/d1-queries';
+import { cachedPublicData } from '@/lib/edge-cache';
 import { getImageUrl } from '@/lib/images';
 import { getSiteUrl } from '@/lib/site-url';
 import { buildPageMetadata, DEFAULT_SEO_IMAGE, EMPTY_SEO } from './metadata';
@@ -64,7 +65,8 @@ export async function readSEO(type: SEOEntityType, id: string): Promise<{ fields
   };
 }
 export async function getPageSEO(type: SEOEntityType, id: string, defaults: { title: string; description: string }, path: string) {
-  const { fields, image } = await readSEO(type, id);
+  // Public pages only; the SEO editor reads through readSEO directly, uncached.
+  const { fields, image } = await cachedPublicData(`seo/${type}/${id}`, () => readSEO(type, id));
   return buildPageMetadata({ defaults, fields, image, path, siteUrl: getSiteUrl() });
 }
 export async function getSEOEditor(target: SEOTarget): Promise<SEOEditorData> {

@@ -28,6 +28,20 @@ export function getCloudflareEnv(): CloudflareEnv {
   }
 }
 
+/**
+ * Keeps `promise` running after the response is sent (ctx.waitUntil). Outside the Workers
+ * runtime the promise simply runs on its own.
+ */
+export function waitUntil(promise: Promise<unknown>): void {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    getCloudflareContext().ctx.waitUntil(promise);
+  } catch {
+    // No Workers context (next dev / next start / tests).
+  }
+}
+
 export function getD1Database(): any {
   const env = getCloudflareEnv();
   return env.DB;
